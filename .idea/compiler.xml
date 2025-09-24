@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="api-gateway" target="17" />
+      <module name="api-gateway.main" target="17" />
+      <module name="api-gateway.test" target="17" />
+      <module name="config-server" target="17" />
+      <module name="config-server.main" target="17" />
+      <module name="config-server.test" target="17" />
+      <module name="eureka-server" target="17" />
+      <module name="eureka-server.main" target="17" />
+      <module name="eureka-server.test" target="17" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
