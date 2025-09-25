@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: division-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  config:
+    import: ${SPRING_CONFIG_IMPORT:configserver:http://config-server:8888}
