@@ -13,7 +13,7 @@ spring:
           uri: https://github.com/Donghaeng-Team/config.git
           username: ${GIT_USERNAME}
           password: ${GIT_TOKEN}
-          default-label: main                            # 디폴트 브랜치
+          default-label: ${CONFIG_BRANCH:main}                            # 디폴트 브랜치
           clone-on-start: true
           search-paths:                                  # (선택) 하위 폴더 지정 가능
             - config
