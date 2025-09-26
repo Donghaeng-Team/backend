@@ -2,6 +2,11 @@ spring:
   application:
     name: division-service
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
-  config:
-    import: ${SPRING_CONFIG_IMPORT:configserver:http://config-server:8888}
+    active: ${SPRING_PROFILES_ACTIVE:default}
+  datasource:
+    url: jdbc:postgresql://localhost:5432/division_db
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: validate
