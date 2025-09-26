@@ -1,0 +1,38 @@
+# ---------- Build Stage ----------
+FROM gradle:8.5-jdk17 AS build
+
+# gradle 유저가 기본적으로 들어있지만, 안전하게 지정
+USER gradle
+WORKDIR /app
+
+# gradle 유저가 읽을 수 있도록 소유권 지정
+COPY --chown=gradle:gradle build.gradle settings.gradle ./
+COPY --chown=gradle:gradle src ./src
+
+# Build the application (테스트 제외)
+RUN gradle build -x test --no-daemon
+
+
+# ---------- Runtime Stage ----------
+FROM eclipse-temurin:17-jre-jammy
+WORKDIR /app
+# curl 먼저 설치 (root 상태)
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# non-root 유저 생성
+RUN groupadd -r eureka && useradd -r -g eureka eureka
+
+# jar 복사 + 소유권 변경
+COPY --from=build /app/build/libs/*.jar app.jar
+RUN chown eureka:eureka /app/app.jar
+
+# non-root 유저로 실행
+USER eureka
+
+# Health check (non-root 유저가 실행 가능)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+    CMD curl -f http://localhost:8761/actuator/health || exit 1
+
+EXPOSE 8761
+
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
