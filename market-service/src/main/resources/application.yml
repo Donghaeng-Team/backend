@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: market-service
+  profiles:
+    active: ${profile:local}
+  datasource:
+    url: jdbc:postgresql://localhost:5432/market_db
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: validate

@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: market-service
+  config:
+    import: "configserver:http://config-server:8888"
+  profiles:
+    active: ${profile}
