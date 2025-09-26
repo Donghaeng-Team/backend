@@ -2,7 +2,9 @@ spring:
   application:
     name: division-service
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:default}
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  config:
+      import: ${SPRING_CONFIG_IMPORT:configserver:http://localhost:8888}
   datasource:
     url: jdbc:postgresql://localhost:5432/division_db
     username: postgres
