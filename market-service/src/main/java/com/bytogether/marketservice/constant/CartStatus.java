@@ -8,9 +8,7 @@ package com.bytogether.marketservice.constant;
  * @since 2025-09-29
  */
 
-public enum MarketStatus {
-    RECRUITING, // 모집 중
-    ENDED, // 모집 완료
-    CANCELLED, // 모집 취소
-    REMOVED // 마켓 삭제
+public enum CartStatus {
+    ADDED,
+    REMOVED
 }
