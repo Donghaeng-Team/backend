@@ -1,5 +1,8 @@
 package com.bytogether.marketservice.entity;
 
+import com.bytogether.marketservice.constant.MarketStatus;
+import com.bytogether.marketservice.dto.request.CreateMarketRequest;
+import com.bytogether.marketservice.util.GeometryUtils;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -7,6 +10,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Point;
 
 import java.math.BigDecimal;
@@ -40,6 +44,9 @@ public class Market {
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
+    @Column(name = "price", nullable = false, updatable = false)
+    private Long price;
+
     @Column(name = "recruit_min", nullable = false, updatable = false)
     private Integer recruitMin;
 
@@ -47,7 +54,8 @@ public class Market {
     private Integer recruitMax;
 
     @Column(name = "status", length = 20, nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private MarketStatus status;
 
     @Column(name = "title", nullable = false)
     private String title;
@@ -107,7 +115,7 @@ public class Market {
         if (recruitMin != null && recruitMin <= 1) {
             throw new IllegalArgumentException("모집 인원은 2명 이상이어야 합니다.");
         }
-        if (recruitMin != null && recruitMax !=null && recruitMin > recruitMax) {
+        if (recruitMin != null && recruitMax != null && recruitMin > recruitMax) {
             throw new IllegalArgumentException("최소 모집 인원은 최대 모집 인원보다 클 수 없습니다.");
         }
         if (latitude != null && (latitude.compareTo(BigDecimal.valueOf(33)) < 0 ||
@@ -120,4 +128,25 @@ public class Market {
         }
     }
 
+    public static Market fromCreateRequest(CreateMarketRequest request, Long authorId, String emdName, String divisionId) {
+        Market market = new Market();
+        market.setCategoryId(request.getCategoryId());
+        market.setEndTime(request.getEndTime());
+        market.setPrice(request.getPrice());
+        market.setRecruitMin(request.getRecruitMin());
+        market.setRecruitMax(request.getRecruitMax());
+        market.setStatus(MarketStatus.RECRUITING); // 기본 상태
+        market.setTitle(request.getTitle());
+        market.setContent(request.getContent());
+        market.setAuthorId(authorId);
+        Point point = GeometryUtils.createPoint(request.getLongitude().doubleValue(), request.getLatitude().doubleValue());
+        market.setLocation(point);
+        market.setLocationText(request.getLocationText());
+        market.setDivisionId(divisionId);
+        market.setEmdName(emdName);
+        market.setLatitude(request.getLatitude());
+        market.setLongitude(request.getLongitude());
+        return market;
+
+    }
 }
