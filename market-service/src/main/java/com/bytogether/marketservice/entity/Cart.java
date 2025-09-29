@@ -1,6 +1,7 @@
 package com.bytogether.marketservice.entity;
 
 
+import com.bytogether.marketservice.constant.CartStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -35,7 +36,8 @@ public class Cart {
     private Long marketId;
 
     @Column(nullable = false, length = 20)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private CartStatus status;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -48,4 +50,13 @@ public class Cart {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "market_id", insertable = false, updatable = false)
     private Market market;
+
+
+    public static Cart createCart(Long userId, Long marketId) {
+        Cart cart = new Cart();
+        cart.setUserId(userId);
+        cart.setMarketId(marketId);
+        cart.setStatus(CartStatus.ADDED);
+        return cart;
+    }
 }
