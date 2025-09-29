@@ -2,18 +2,16 @@ package com.bytogether.marketservice.service;
 
 import com.bytogether.marketservice.client.DivisionServiceClient;
 import com.bytogether.marketservice.client.dto.DivisionResponseDto;
+import com.bytogether.marketservice.constant.MarketStatus;
 import com.bytogether.marketservice.dto.request.CreateMarketRequest;
 import com.bytogether.marketservice.dto.response.CreateMarketResponse;
 import com.bytogether.marketservice.entity.Market;
 import com.bytogether.marketservice.exception.MarketException;
 import com.bytogether.marketservice.service.sub.*;
-import io.micrometer.tracing.Span;
-import io.micrometer.tracing.Tracer;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StopWatch;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -69,4 +67,33 @@ public class MarketFacadeService {
         return CreateMarketResponse.fromEntity(savedMarket);
     }
 
+    // 마켓글 삭제 (취소)
+    public void deleteMarketPost(Long marketId) {
+        // 1. 유저 권한 확인 (추후 구현)
+        Long userId = 1L; // TODO: 실제 로그인 사용자 ID로 대체
+
+        // 2. 마켓글 가져오기
+        Market market = marketService.findByMarketId(marketId);
+
+        // 3. 권한 확인
+        if (!market.getAuthorId().equals(userId)) {
+            throw new MarketException("권한이 없습니다.", HttpStatus.FORBIDDEN);
+        }
+
+        // 4. 마켓글 상태 변경 (취소)
+        marketService.changeStatus(market, MarketStatus.REMOVED);
+
+        // 5. 응답 반환 (추후 구현)
+    }
+
+    // 자신의 마켓글 조회
+    public void getMyMarketPosts() {
+        // 1. 로그인 사용자 확인 (추후 구현)
+        Long userId = 1L; // TODO: 실제 로그인 사용자 ID로 대체
+
+        // 2. 자신의 마켓글 조회
+        List<Market> myMarkets = marketService.getMarketsByAuthorId(userId);
+
+        // 3. 응답 반환 (추후 구현)
+    }
 }

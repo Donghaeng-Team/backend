@@ -26,6 +26,7 @@ public class ImageService {
     private static final String IMAGE_DIR = "images/market/"; // 이미지 저장 디렉토리
     private static final String THUMBNAIL_DIR = IMAGE_DIR + "thumbnail/"; // 썸네일 이미지 접두사
     private static final List<String> ALLOWED_MIME_TYPES = List.of("image/jpeg", "image/jpg", "image/png", "image/webp");
+
     private final ImageUploader imageUploader;
     private final ImageRepository imageRepository;
 

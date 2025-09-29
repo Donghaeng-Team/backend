@@ -41,10 +41,11 @@ public class MarketController {
         return "Market post " + marketId + " updated";
     }
 
-    // 마켓글 삭제
+    // 마켓글 삭제(취소)
     // TODO: 실제로는 삭제가 아닌 취소
     @DeleteMapping("/{marketId}")
     public String deleteMarketPost(@PathVariable Long marketId) {
+        marketFacadeService.deleteMarketPost(marketId);
         return "Market post " + marketId + " deleted";
     }
 
@@ -75,6 +76,7 @@ public class MarketController {
     // 자신의 마켓글 조회
     @GetMapping("/my")
     public String getMyMarketPosts() {
+        marketFacadeService.getMyMarketPosts();
         return "List of my market posts";
     }
 
