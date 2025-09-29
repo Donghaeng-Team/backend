@@ -3,6 +3,7 @@ package com.bytogether.marketservice.service;
 import com.bytogether.marketservice.client.DivisionServiceClient;
 import com.bytogether.marketservice.client.dto.DivisionResponseDto;
 import com.bytogether.marketservice.dto.request.CreateMarketRequest;
+import com.bytogether.marketservice.dto.response.CreateMarketResponse;
 import com.bytogether.marketservice.entity.Market;
 import com.bytogether.marketservice.exception.MarketException;
 import com.bytogether.marketservice.service.sub.*;
@@ -38,7 +39,7 @@ public class MarketFacadeService {
     private final DivisionServiceClient divisionServiceClient;
 
     // 마켓글 작성
-    public void createMarketPost(CreateMarketRequest createMarketRequest) {
+    public CreateMarketResponse createMarketPost(CreateMarketRequest createMarketRequest) {
 
         // 1. 로그인 사용자 확인 (추후 구현)
         Long userId = 1L; // TODO: 실제 로그인 사용자 ID로 대체
@@ -64,6 +65,8 @@ public class MarketFacadeService {
         List<MultipartFile> images = createMarketRequest.getImages();
         imageService.handleImageWhenMarketCreate(images, savedMarket.getId());
 
+
+        return CreateMarketResponse.fromEntity(savedMarket);
     }
 
 }

@@ -2,9 +2,12 @@ package com.bytogether.marketservice.controller;
 
 
 import com.bytogether.marketservice.dto.request.CreateMarketRequest;
+import com.bytogether.marketservice.dto.response.CreateMarketResponse;
 import com.bytogether.marketservice.service.MarketFacadeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -25,10 +28,11 @@ public class MarketController {
 
     // 마켓글 작성
     @PostMapping(consumes = "multipart/form-data")
-    public String createMarketPost(@Valid @ModelAttribute CreateMarketRequest createMarketRequest) {
+    public ResponseEntity<CreateMarketResponse> createMarketPost(@Valid @ModelAttribute CreateMarketRequest createMarketRequest) {
 
-        marketFacadeService.createMarketPost(createMarketRequest);
-        return "Market post created";
+        CreateMarketResponse marketPost = marketFacadeService.createMarketPost(createMarketRequest);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(marketPost);
     }
 
     // 마켓글 수정
