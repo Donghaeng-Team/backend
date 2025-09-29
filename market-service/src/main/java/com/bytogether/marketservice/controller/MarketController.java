@@ -1,7 +1,9 @@
 package com.bytogether.marketservice.controller;
 
 
+import com.bytogether.marketservice.dto.request.CreateMarketRequest;
 import com.bytogether.marketservice.service.MarketFacadeService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,8 +24,10 @@ public class MarketController {
     private final MarketFacadeService marketFacadeService;
 
     // 마켓글 작성
-    @PostMapping
-    public String createMarketPost() {
+    @PostMapping(consumes = "multipart/form-data")
+    public String createMarketPost(@Valid @ModelAttribute CreateMarketRequest createMarketRequest) {
+
+        marketFacadeService.createMarketPost(createMarketRequest);
         return "Market post created";
     }
 

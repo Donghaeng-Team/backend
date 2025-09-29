@@ -1,5 +1,8 @@
 package com.bytogether.marketservice.service.sub;
 
+import com.bytogether.marketservice.entity.Market;
+import com.bytogether.marketservice.repository.MarketRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,5 +17,10 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class MarketService {
+    private final MarketRepository marketRepository;
 
+    @Transactional
+    public Market createMarket(Market newMarket) {
+        return marketRepository.save(newMarket);
+    }
 }
