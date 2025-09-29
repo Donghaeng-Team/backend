@@ -80,4 +80,17 @@ public class Image {
             throw new IllegalArgumentException("정렬 순서는 0 이상의 값이어야 합니다.");
         }
     }
+
+    public static Image createImage(Long marketId, Integer sortOrder, String originalName,
+                                    String storedName, String filePath, String mimeType) {
+        Image image = new Image();
+        image.setMarketId(marketId);
+        image.setSortOrder(sortOrder);
+        image.setOriginalName(originalName);
+        image.setStoredName(storedName);
+        image.setFilePath(filePath);
+        image.setMimeType(mimeType);
+        return image;
+    }
+
 }
