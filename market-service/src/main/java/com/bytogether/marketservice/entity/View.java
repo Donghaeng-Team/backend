@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 /**
  * 유저의 상품 조회 기록을 나타내는 엔티티 클래스입니다.
@@ -30,6 +33,10 @@ public class View {
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     // Market과의 관계
     @ManyToOne(fetch = FetchType.LAZY)

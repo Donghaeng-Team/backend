@@ -3,6 +3,10 @@ package com.bytogether.marketservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 
 /**
  * 장바구니 엔티티 클래스 - Cart
@@ -32,6 +36,14 @@ public class Cart {
 
     @Column(nullable = false, length = 20)
     private String status;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "market_id", insertable = false, updatable = false)
