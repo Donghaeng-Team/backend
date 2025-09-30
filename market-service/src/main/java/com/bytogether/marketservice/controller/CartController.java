@@ -14,29 +14,32 @@ import org.springframework.web.bind.annotation.*;
  */
 
 @RestController
-@RequestMapping("/api/v1/market/cart")
+@RequestMapping("/api/v1/market/cart/private")
 @RequiredArgsConstructor
 public class CartController {
-
     private final CartFacadeService cartFacadeService;
 
-    // 찜하기 추가
+//    1.찜하기 추가 addCart - private
+//    2.찜하기 삭제 deleteCart - private
+//    3.내가 찜한 목록 보기 getMyCarts - private
+
+    // 1. 찜하기 추가 addCart - private
     @PostMapping("/{marketId}")
-    public void addCart(@PathVariable Long marketId) {
-        cartFacadeService.addCart(marketId);
+    public void addCart(@RequestHeader(value = "X-User-Id", required = true) Long requestUserID, @PathVariable Long marketId) {
+        cartFacadeService.addCart(requestUserID,marketId);
     }
 
-    // 찜하기 삭제
+    // 2. 찜하기 삭제 deleteCart - private
     @DeleteMapping("/{cartId}")
-    public void deleteCart(@PathVariable Long cartId) {
-        cartFacadeService.deleteCart(cartId);
+    public void deleteCart(@RequestHeader(value = "X-User-Id", required = true) Long requestUserID, @PathVariable Long cartId) {
+        cartFacadeService.deleteCart(requestUserID,cartId);
 
     }
 
-    // 내 찜하기 목록 조회
+    // 3. 내가 찜한 목록 보기 getMyCarts - private
     @GetMapping("/my")
-    public void getMyCarts() {
-        cartFacadeService.getMyCarts();
+    public void getMyCarts(@RequestHeader(value = "X-User-Id", required = true) Long requestUserID) {
+        cartFacadeService.getMyCarts(requestUserID);
     }
 
 
