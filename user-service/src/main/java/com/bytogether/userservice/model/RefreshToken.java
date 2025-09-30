@@ -7,7 +7,7 @@ import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.TimeToLive;
 import org.springframework.data.redis.core.index.Indexed;
 
-@RedisHash(value="refreshToken")
+@RedisHash(value="refreshTokens")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,9 +16,11 @@ import org.springframework.data.redis.core.index.Indexed;
 public class RefreshToken {
 
     @Id
-    private Long userId;
+    private String id;
 
     @Indexed  // 토큰으로도 검색 가능
+    private Long userId;
+
     private String refreshToken;
 
     @TimeToLive
