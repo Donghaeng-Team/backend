@@ -2,8 +2,12 @@ package com.bytogether.marketservice.entity;
 
 import com.bytogether.marketservice.constant.MarketStatus;
 import com.bytogether.marketservice.dto.request.CreateMarketRequest;
+import com.bytogether.marketservice.dto.request.ExtendMarketRequest;
+import com.bytogether.marketservice.dto.request.PutMarketRequest;
+import com.bytogether.marketservice.exception.MarketException;
 import com.bytogether.marketservice.util.GeometryUtils;
 import jakarta.persistence.*;
+import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,6 +16,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Point;
+import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -148,5 +153,28 @@ public class Market {
         market.setLongitude(request.getLongitude());
         return market;
 
+    }
+
+    public void updateFromPutRequest(@Valid PutMarketRequest putMarketRequest) {
+        // 수정 가능한 필드만 업데이트
+        // title, content, categoryId, endTime(이후 시간으로만 변경 가능)
+
+        // 이후 시간으로만 변경 가능
+        if (putMarketRequest.getEndTime().isBefore(this.getEndTime())) {
+            throw new MarketException("End time must be later than the current end time", HttpStatus.BAD_REQUEST);
+        }
+        this.setTitle(putMarketRequest.getTitle());
+        this.setContent(putMarketRequest.getContent());
+        this.setCategoryId(putMarketRequest.getCategoryId());
+
+        this.setEndTime(putMarketRequest.getEndTime());
+    }
+
+    public void extendEndTimeFromExtendRequest(ExtendMarketRequest extendMarketRequest) {
+        // 이후 시간으로만 변경 가능
+        if (extendMarketRequest.getEndTime().isBefore(this.getEndTime())) {
+            throw new MarketException("End time must be later than the current end time", HttpStatus.BAD_REQUEST);
+        }
+        this.setEndTime(extendMarketRequest.getEndTime());
     }
 }
