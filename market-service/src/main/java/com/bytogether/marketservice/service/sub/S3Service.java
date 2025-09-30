@@ -7,7 +7,6 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 import java.io.InputStream;
 
@@ -20,10 +19,10 @@ import java.io.InputStream;
  */
 
 @Service
-public class S3Uploader {
+public class S3Service {
     private final S3Client s3Client;
 
-    public S3Uploader() {
+    public S3Service() {
         this.s3Client = S3Client.builder()
                 .region(Region.AP_NORTHEAST_2) // 서울 리전 등
                 .credentialsProvider(DefaultCredentialsProvider.create())
@@ -39,6 +38,11 @@ public class S3Uploader {
                 .build();
 
         s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, contentLength));
+    }
+
+    @Async
+    public void deleteFile(String bucketName, String key) {
+        s3Client.deleteObject(builder -> builder.bucket(bucketName).key(key).build());
     }
 
 }
