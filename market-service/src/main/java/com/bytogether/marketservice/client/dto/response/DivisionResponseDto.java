@@ -1,4 +1,4 @@
-package com.bytogether.marketservice.client.dto;
+package com.bytogether.marketservice.client.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
