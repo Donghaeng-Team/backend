@@ -23,17 +23,26 @@ import java.util.concurrent.CompletableFuture;
 @Service
 @RequiredArgsConstructor
 public class ImageService {
-    private static final String IMAGE_DIR = "images/market/"; // 이미지 저장 디렉토리
-    private static final String THUMBNAIL_DIR = IMAGE_DIR + "thumbnail/"; // 썸네일 이미지 접두사
+    private static final String IMAGE_DIR = "market/images/"; // 이미지 저장 디렉토리
+    private static final String THUMBNAIL_DIR = "market/thumbnails/"; // 썸네일 이미지 접두사
     private static final List<String> ALLOWED_MIME_TYPES = List.of("image/jpeg", "image/jpg", "image/png", "image/webp");
 
     private final ImageUploader imageUploader;
     private final ImageRepository imageRepository;
 
+    // 허용된 MIME 타입인지 확인
     public void isAllowedMimeType(List<MultipartFile> images) {
+        // 이미지가 없으면 처리하지 않음
+        if (images == null || images.isEmpty()) {
+            return;
+        }
+        // 각 이미지의 MIME 타입 검사 및 파일 확장자 검사
         images.forEach(image -> {
             if (!ALLOWED_MIME_TYPES.contains(image.getContentType())) {
                 throw new MarketException("Unsupported image type: " + image.getContentType(), HttpStatus.BAD_REQUEST);
+            }
+            if (image.getOriginalFilename() == null || !image.getOriginalFilename().matches(".*\\.(jpg|jpeg|png|webp)$")) {
+                throw new MarketException("Invalid file extension for image: " + image.getOriginalFilename(), HttpStatus.BAD_REQUEST);
             }
         });
     }
@@ -59,7 +68,8 @@ public class ImageService {
                     : "";
 
             // 고유한 파일명 생성 ( marketId + order + UUID + 확장자 )
-            String uniqueFilename = marketId + "_" + (i+1) + "_" + java.util.UUID.randomUUID() + extension;
+            String uuid = java.util.UUID.randomUUID().toString();
+            String uniqueFilename = marketId + "_" + (i+1) + "_" + uuid + extension;
             System.out.println("uniqueFilename = " + uniqueFilename);
             String imagePath = IMAGE_DIR + uniqueFilename;
 
@@ -74,7 +84,7 @@ public class ImageService {
 
             if (i == 0) {
                 // 썸네일 이미지 추가 (0번 인덱스)
-                String thumbnailUniqueFilename =  marketId + "_" + i + "_" + java.util.UUID.randomUUID() + extension;
+                String thumbnailUniqueFilename =  marketId + "_" + i + "_" + uuid + extension;
                 Image newThumbnailImage = Image.createImage(marketId, 0, originalFilename, thumbnailUniqueFilename, THUMBNAIL_DIR + thumbnailUniqueFilename, image.getContentType());
                 newImages.add(newThumbnailImage);
             }
