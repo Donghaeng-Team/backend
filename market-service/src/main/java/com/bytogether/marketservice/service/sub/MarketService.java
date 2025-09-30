@@ -25,7 +25,7 @@ public class MarketService {
     private final MarketRepository marketRepository;
 
     @Transactional
-    public Market createMarket(Market newMarket) {
+    public Market saveMarket(Market newMarket) {
         return marketRepository.save(newMarket);
     }
 
