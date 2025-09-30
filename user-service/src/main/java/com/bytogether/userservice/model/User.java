@@ -16,19 +16,19 @@ import java.time.LocalDateTime;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String username;
+    private Long id;
 
     @Column(nullable = false, unique = true)
     private String email;
-
-    @Column()
-    private String kakaoId;
 
     @Column(nullable = false)
     private String password;
 
     @Column(nullable = false, unique = true)
     private String nickname;
+
+    @Column()
+    private String kakaoId;
 
     @Column()
     private String avatar;
