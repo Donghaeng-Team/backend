@@ -4,6 +4,7 @@ import com.bytogether.commservice.client.UserServiceClient;
 import com.bytogether.commservice.client.dto.UserDto;
 import com.bytogether.commservice.dto.PostCreateRequest;
 import com.bytogether.commservice.dto.PostResponse;
+import com.bytogether.commservice.entity.Post;
 import com.bytogether.commservice.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ public class PostService {
     @Transactional
     public PostResponse createPost(PostCreateRequest request) {
         // 글 저장
-        Post post = new Post(request.getUserId(), request.getTitle(), request.getContent(), request.getTags());
+        Post post = new Post(request.getUserId(), request.getTitle(), request.getContent(), request.getTag());
         postRepository.save(post);
 
         // 작성자 정보 가져오기 (FeignClient)
