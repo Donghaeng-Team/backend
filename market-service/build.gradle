@@ -1,0 +1,89 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.6'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.bytogether'
+version = '0.0.1-SNAPSHOT'
+description = 'market-service'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    set('springCloudVersion', "2025.0.0")
+}
+
+dependencies {
+    // AWS
+
+    // https://mvnrepository.com/artifact/com.amazonaws/aws-lambda-java-core
+    implementation 'com.amazonaws:aws-lambda-java-core:1.4.0'
+    // https://mvnrepository.com/artifact/com.amazonaws/aws-lambda-java-events
+    implementation 'com.amazonaws:aws-lambda-java-events:3.16.1'
+    // https://mvnrepository.com/artifact/software.amazon.awssdk/s3
+    implementation 'software.amazon.awssdk:s3:2.34.5'
+    // https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-function-adapter-aws
+    implementation 'org.springframework.cloud:spring-cloud-function-adapter-aws:4.3.0'
+
+
+    // DB
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'org.postgresql:postgresql'
+    // jts, hibernate-spatial -> PostGIS
+    implementation 'org.locationtech.jts:jts-core:1.19.0'
+    implementation 'org.hibernate:hibernate-spatial:6.2.7.Final'
+    // actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // swagger
+    // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+
+    implementation 'org.springframework.cloud:spring-cloud-starter-config'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+    compileOnly 'org.projectlombok:lombok'
+
+    //local - dev
+    implementation 'io.opentelemetry:opentelemetry-exporter-zipkin'
+
+    // for k8s
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.github.openfeign:feign-micrometer'
+
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
