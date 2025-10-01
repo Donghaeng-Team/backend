@@ -1,5 +1,6 @@
 package com.bytogether.apigateway;
 
+import com.bytogether.apigateway.util.Constants;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.JwtException;
@@ -103,10 +104,12 @@ public class JwtAuthenticationFilter implements Filter {
         if("OPTIONS".equals(method)) {
             return true;
         }
-        if (pathMatcher.match("/api/v1/**/public/**", path)) {
-            return true;
-        }
-        return false;
+      for (String publicPath : Constants.PUBLIC_PATH) {
+          if(pathMatcher.match(publicPath, path)) {
+              return true;
+          }
+      }
+      return false;
     }
 
     //Request의 헤더에서 Token추출
