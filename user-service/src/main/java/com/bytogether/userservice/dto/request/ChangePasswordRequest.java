@@ -1,6 +1,7 @@
 package com.bytogether.userservice.dto.request;
 
 import com.bytogether.userservice.model.VerifyType;
+import com.bytogether.userservice.validation.PasswordMatches;
 import com.bytogether.userservice.validation.ValidPassword;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
@@ -13,7 +14,7 @@ import java.util.Objects;
 
 @Getter
 @AllArgsConstructor
-//@PasswordMatches
+@PasswordMatches
 public class ChangePasswordRequest {
     @Email(message = "이메일 형식이 아닙니다.")
     @NotBlank(message = "이메일은 필수 값입니다.")
