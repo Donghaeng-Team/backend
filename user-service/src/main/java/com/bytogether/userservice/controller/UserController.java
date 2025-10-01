@@ -18,20 +18,21 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
+@RequestMapping(("api/v1/user"))
 @RequiredArgsConstructor
 public class UserController {
      private final UserService userService;
-     private final UserService authService;
      private final CookieUtil cookieUtil;
 
-    @PostMapping("/register")
+    @PostMapping("/register/public")
     public ResponseEntity<ApiResponse<?>> register(@Valid @RequestBody RegisterRequest registerRequest) {
+        log.info("User Register Requested");
         userService.register(registerRequest);
         return ResponseEntity.ok(ApiResponse.success(null));
 
     }
 
-    @PostMapping("/login")
+    @PostMapping("/login/public")
     public ResponseEntity<ApiResponse<?>> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         LoginResponse tokenIssued = userService.login(loginRequest) ;
         response.setHeader("authorization", tokenIssued.getAccessToken());
@@ -46,13 +47,20 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @PostMapping("/refresh")
+    @PostMapping("/refresh/public")
     public ResponseEntity<ApiResponse<?>> refresh(HttpServletRequest request, HttpServletResponse response) {
         LoginResponse tokenReissued = userService.refresh(request, response);
         response.setHeader("authorization", tokenReissued.getAccessToken());
         Cookie newCookie = cookieUtil.createCookie("refresh_token", tokenReissued.getRefreshToken(),7L);
         response.addCookie(newCookie);
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @GetMapping("/getUserInfo")
+    public ResponseEntity<ApiResponse<?>> getUserInfo(@RequestHeader("X-User-Id") Long userId, HttpServletResponse response) {
+        log.info("토큰 헤더의 UserID:" + userId);
+        Long Request = userId;
+        return ResponseEntity.ok(ApiResponse.success(Request));
     }
 
 //    @GetMapping("/email")

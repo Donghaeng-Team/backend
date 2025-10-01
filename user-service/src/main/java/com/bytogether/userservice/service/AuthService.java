@@ -18,17 +18,12 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class AuthService {
 
-    private final UserService userService;
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtTokenProvider jwtTokenProvider;
-    private final TokenAuditLogRepository tokenAuditLogRepository;
     private final TokenAuditLogService tokenAuditLogService;
-    private final UserRepository userRepository;
 
-    @Transactional
     public LoginResponse issueNewToken(Long userId, Role role) {
         String accessToken = jwtTokenProvider.getAccessToken(userId, role);
         String refreshToken = jwtTokenProvider.getRefreshToken(userId, role);
@@ -48,7 +43,6 @@ public class AuthService {
         return new LoginResponse(accessToken, refreshToken);
     }
 
-    @Transactional
     public LoginResponse updateToken(Long userId, Role role) {
         String accessToken = jwtTokenProvider.getAccessToken(userId, role);
         String refreshToken = jwtTokenProvider.getRefreshToken(userId, role);
@@ -88,8 +82,6 @@ public class AuthService {
         refreshToken.ifPresent(refreshTokenRepository::delete);
         log.info("deleteToken 완료");
         tokenAuditLogService.saveTokenLog(userId, refreshToken.toString(), TokenType.REFRESH, Action.REVOKED);
-
-
     }
 
 }
