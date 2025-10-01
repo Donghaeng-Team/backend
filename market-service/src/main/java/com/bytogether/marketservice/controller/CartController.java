@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
  */
 
 @RestController
-@RequestMapping("/api/v1/market/cart/private")
+@RequestMapping("/api/v1/market/private/cart")
 @RequiredArgsConstructor
 public class CartController {
     private final CartFacadeService cartFacadeService;
@@ -26,13 +26,13 @@ public class CartController {
     // 1. 찜하기 추가 addCart - private
     @PostMapping("/{marketId}")
     public void addCart(@RequestHeader(value = "X-User-Id", required = true) Long requestUserID, @PathVariable Long marketId) {
-        cartFacadeService.addCart(requestUserID,marketId);
+        cartFacadeService.addCart(requestUserID, marketId);
     }
 
     // 2. 찜하기 삭제 deleteCart - private
     @DeleteMapping("/{cartId}")
     public void deleteCart(@RequestHeader(value = "X-User-Id", required = true) Long requestUserID, @PathVariable Long cartId) {
-        cartFacadeService.deleteCart(requestUserID,cartId);
+        cartFacadeService.deleteCart(requestUserID, cartId);
 
     }
 

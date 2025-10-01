@@ -13,8 +13,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Point;
 import org.springframework.http.HttpStatus;
 
@@ -106,11 +104,11 @@ public class Market {
     private Category category;
 
     // Images와의 관계
-    @OneToMany(mappedBy = "market", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "market", cascade = CascadeType.ALL)
     private List<Image> images = new ArrayList<>();
 
     // Views와의 관계
-    @OneToMany(mappedBy = "market", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "market", cascade = CascadeType.ALL)
     private List<View> marketViews = new ArrayList<>();
 
     // 제약조건 검증 메서드
@@ -176,5 +174,29 @@ public class Market {
             throw new MarketException("End time must be later than the current end time", HttpStatus.BAD_REQUEST);
         }
         this.setEndTime(extendMarketRequest.getEndTime());
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "(" +
+                "id = " + id + ", " +
+                "categoryId = " + categoryId + ", " +
+                "endTime = " + endTime + ", " +
+                "price = " + price + ", " +
+                "recruitMin = " + recruitMin + ", " +
+                "recruitMax = " + recruitMax + ", " +
+                "status = " + status + ", " +
+                "title = " + title + ", " +
+                "content = " + content + ", " +
+                "authorId = " + authorId + ", " +
+                "location = " + location + ", " +
+                "locationText = " + locationText + ", " +
+                "divisionId = " + divisionId + ", " +
+                "emdName = " + emdName + ", " +
+                "latitude = " + latitude + ", " +
+                "longitude = " + longitude + ", " +
+                "createdAt = " + createdAt + ", " +
+                "updatedAt = " + updatedAt + ", " +
+                "views = " + views + ")";
     }
 }

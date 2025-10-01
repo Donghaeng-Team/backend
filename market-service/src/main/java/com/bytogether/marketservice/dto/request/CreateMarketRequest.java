@@ -2,7 +2,10 @@ package com.bytogether.marketservice.dto.request;
 
 import com.bytogether.marketservice.dto.validation.annotation.RecruitonMatches;
 import jakarta.validation.constraints.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,7 +25,6 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
 @RecruitonMatches
 public class CreateMarketRequest {
 

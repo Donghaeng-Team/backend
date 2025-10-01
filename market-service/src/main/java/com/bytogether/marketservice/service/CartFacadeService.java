@@ -46,7 +46,7 @@ public class CartFacadeService {
         List<Cart> myCarts = cartService.getMyCarts(requestUserID);
 
         // 마켓 정보 조회
-        List<Market> markets =marketService.getMarketsByIds(
+        List<Market> markets = marketService.getMarketsByIds(
                 myCarts.stream().map(Cart::getMarketId).toList()
         );
 

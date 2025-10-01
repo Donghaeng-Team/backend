@@ -5,12 +5,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+
+/**
+ * Division Service에서 행정구역 정보를 받아오기 위한 DTO
+ *
+ * @author insu9058@naver.com
+ * @version 1.0
+ * @since 2025-10-01
+ */
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class DivisionResponseDto {
-//    {
+    //    {
 //        "id": "string",
 //            "sidoCode": "string",
 //            "sidoName": "string",

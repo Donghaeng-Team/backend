@@ -1,9 +1,10 @@
 package com.bytogether.marketservice.client;
 
+import com.bytogether.marketservice.client.dto.response.MockUserDto;
 import org.springframework.cloud.openfeign.FeignClient;
 
 /**
- * Division Service와 통신하기 위한 Feign Client
+ * User Service와 통신하기 위한 Feign Client
  *
  * @author insu9058@naver.com
  * @version 1.0
@@ -12,5 +13,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 
 @FeignClient(name = "user-service")
 public interface UserServiceClient {
+    public default MockUserDto getUserById(Long userId){
+        return new MockUserDto(userId, "mockUser","mockImageUrl");
+    };
 
 }

@@ -1,15 +1,17 @@
 package com.bytogether.marketservice.service;
 
 import com.bytogether.marketservice.client.DivisionServiceClient;
+import com.bytogether.marketservice.client.UserServiceClient;
 import com.bytogether.marketservice.client.dto.response.DivisionResponseDto;
+import com.bytogether.marketservice.client.dto.response.MockUserDto;
 import com.bytogether.marketservice.constant.MarketStatus;
 import com.bytogether.marketservice.dto.request.CreateMarketRequest;
 import com.bytogether.marketservice.dto.request.ExtendMarketRequest;
+import com.bytogether.marketservice.dto.request.MarketListRequest;
 import com.bytogether.marketservice.dto.request.PutMarketRequest;
-import com.bytogether.marketservice.dto.response.CreateMarketResponse;
-import com.bytogether.marketservice.dto.response.ExtendMarketResponse;
-import com.bytogether.marketservice.dto.response.PutMarketResponse;
+import com.bytogether.marketservice.dto.response.*;
 import com.bytogether.marketservice.entity.Market;
+import com.bytogether.marketservice.entity.Search;
 import com.bytogether.marketservice.exception.MarketException;
 import com.bytogether.marketservice.service.sub.*;
 import jakarta.transaction.Transactional;
@@ -40,6 +42,7 @@ public class MarketFacadeService {
     private final SearchService searchService;
     private final ViewService viewService;
     private final DivisionServiceClient divisionServiceClient;
+    private final UserServiceClient userServiceClient;
 
     // 마켓글 작성 - private
     public CreateMarketResponse createMarketPost(Long requestUserID, CreateMarketRequest createMarketRequest) {
@@ -56,7 +59,7 @@ public class MarketFacadeService {
         imageService.isAllowedMimeType(createMarketRequest.getImages());
 
         // 마켓글 생성
-        Market newMarket = Market.fromCreateRequest(createMarketRequest, requestUserID, division.getEmdName(),division.getId());
+        Market newMarket = Market.fromCreateRequest(createMarketRequest, requestUserID, division.getEmdName(), division.getId());
 
         Market savedMarket = marketService.saveMarket(newMarket);
 
@@ -79,11 +82,14 @@ public class MarketFacadeService {
         if (!market.getAuthorId().equals(requestUserID)) {
             throw new MarketException("권한이 없습니다.", HttpStatus.FORBIDDEN);
         }
+        // 마켓글 상태 확인 ( 모집 완료는 삭제 불가 )
+        if (market.getStatus() == MarketStatus.ENDED) {
+            throw new MarketException("모집 완료된 마켓글은 삭제할 수 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+
 
         // 마켓글 상태 변경 (취소)
         marketService.changeStatus(market, MarketStatus.REMOVED);
-
-        // 응답 반환 (추후 구현)
     }
 
     // 특정 사용자가 작성한 마켓글 조회
@@ -149,9 +155,43 @@ public class MarketFacadeService {
         return ExtendMarketResponse.fromEntity(market);
     }
 
-    public void getMarketPostDetailWithLogin(Long requestUserID, Long marketId) {
+    public MarketDetailResponse getMarketPostDetailWithLogin(Long requestUserID, Long marketId) {
+        // 마켓글 가져오기
         Market byMarketId = marketService.findByMarketId(marketId);
+
+        // 조회수 증가 및 기록
         viewService.recordView(requestUserID, marketId);
+
+        // 응답 생성하기
+        MarketDetailResponse marketDetailResponse = MarketDetailResponse.fromEntity(byMarketId);
+
+        // 임시 mock user api 호출
+        MockUserDto userById = userServiceClient.getUserById(byMarketId.getAuthorId());
+
+        marketDetailResponse.setAuthorNickname(userById.getNickname()); // TODO: 실제 닉네임으로 교체
+        marketDetailResponse.setAuthorProfileImageUrl(userById.getImageUrl()); // TODO: 실제 프로필 이미지 URL로 교체
+
+
+        return marketDetailResponse;
+    }
+
+    public MarketListResponse getMarketPostsWithLogin(Long requestUserID, MarketListRequest marketListRequest) {
+        // 카테고리 ID 유효성 검사
+        if( marketListRequest.getCategoryId() != null) {
+            categoryService.validateCategoryId(marketListRequest.getCategoryId());
+        }
+        // 행정구역 ID 유효성 검사
+
+
+        // 검색 기록 추가 ( USER_ID, DIVISION_ID, DEPTH, CATEGORY_ID, KEYWORD)
+        Search newSearch = new Search();
+        newSearch.setUserId(requestUserID);
+        newSearch.setDivisionId(marketListRequest.getDivisionId());
+        newSearch.setDepth(marketListRequest.getDepth());
+        newSearch.setCategoryId(marketListRequest.getCategoryId());
+        newSearch.setKeyword(marketListRequest.getKeyword());
+        searchService.saveSearch(newSearch);
+
 
     }
 }

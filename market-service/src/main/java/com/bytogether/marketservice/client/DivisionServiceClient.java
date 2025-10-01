@@ -19,4 +19,7 @@ import java.util.Optional;
 public interface DivisionServiceClient {
     @GetMapping("/api/v1/division/public/by-coord")
     Optional<DivisionResponseDto> getDivisionByCoord(@RequestParam("latitude") Double latitude, @RequestParam("longitude") Double longitude);
+
+    @GetMapping("/api/v1/division/private/near/by-code")
+    Optional<DivisionResponseDto> getDivisionByCoord(@RequestParam("emyCode") String latitude, @RequestParam("longitude") Double longitude);
 }

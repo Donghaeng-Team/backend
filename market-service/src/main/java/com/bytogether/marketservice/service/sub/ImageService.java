@@ -63,8 +63,6 @@ public class ImageService {
     }
 
 
-
-
     public void handleImageWhenMarketCreate(List<MultipartFile> images, Long marketId) {
         if (images == null || images.isEmpty()) {
             return; // 이미지가 없으면 처리하지 않음
@@ -87,7 +85,7 @@ public class ImageService {
 
             // 고유한 파일명 생성 ( marketId + order + UUID + 확장자 )
             String uuid = java.util.UUID.randomUUID().toString();
-            String uniqueFilename = marketId + "_" + (i+1) + "_" + uuid + extension;
+            String uniqueFilename = marketId + "_" + (i + 1) + "_" + uuid + extension;
             System.out.println("uniqueFilename = " + uniqueFilename);
             String imagePath = IMAGE_DIR + uniqueFilename;
 
@@ -101,7 +99,7 @@ public class ImageService {
 
             if (i == 0) {
                 // 썸네일 이미지 추가 (0번 인덱스)
-                String thumbnailUniqueFilename =  marketId + "_" + i + "_" + uuid + extension;
+                String thumbnailUniqueFilename = marketId + "_" + i + "_" + uuid + extension;
                 Image newThumbnailImage = Image.createImage(marketId, 0, originalFilename, thumbnailUniqueFilename, THUMBNAIL_DIR + thumbnailUniqueFilename, image.getContentType());
                 newImages.add(newThumbnailImage);
             }
@@ -118,7 +116,7 @@ public class ImageService {
         List<Image> allByMarketId = imageRepository.findAllByMarketId(marketId);
 
         // 기존 이미지가 있을 경우
-        if(!allByMarketId.isEmpty()){
+        if (!allByMarketId.isEmpty()) {
             // S3에서 삭제
             allByMarketId.forEach(image -> imageHandler.deleteImageByS3(image.getFilePath()));
 

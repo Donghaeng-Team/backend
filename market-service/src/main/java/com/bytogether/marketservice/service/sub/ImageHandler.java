@@ -16,9 +16,9 @@ public class ImageHandler {
 
     @Async
     public void uploadImageByS3(MultipartFile image, String key) {
-        try{
+        try {
             s3Service.uploadFile(BUCKET_NAME, key, image.getInputStream(), image.getSize(), image.getContentType());
-        }catch (IOException e){
+        } catch (IOException e) {
             throw new RuntimeException("Failed to upload image to S3", e);
         }
     }

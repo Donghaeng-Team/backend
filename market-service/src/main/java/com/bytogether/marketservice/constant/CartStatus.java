@@ -1,7 +1,7 @@
 package com.bytogether.marketservice.constant;
 
 /**
- * 공동 구매 마켓 상태 Enum
+ * 공동 구매 마켓 찜하기 상태 Enum
  *
  * @author insu9058@naver.com
  * @version 1.0

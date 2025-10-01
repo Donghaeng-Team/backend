@@ -1,6 +1,9 @@
 package com.bytogether.marketservice.service.sub;
 
+import com.bytogether.marketservice.entity.Search;
+import com.bytogether.marketservice.repository.SearchRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 
@@ -15,4 +18,12 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class SearchService {
+    private final SearchRepository searchRepository;
+
+    // 검색 기록 저장
+    @Async
+    public void saveSearch(Search newSearch) {
+        searchRepository.save(newSearch);
+    }
+
 }
