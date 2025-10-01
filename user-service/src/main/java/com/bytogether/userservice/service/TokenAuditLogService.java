@@ -4,6 +4,7 @@ import com.bytogether.userservice.model.Action;
 import com.bytogether.userservice.model.TokenAuditLog;
 import com.bytogether.userservice.model.TokenType;
 import com.bytogether.userservice.repository.TokenAuditLogRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +24,6 @@ public class TokenAuditLogService {
                 .action(action)
                 .createdAt(LocalDateTime.now())
                 .build();
-
         tokenAuditLogRepository.save(log);
     }
-
 }
