@@ -81,10 +81,10 @@ public class AuthService {
         return Optional.empty();
     }
 
-
     public void deleteRefreshToken(Long userId) {
         Optional<RefreshToken> refreshToken = refreshTokenRepository.findByUserId(userId);
         log.info("토큰 조회 결과: {}", refreshToken.isPresent());
+
         refreshToken.ifPresent(refreshTokenRepository::delete);
         log.info("deleteToken 완료");
         tokenAuditLogService.saveTokenLog(userId, refreshToken.toString(), TokenType.REFRESH, Action.REVOKED);

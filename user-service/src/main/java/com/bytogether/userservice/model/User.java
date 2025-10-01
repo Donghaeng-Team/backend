@@ -49,11 +49,10 @@ public class User {
     private LocalDateTime createdAt;
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column
     private LocalDateTime deletedAt;
 
 
