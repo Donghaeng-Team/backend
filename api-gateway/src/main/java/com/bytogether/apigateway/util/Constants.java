@@ -5,6 +5,5 @@ public class Constants {
             "/api/v1/**/public/**",
             "/actuator/**",
             "/websocket/**",            // 웹소켓 핸드쉐이크
-            "/api/v1/tes/**"            // 테스트용
     };
 }
