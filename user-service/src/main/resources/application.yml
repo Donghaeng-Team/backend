@@ -2,9 +2,9 @@ spring:
   application:
     name: user-service
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
+    active: dev
   config:
-    import: ${SPRING_CONFIG_IMPORT:configserver:http://localhost:8888}
+    import: "configserver:http://localhost:8888"
   datasource:
     url: jdbc:postgresql://localhost:5432/user_db
     username: postgres
@@ -14,7 +14,7 @@ spring:
       ddl-auto: validate
   data:
     redis:
-      host: redis
+      host: localhost
       port: 6379
   mail:
     host: smtp.gmail.com
@@ -33,21 +33,21 @@ spring:
     refresh: 7
 
     #Kakao Oauth2 ??
-    oauth2:
-      client:
-        registration:
-          kakao:
-            client-id: { KAKAO_CLIENT_ID }
-            client-secret: { KAKAO_CLIENT_SECRET }
-            client-authentication-method: client_secret_post
-            authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            scope:
-              - profile_nickname
-              - account_email
-        provider:
-          kakao:
-            authorization-uri: https://kauth.kakao.com/oauth/authorize
-            token-uri: https://kauth.kakao.com/oauth/token
-            user-info-uri: https://kapi.kakao.com/v2/user/me
-            user-name-attribute: : { USER_ID }
+#    oauth2:
+#      client:
+#        registration:
+#          kakao:
+#            client-id: { KAKAO_CLIENT_ID }
+#            client-secret: { KAKAO_CLIENT_SECRET }
+#            client-authentication-method: client_secret_post
+#            authorization-grant-type: authorization_code
+#            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+#            scope:
+#              - profile_nickname
+#              - account_email
+#        provider:
+#          kakao:
+#            authorization-uri: https://kauth.kakao.com/oauth/authorize
+#            token-uri: https://kauth.kakao.com/oauth/token
+#            user-info-uri: https://kapi.kakao.com/v2/user/me
+#            user-name-attribute: { USER_ID }
