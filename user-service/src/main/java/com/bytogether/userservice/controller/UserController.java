@@ -41,7 +41,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @DeleteMapping("/logout")
+    @DeleteMapping("/logout/private")
     public ResponseEntity<ApiResponse<?>> logout(@RequestHeader("X-User-Id") Long userId, HttpServletResponse response) {
         userService.logout(userId, response);
         return ResponseEntity.ok(ApiResponse.success(null));
@@ -56,7 +56,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @GetMapping("/getUserInfo")
+    @GetMapping("/getUserInfo/private")
     public ResponseEntity<ApiResponse<?>> getUserInfo(@RequestHeader("X-User-Id") Long userId, HttpServletResponse response) {
         log.info("토큰 헤더의 UserID:" + userId);
         Long Request = userId;
