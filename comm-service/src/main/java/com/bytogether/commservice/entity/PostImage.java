@@ -28,7 +28,7 @@ public class PostImage {
     @Column(name = "display_order")
     private Integer order;
 
-    /** 썸네일 여부 */
+    /** 썸네일 여부 */+
     @Column(nullable = false)
     @Builder.Default
     private boolean thumbnail = false;
