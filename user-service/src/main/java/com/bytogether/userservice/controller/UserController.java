@@ -1,9 +1,7 @@
 package com.bytogether.userservice.controller;
 
-import com.bytogether.userservice.dto.request.LoginRequest;
-import com.bytogether.userservice.dto.request.RegisterRequest;
-import com.bytogether.userservice.dto.response.ApiResponse;
-import com.bytogether.userservice.dto.response.LoginResponse;
+import com.bytogether.userservice.dto.request.*;
+import com.bytogether.userservice.dto.response.*;
 import com.bytogether.userservice.service.UserService;
 import com.bytogether.userservice.util.CookieUtil;
 import jakarta.servlet.http.Cookie;
@@ -56,23 +54,36 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @GetMapping("/private/getUserInfo")
-    public ResponseEntity<ApiResponse<?>> getUserInfo(@RequestHeader("X-User-Id") Long userId, HttpServletResponse response) {
-        log.info("토큰 헤더의 UserID:" + userId);
-        Long Request = userId;
-        return ResponseEntity.ok(ApiResponse.success(Request));
+    @GetMapping("/private/me")
+    public ResponseEntity<ApiResponse<?>> userInfo(@RequestHeader("X-User-Id") Long userId, HttpServletResponse response) {
+        log.info("현재 로그인된 사용자의 UserID:" + userId);
+        Long currentUserId = userId;
+        UserInfoResponse userInfoResponse = userService.findUsersByUserId(currentUserId);
+        log.info("로그인된 사용자 정보: " + userInfoResponse);
+        return ResponseEntity.ok(ApiResponse.success(userInfoResponse));
     }
 
-//    @GetMapping("/private/email")
-//    public ResponseEntity<?> checkRegisteredMail(@Valid @ModelAttribute EmailCheckRequest emailCheckRequest) {
-//        return ResponseEntity.status(HttpStatus.OK).body(authService.checkRegisteredEmail(emailCheckRequest));
-//    }
+    @GetMapping("/public/email")
+    public ResponseEntity<ApiResponse<?>> checkRegisteredMail(@Valid @ModelAttribute EmailCheckRequest emailCheckRequest) {
+        EmailCheckResponse response = userService.checkRegisteredMail(emailCheckRequest.getEmail());
+        log.info("email 존재여부 : "+ response);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 
-//    @PutMapping("/private/nickname")
-//    public ResponseEntity<?> checkRegisteredNickname(HttpServletRequest request, HttpServletResponse response) {
-//        userService.refresh(request, response);
-//        return ResponseEntity.status(HttpStatus.OK).build();
-//    }
+    @GetMapping("/public/nickname")
+    public ResponseEntity<?> checkRegisteredNickname(@Valid @ModelAttribute NicknameCheckRequest nicknameCheckRequest) {
+        NickNameCheckResponse response = userService.checkRegisteredNickname(nicknameCheckRequest.getNickname());
+        log.info("nickname 존재여부 : "+ response);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/private/userInfo")
+    public ResponseEntity<ApiResponse<?>> userInfo(@Valid @ModelAttribute UserInfoRequest userInfoRequest) {
+        Long targetUserID = userInfoRequest.getUserId();
+        UserInfoResponse targetUserInfoResponse = userService.findUserByUserId(targetUserID);
+        log.info("로그인된 사용자 정보: " + targetUserInfoResponse);
+        return ResponseEntity.ok(ApiResponse.success(targetUserInfoResponse));
+    }
 
 //    @PostMapping("/public/verify")
 //    public ResponseEntity<?> verify(@RequestBody VerifyRequest verifyRequest) {
