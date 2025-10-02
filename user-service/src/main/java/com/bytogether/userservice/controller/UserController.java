@@ -58,7 +58,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<?>> userInfo(@RequestHeader("X-User-Id") Long userId, HttpServletResponse response) {
         log.info("현재 로그인된 사용자의 UserID:" + userId);
         Long currentUserId = userId;
-        UserInfoResponse userInfoResponse = userService.findUsersByUserId(currentUserId);
+        UserInfoResponse userInfoResponse = userService.findUserByUserId(currentUserId);
         log.info("로그인된 사용자 정보: " + userInfoResponse);
         return ResponseEntity.ok(ApiResponse.success(userInfoResponse));
     }

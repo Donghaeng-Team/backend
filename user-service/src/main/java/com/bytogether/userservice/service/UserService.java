@@ -64,17 +64,17 @@ public class UserService {
                 .build();
     }
 
-    public UserInfoResponse findUsersByUserId(Long userId) {
-        User targetUsers = userRepository.findUsersByIds(userId).orElseThrow(
-                () -> new UsernameNotFoundException("User with userId " + userId + " not found")
-        );
-
-        return UserInfoResponse.builder()
-                .email(targetUser.getEmail())
-                .nickName(targetUser.getNickname())
-                .avatarUrl(targetUser.getAvatar())
-                .build();
-    }
+//    public UserInfoResponse findUsersByUserId(Long userId) {
+//        User targetUsers = userRepository.findUsersByIds(userId).orElseThrow(
+//                () -> new UsernameNotFoundException("User with userId " + userId + " not found")
+//        );
+//
+//        return UserInfoResponse.builder()
+//                .email(targetUser.getEmail())
+//                .nickName(targetUser.getNickname())
+//                .avatarUrl(targetUser.getAvatar())
+//                .build();
+//    }
 
 
     //사용자 등록
@@ -169,7 +169,8 @@ public class UserService {
 
         //3. 사용자 정보추출
         Long userId = claims.get("userId", Long.class);
-        Role role = claims.get("role", Role.class);
+        String roleString = claims.get("role", String.class);
+        Role role = Role.valueOf(roleString);
 
         // 4.Redis에서 저장된 토큰과 비교
         RefreshToken storedToken = refreshTokenRepository.findByUserId(userId)
