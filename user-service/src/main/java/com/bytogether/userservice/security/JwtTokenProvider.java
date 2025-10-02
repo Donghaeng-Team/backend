@@ -57,7 +57,7 @@ public class JwtTokenProvider {
     private String generateToken(Long userId, Role role, String tokenCategory,  Long expireMs){
        Map<String, Object> claims = new HashMap<>();
        claims.put("userId", userId);
-       claims.put("role", role);
+       claims.put("role", role.name());
        claims.put("category", tokenCategory);
         return Jwts.builder()
                .claims(claims)
