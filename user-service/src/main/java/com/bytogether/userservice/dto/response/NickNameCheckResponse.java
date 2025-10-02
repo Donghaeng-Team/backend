@@ -1,11 +1,10 @@
 package com.bytogether.userservice.dto.response;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
-@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class NickNameCheckResponse {
     boolean duplication;
@@ -14,14 +13,14 @@ public class NickNameCheckResponse {
     public static NickNameCheckResponse unavailable() {
         return NickNameCheckResponse.builder()
                 .duplication(true)
-                .message("이미 사용중인 닉네임 입니다.")
+                .message("사용할수 없는 닉네임입니다.")
                 .build();
     }
 
     public static NickNameCheckResponse available() {
         return NickNameCheckResponse.builder()
                 .duplication(false)
-                .message("사용 가능한 닉네임 입니다.")
+                .message("사용가능한 닉네임입니다.")
                 .build();
     }
 }

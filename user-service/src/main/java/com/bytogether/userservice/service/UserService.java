@@ -7,9 +7,10 @@ import com.bytogether.userservice.dto.request.RegisterRequest;
 import com.bytogether.userservice.dto.response.EmailCheckResponse;
 import com.bytogether.userservice.dto.response.LoginResponse;
 import com.bytogether.userservice.dto.response.NickNameCheckResponse;
+import com.bytogether.userservice.dto.response.UserInfoResponse;
 import com.bytogether.userservice.model.*;
 import com.bytogether.userservice.repository.RefreshTokenRepository;
-import com.bytogether.userservice.repository.TokenAuditLogRepository;
+
 import com.bytogether.userservice.repository.UserRepository;
 import com.bytogether.userservice.security.JwtTokenProvider;
 import com.bytogether.userservice.util.CookieUtil;
@@ -43,19 +44,38 @@ public class UserService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final TokenAuditLogService tokenAuditLogService;
 
-    public boolean existsByEmail(String email) {
+    public Boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
 
-    public boolean existsByNickname(String nickname) {
-        return userRepository.existsByNickname(nickname);
+    public Boolean existsByNickname(String nickname) {
+       return userRepository.existsByNickname(nickname);
     }
 
-    public User findByUserId(Long userId) {
-        return userRepository.findById(userId).orElseThrow(
+    public UserInfoResponse findUserByUserId(Long userId) {
+       User targetUser = userRepository.findById(userId).orElseThrow(
                 () -> new UsernameNotFoundException("User with userId " + userId + " not found")
         );
+
+       return UserInfoResponse.builder()
+                .email(targetUser.getEmail())
+                .nickName(targetUser.getNickname())
+                .avatarUrl(targetUser.getAvatar())
+                .build();
     }
+
+    public UserInfoResponse findUsersByUserId(Long userId) {
+        User targetUsers = userRepository.findUsersByIds(userId).orElseThrow(
+                () -> new UsernameNotFoundException("User with userId " + userId + " not found")
+        );
+
+        return UserInfoResponse.builder()
+                .email(targetUser.getEmail())
+                .nickName(targetUser.getNickname())
+                .avatarUrl(targetUser.getAvatar())
+                .build();
+    }
+
 
     //사용자 등록
     @Transactional
@@ -113,22 +133,6 @@ public class UserService {
         return newTokenResponse;
     };
 
-    //이미 사용된 Email체크
-    public EmailCheckResponse checkRegisteredEmail (EmailCheckRequest request){
-        if(!existsByEmail(request.getEmail())){
-            return EmailCheckResponse.unavailable();
-        }
-        return EmailCheckResponse.available();
-    };
-
-    //이미 사용된 NickName체크
-    public NickNameCheckResponse checkRegisteredNickname(NicknameCheckRequest request){
-        if(!existsByNickname(request.getNickname())){
-            return NickNameCheckResponse.unavailable();
-        }
-        return NickNameCheckResponse.available();
-    };
-
     // Cookie의 refreshToken의 value와 기간 초기화, DB의 token삭제,
     public void logout(Long userId, HttpServletResponse response) {
         //1. redis에서 refreshToken삭제
@@ -178,6 +182,22 @@ public class UserService {
         refreshTokenRepository.delete(storedToken); //새 토큰 저장을 위해 기존 토큰 삭제
         LoginResponse UpdatedTokenResponse = authService.updateToken(userId, role);
         return UpdatedTokenResponse;
+    }
+
+    //이미 사용된 Email체크
+    public EmailCheckResponse checkRegisteredMail(String email) {
+        boolean isRegisteredUser = userRepository.existsByEmail(email);
+        return isRegisteredUser ?
+                EmailCheckResponse.unavailable()
+                : EmailCheckResponse.available();
+    }
+
+    //이미 사용된 NickName체크
+    public NickNameCheckResponse checkRegisteredNickname(String nickname) {
+        boolean isRegisteredUser = userRepository.existsByNickname(nickname);
+        return isRegisteredUser ?
+                NickNameCheckResponse.unavailable()
+                : NickNameCheckResponse.available();
     }
 
     public Optional<User> getOptionalUser(String email) {

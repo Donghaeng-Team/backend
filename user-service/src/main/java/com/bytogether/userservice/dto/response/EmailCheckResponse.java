@@ -1,11 +1,11 @@
 package com.bytogether.userservice.dto.response;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+
 
 @Getter
-@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class EmailCheckResponse {
     private boolean duplication;
@@ -14,14 +14,14 @@ public class EmailCheckResponse {
     public static EmailCheckResponse unavailable() {
         return EmailCheckResponse.builder()
                 .duplication(true)
-                .message("이미 사용중인 이메일 입니다.")
+                .message("가입할수 없는 이메일 입니다.")
                 .build();
     }
 
     public static EmailCheckResponse available() {
         return EmailCheckResponse.builder()
                 .duplication(false)
-                .message("사용 가능한 이메일입니다.")
+                .message("가입 가능한 이메일입니다.")
                 .build();
     }
 }
