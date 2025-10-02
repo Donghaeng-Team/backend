@@ -5,13 +5,6 @@ spring:
     active: dev
   config:
     import: "configserver:http://localhost:8888"
-  datasource:
-    url: jdbc:postgresql://localhost:5432/user_db
-    username: postgres
-    password: postgres
-  jpa:
-    hibernate:
-      ddl-auto: validate
   data:
     redis:
       host: localhost
@@ -19,18 +12,14 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: bytogethermaster@gmail.com
-    password: zcjxbucnbljywuai
+    username: ${MASTER_MAIL_ACCOUNT}
+    password: ${MASTER_KEY}
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
-  security:
-    jwt: a23djklfjklsjd234ksldjfl97sdhjkhjk7jkl8bnyl5sh0asdfemdfhbG9uZ2Vub3VnaGZvcmhzMjU2
-    access: 1
-    refresh: 7
 
     #Kakao Oauth2 ??
 #    oauth2:

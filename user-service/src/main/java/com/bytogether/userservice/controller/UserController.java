@@ -24,7 +24,7 @@ public class UserController {
      private final UserService userService;
      private final CookieUtil cookieUtil;
 
-    @PostMapping("/register/public")
+    @PostMapping("/public/register")
     public ResponseEntity<ApiResponse<?>> register(@Valid @RequestBody RegisterRequest registerRequest) {
         log.info("User Register Requested");
         userService.register(registerRequest);
@@ -32,7 +32,7 @@ public class UserController {
 
     }
 
-    @PostMapping("/login/public")
+    @PostMapping("/public/login")
     public ResponseEntity<ApiResponse<?>> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         LoginResponse tokenIssued = userService.login(loginRequest) ;
         response.setHeader("authorization", tokenIssued.getAccessToken());
@@ -41,13 +41,13 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @DeleteMapping("/logout/private")
+    @DeleteMapping("/private/logout")
     public ResponseEntity<ApiResponse<?>> logout(@RequestHeader("X-User-Id") Long userId, HttpServletResponse response) {
         userService.logout(userId, response);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @PostMapping("/refresh/public")
+    @PostMapping("/public/refresh")
     public ResponseEntity<ApiResponse<?>> refresh(HttpServletRequest request, HttpServletResponse response) {
         LoginResponse tokenReissued = userService.refresh(request, response);
         response.setHeader("authorization", tokenReissued.getAccessToken());
@@ -56,43 +56,43 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @GetMapping("/getUserInfo/private")
+    @GetMapping("/private/getUserInfo")
     public ResponseEntity<ApiResponse<?>> getUserInfo(@RequestHeader("X-User-Id") Long userId, HttpServletResponse response) {
         log.info("토큰 헤더의 UserID:" + userId);
         Long Request = userId;
         return ResponseEntity.ok(ApiResponse.success(Request));
     }
 
-//    @GetMapping("/email")
+//    @GetMapping("/private/email")
 //    public ResponseEntity<?> checkRegisteredMail(@Valid @ModelAttribute EmailCheckRequest emailCheckRequest) {
 //        return ResponseEntity.status(HttpStatus.OK).body(authService.checkRegisteredEmail(emailCheckRequest));
 //    }
 
-//    @PutMapping("/nickname")
+//    @PutMapping("/private/nickname")
 //    public ResponseEntity<?> checkRegisteredNickname(HttpServletRequest request, HttpServletResponse response) {
 //        userService.refresh(request, response);
 //        return ResponseEntity.status(HttpStatus.OK).build();
 //    }
 
-//    @PostMapping("/verify")
+//    @PostMapping("/public/verify")
 //    public ResponseEntity<?> verify(@RequestBody VerifyRequest verifyRequest) {
 //        userService.verify(verifyRequest);
 //        return ResponseEntity.status(HttpStatus.OK).build();
 //    }
 
-//    @PostMapping("/reverify")
+//    @PostMapping("/public/reverify")
 //    public ResponseEntity<?> reverify(@RequestParam String email) {
 //        authService.reverify(email);
 //        return ResponseEntity.status(HttpStatus.CREATED).build();
 //    }
 
-//    @PostMapping("/password/") //패스워드 찾기요청
+//    @PostMapping("/public/password/request-reset") //패스워드 찾기요청
 //    public ResponseEntity<?> findPassword(@RequestBody FindPassWordRequest findPassWordRequest) {
 //        userService.findPassword(findPassWordRequest);
 //        return ResponseEntity.status(HttpStatus.OK).build();
 //    }
 //
-//    @PostMapping("password/reset") //비밀번호 초기화 요청
+//    @PostMapping("/public/password/confirm-reset") //비밀번호 초기화 요청
 //    public ResponseEntity<?> resetPassword(@RequestBody ChangePasswordRequest changePasswordRequest){
 //        userService.resetPassword(changePasswordRequest);
 //        return ResponseEntity.status(HttpStatus.OK).build();
