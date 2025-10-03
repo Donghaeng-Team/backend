@@ -12,5 +12,5 @@ import lombok.Setter;
 @Setter
 public class Emd {
     @Pattern(regexp = "^\\d{8}$")
-    private String emyCode;
+    private String emdCode;
 }
