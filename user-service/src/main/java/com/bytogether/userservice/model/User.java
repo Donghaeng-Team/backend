@@ -3,6 +3,7 @@ package com.bytogether.userservice.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -18,22 +19,22 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column
     private String email;
 
-    @Column(nullable = false)
+    @Column
     private String password;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String nickname;
 
-    @Column()
-    private String kakaoId;
+    @Column
+    private String providerId;
 
-    @Column()
+    @Column
     private String avatar;
 
-    @Column()
+    @Column
     private Boolean verify;   //이메일 인증 (true, false)
 
     @Enumerated(EnumType.STRING)
@@ -48,12 +49,10 @@ public class User {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @CreationTimestamp
+    @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
     @Column
     private LocalDateTime deletedAt;
-
-
 }
