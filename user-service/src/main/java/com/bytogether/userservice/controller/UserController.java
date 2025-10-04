@@ -66,6 +66,7 @@ public class UserController {
     @GetMapping("/public/email")
     public ResponseEntity<ApiResponse<?>> checkRegisteredMail(@Valid @ModelAttribute EmailCheckRequest emailCheckRequest) {
         EmailCheckResponse response = userService.checkRegisteredMail(emailCheckRequest.getEmail());
+        //Local 가입자인지 확인 추가 필요
         log.info("email 존재여부 : "+ response);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -73,6 +74,7 @@ public class UserController {
     @GetMapping("/public/nickname")
     public ResponseEntity<?> checkRegisteredNickname(@Valid @ModelAttribute NicknameCheckRequest nicknameCheckRequest) {
         NickNameCheckResponse response = userService.checkRegisteredNickname(nicknameCheckRequest.getNickname());
+        //Local 가입자인지 확인 추가 필요
         log.info("nickname 존재여부 : "+ response);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
