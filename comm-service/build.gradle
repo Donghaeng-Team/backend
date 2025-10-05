@@ -44,7 +44,6 @@ dependencies {
 	implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.39.0'
 	implementation 'io.opentelemetry:opentelemetry-exporter-zipkin'
 	implementation 'io.github.openfeign:feign-micrometer'
-	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
