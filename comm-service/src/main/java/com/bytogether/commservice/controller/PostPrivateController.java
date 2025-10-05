@@ -24,7 +24,7 @@ public class PostPrivateController {
     @PostMapping
     public ResponseEntity<ApiResponse<?>> createPost(
             @RequestHeader("X-User-Id") Long userId,
-            @RequestBody PostCreateAndUpdateRequest request) {
+            @RequestBody PostCreateRequest request) {
         log.info("게시글 작성 요청 - userId: {}", userId);
         return ResponseEntity.ok(ApiResponse.success(postService.createPost(userId, request)));
     }
@@ -38,7 +38,7 @@ public class PostPrivateController {
     public ResponseEntity<ApiResponse<?>> updatePost(
             @RequestHeader("X-User-Id") Long userId,
             @PathVariable Long postId,
-            @RequestBody PostCreateAndUpdateRequest request) {
+            @RequestBody PostUpdateRequest request) {
         log.info("게시글 수정 요청 - postId: {}, userId: {}", postId, userId);
         return ResponseEntity.ok(ApiResponse.success(postService.updatePost(userId, postId, request)));
     }
