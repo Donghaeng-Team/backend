@@ -2,6 +2,8 @@ package com.bytogether.commservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 import java.time.LocalDateTime;
 
@@ -11,6 +13,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@SQLDelete(sql = "UPDATE comments SET deleted = true, deleted_at = now() WHERE comment_id = ?")
+@Where(clause = "deleted = false")
 @Table(name = "comments", indexes = {
         @Index(name = "idx_comments_post_id", columnList = "post_id")
 })
@@ -19,7 +23,8 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long commentId;
 
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "post_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
     @Column(nullable = false)
@@ -29,22 +34,27 @@ public class Comment {
     @Column(nullable = false)
     private String content;
 
-    @Builder.Default
-    @Column(nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(nullable = false,updatable = false)
+    private LocalDateTime createdAt;
 
-    @Column(nullable = true)
+    @Column
     private LocalDateTime updatedAt;
-    @PreUpdate
-    public void onUpdate() { this.updatedAt = LocalDateTime.now(); }
-
 
     @Column(nullable = false)
-    private Boolean deleted = false;
+    private boolean deleted = false;
 
+    @Column
     private LocalDateTime deletedAt;
-    @PreRemove
-    public void onRemove() { this.deleted = true; }
+
+    @PrePersist
+    public void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 
 
 }

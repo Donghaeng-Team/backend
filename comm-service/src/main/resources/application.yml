@@ -5,3 +5,8 @@ spring:
     name: comm-service
   profiles:
     active: ${profile:docker}
+
+
+s3:
+  bucket:
+    commImg: "sesac-bytogether-bucket"

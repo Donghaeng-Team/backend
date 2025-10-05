@@ -3,7 +3,6 @@ package com.bytogether.commservice.entity;
 import com.bytogether.commservice.util.JsonStringListConverter;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
