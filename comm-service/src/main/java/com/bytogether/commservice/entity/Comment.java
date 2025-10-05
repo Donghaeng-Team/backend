@@ -30,8 +30,7 @@ public class Comment {
     @Column(nullable = false)
     private Long authorId;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable=false, columnDefinition = "text")
     private String content;
 
     @Column(nullable = false,updatable = false)

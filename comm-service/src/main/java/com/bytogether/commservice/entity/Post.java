@@ -36,8 +36,7 @@ public class Post {
     @Column(nullable = false, length = 200)
     private String title;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable= false, columnDefinition = "text")
     private String content;
 
     @Column(nullable = false,updatable = false)
