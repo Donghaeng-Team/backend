@@ -1,15 +1,35 @@
 package com.bytogether.commservice.dto;
 
+import com.bytogether.commservice.entity.Post;
+import lombok.Builder;
+import lombok.Getter;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
+@Getter
+@Builder
 public class PostResponse {
-    private Long postId;        // 글 ID
-    private Long userId;        // 작성자 ID
-    private String userName;    // 작성자 닉네임 (UserService 연동)
+
+    private Long id;
+    private Long authorId;
     private String title;
     private String content;
-    private List<String> tags;
-    private LocalDateTime createdAt;
+    private String region;
+    private String tag;
+    private List<String> imageUrls;
+
+    // ⚡ 핵심: Post 엔티티를 DTO로 변환하는 정적 팩토리 메서드
+    public static PostResponse from(Post post) {
+        return PostResponse.builder()
+                .id(post.getPostId())
+                .authorId(post.getAuthorId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .region(post.getRegion())
+                .tag(post.getTag())
+                .imageUrls(post.getImageUrls())
+                .build();
+    }
+
+
 }
