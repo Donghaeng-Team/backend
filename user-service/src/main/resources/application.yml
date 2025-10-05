@@ -9,34 +9,35 @@ spring:
     redis:
       host: localhost
       port: 6379
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MASTER_MAIL_ACCOUNT}
-    password: ${MASTER_KEY}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-
-    #Kakao Oauth2 ??
+#  mail:
+#    host: smtp.gmail.com
+#    port: 587
+#    username: ${MASTER_MAIL_ACCOUNT}
+#    password: ${MASTER_KEY}
+#    properties:
+#      mail:
+#        smtp:
+#          auth: true
+#          starttls:
+#            enable: true
+#
+#    # Kakao Oauth2 & Provider설정
+#  security:
 #    oauth2:
 #      client:
 #        registration:
 #          kakao:
-#            client-id: { KAKAO_CLIENT_ID }
-#            client-secret: { KAKAO_CLIENT_SECRET }
+#            client-id: ${KAKAO_CLIENT_ID}
+#            client-secret: ${KAKAO_CLIENT_SECRET}
 #            client-authentication-method: client_secret_post
 #            authorization-grant-type: authorization_code
-#            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+#            redirect-uri: "${BASE_URL:http://localhost:8080}/api/v1/user/public/login/oauth2/callback/{registrationId}"
 #            scope:
 #              - profile_nickname
-#              - account_email
+#              - profile_image
 #        provider:
 #          kakao:
 #            authorization-uri: https://kauth.kakao.com/oauth/authorize
 #            token-uri: https://kauth.kakao.com/oauth/token
 #            user-info-uri: https://kapi.kakao.com/v2/user/me
-#            user-name-attribute: { USER_ID }
+#            user-name-attribute: id
