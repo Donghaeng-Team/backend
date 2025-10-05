@@ -29,7 +29,7 @@ public class JsonStringListConverter implements AttributeConverter<List<String>,
     public List<String> convertToEntityAttribute(String dbData) {
         if (dbData == null || dbData.isBlank()) return new ArrayList<>();
         try {
-            return objectMapper.readValue(dbData, new TypeReference<List<String>>() {});
+            return objectMapper.readValue(dbData, new TypeReference<>() {});
         } catch (IOException e) {
             throw new IllegalArgumentException("JSON 문자열을 리스트로 변환 실패", e);
         }
