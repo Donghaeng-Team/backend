@@ -1,6 +1,6 @@
 spring:
   config:
-    import: "configserver:http://config-server:8888"
+    import: "configserver:http://localhost:8888"
   application:
     name: comm-service
   profiles:
