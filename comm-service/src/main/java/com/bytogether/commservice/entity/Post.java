@@ -1,26 +1,35 @@
 package com.bytogether.commservice.entity;
 
+import com.bytogether.commservice.util.JsonStringListConverter;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Getter
+@Setter
+@Where(clause = "deleted=false")
+@SQLDelete(sql = "UPDATE posts SET deleted = true, deleted_at = now() WHERE id = ?")
 @Table(name = "posts")
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long postId;
+
+    @Column(nullable = false)
+    private String region;
+
+    @Column(nullable = false)
+    private String tag;
 
     @Column(nullable = false)
     private Long authorId;
@@ -32,24 +41,57 @@ public class Post {
     @Column(nullable = false)
     private String content;
 
-    @Builder.Default
-    @Column(nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(nullable = false,updatable = false)
+    private LocalDateTime createdAt;
 
+    @Column
     private LocalDateTime updatedAt;
 
     @Builder.Default
     @Column(nullable = false)
-    @ColumnDefault("false")
     private boolean deleted = false;
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    @OneToMany(mappedBy = "post")
     private List<Comment> comments = new ArrayList<>();
 
-    @PreUpdate
-    public void onUpdate() { this.updatedAt = LocalDateTime.now(); }
+    @Column(name = "thumbnail_url")
+    private String thumbnailUrl;
 
-    private String region;
+
+    @Convert(converter = JsonStringListConverter.class)
+    @Column(name = "image_urls", columnDefinition = "TEXT")
+    private List<String> imageUrls;
+
+
+
+    @PrePersist
+    public void onCreate() {
+        if (this.createdAt == null) this.createdAt = LocalDateTime.now();
+        updateThumbnail();
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+        updateThumbnail();
+    }
+
+    // 썸네일 로직을 처리하는 private 헬퍼 메서드
+    private void updateThumbnail() {
+        if (this.imageUrls != null && !this.imageUrls.isEmpty()) {
+            this.thumbnailUrl = this.imageUrls.get(0);
+        } else {
+            this.thumbnailUrl = null;
+        }
+    }
+
+    // 편의 메서드
+    public void addComment(Comment comment) {
+        comments.add(comment);
+        comment.setPost(this);
+    }
+
+
 
 }
