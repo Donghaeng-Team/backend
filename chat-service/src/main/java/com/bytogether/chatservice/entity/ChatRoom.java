@@ -40,7 +40,9 @@ public class ChatRoom {
     @Column(name = "market_id", nullable = false)
     private Long marketId;
 
+
     // 모집 정보
+    // endTime - 구인글에서 공시된 마감시각
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
@@ -53,17 +55,20 @@ public class ChatRoom {
     @Column(name = "title", nullable = false, length = 255)
     private String title;
 
+
     // 상태 관리
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
     private ChatRoomStatus status = ChatRoomStatus.RECRUITING;
 
+    // 실제로 공동구매할 모집이 완료된 시각
     @Column(name = "recruitment_closed_at")
     private LocalDateTime recruitmentClosedAt;
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+
 
     // 타임스탬프
     @CreationTimestamp
@@ -73,6 +78,7 @@ public class ChatRoom {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
 
     // 연관 관계 (양방향 매핑 - 선택사항)
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)

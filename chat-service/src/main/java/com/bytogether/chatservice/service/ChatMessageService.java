@@ -37,7 +37,7 @@ public class ChatMessageService {
     }
 
     /**
-     * 최근 메시지 조회 (페이지 크기 지정)
+     * 채팅방 최초 접속 시 최근 메시지 조회 (페이지 크기 지정)
      */
     public ChatMessagePageResponse getRecentMessages(Long chatRoomId, Long userId, int size) {
         // 열람 가능한 시간 범위 조회
@@ -141,7 +141,7 @@ public class ChatMessageService {
      * Entity -> DTO 변환
      */
     private ChatMessageResponse convertToResponse(ChatMessage message) {
-        // TODO: UserService를 통해 닉네임 조회 (MSA 환경에서는 FeignClient 등)
+        // TODO: FeignClient를 통해 유저 정보 획득
         String nickname = "User#" + message.getSenderUserId(); // 임시
 
         return ChatMessageResponse.builder()
