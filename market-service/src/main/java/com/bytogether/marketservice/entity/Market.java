@@ -12,6 +12,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.locationtech.jts.geom.Point;
 import org.springframework.http.HttpStatus;
@@ -104,32 +106,13 @@ public class Market {
     private Category category;
 
     // Images와의 관계
-    @OneToMany(mappedBy = "market", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "market", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SUBSELECT)
     private List<Image> images = new ArrayList<>();
 
     // Views와의 관계
     @OneToMany(mappedBy = "market", cascade = CascadeType.ALL)
     private List<View> marketViews = new ArrayList<>();
-
-    // 제약조건 검증 메서드
-    @PrePersist
-    @PreUpdate
-    private void validateConstraints() {
-        if (recruitMin != null && recruitMin <= 1) {
-            throw new IllegalArgumentException("모집 인원은 2명 이상이어야 합니다.");
-        }
-        if (recruitMin != null && recruitMax != null && recruitMin > recruitMax) {
-            throw new IllegalArgumentException("최소 모집 인원은 최대 모집 인원보다 클 수 없습니다.");
-        }
-        if (latitude != null && (latitude.compareTo(BigDecimal.valueOf(33)) < 0 ||
-                latitude.compareTo(BigDecimal.valueOf(39)) > 0)) {
-            throw new IllegalArgumentException("위도는 33~39 범위여야 합니다.");
-        }
-        if (longitude != null && (longitude.compareTo(BigDecimal.valueOf(124)) < 0 ||
-                longitude.compareTo(BigDecimal.valueOf(132)) > 0)) {
-            throw new IllegalArgumentException("경도는 124~132 범위여야 합니다.");
-        }
-    }
 
     public static Market fromCreateRequest(CreateMarketRequest request, Long authorId, String emdName, String divisionId) {
         Market market = new Market();
@@ -151,6 +134,26 @@ public class Market {
         market.setLongitude(request.getLongitude());
         return market;
 
+    }
+
+    // 제약조건 검증 메서드
+    @PrePersist
+    @PreUpdate
+    private void validateConstraints() {
+        if (recruitMin != null && recruitMin <= 1) {
+            throw new IllegalArgumentException("모집 인원은 2명 이상이어야 합니다.");
+        }
+        if (recruitMin != null && recruitMax != null && recruitMin > recruitMax) {
+            throw new IllegalArgumentException("최소 모집 인원은 최대 모집 인원보다 클 수 없습니다.");
+        }
+        if (latitude != null && (latitude.compareTo(BigDecimal.valueOf(33)) < 0 ||
+                latitude.compareTo(BigDecimal.valueOf(39)) > 0)) {
+            throw new IllegalArgumentException("위도는 33~39 범위여야 합니다.");
+        }
+        if (longitude != null && (longitude.compareTo(BigDecimal.valueOf(124)) < 0 ||
+                longitude.compareTo(BigDecimal.valueOf(132)) > 0)) {
+            throw new IllegalArgumentException("경도는 124~132 범위여야 합니다.");
+        }
     }
 
     public void updateFromPutRequest(@Valid PutMarketRequest putMarketRequest) {
