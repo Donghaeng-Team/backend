@@ -4,6 +4,7 @@ import com.bytogether.marketservice.entity.Image;
 import com.bytogether.marketservice.exception.MarketException;
 import com.bytogether.marketservice.repository.ImageRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,8 +24,12 @@ import java.util.concurrent.CompletableFuture;
 @Service
 @RequiredArgsConstructor
 public class ImageService {
-    private static final String IMAGE_DIR = "market/images/"; // 이미지 저장 디렉토리
-    private static final String THUMBNAIL_DIR = "market/thumbnails/"; // 썸네일 이미지 접두사
+    @Value("${cloud.aws.s3.bucket.image-dir:static/market/images/}")
+    private String IMAGE_DIR = "static/market/images/"; // 이미지 저장 디렉토리
+
+    @Value("${cloud.aws.s3.bucket.thumbnail-dir:static/market/thumbnails/}")
+    private String THUMBNAIL_DIR = "static/market/thumbnails/"; // 썸네일 이미지 접두사
+
     private static final List<String> ALLOWED_MIME_TYPES = List.of("image/jpeg", "image/jpg", "image/png", "image/webp");
 
     private final ImageHandler imageHandler;

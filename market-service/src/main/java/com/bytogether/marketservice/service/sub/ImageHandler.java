@@ -1,6 +1,7 @@
 package com.bytogether.marketservice.service.sub;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -10,9 +11,9 @@ import java.io.IOException;
 @Service
 @RequiredArgsConstructor
 public class ImageHandler {
-    private static final String BUCKET_NAME = "kis-test-dev";
-
     private final S3Service s3Service;
+    @Value("${cloud.aws.s3.bucket.name:kis-test-dev}")
+    private String BUCKET_NAME;
 
     @Async
     public void uploadImageByS3(MultipartFile image, String key) {
