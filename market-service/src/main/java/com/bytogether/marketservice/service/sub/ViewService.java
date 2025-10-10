@@ -23,7 +23,7 @@ public class ViewService {
 
 
     // 조회 기록 저장 및 조회수 증가
-    public void recordView(Long requestUserID, Long marketId) {
+    public void recordViewAndIncrement(Long requestUserID, Long marketId) {
         View view = new View();
         view.setUserId(requestUserID);
         view.setMarketId(marketId);

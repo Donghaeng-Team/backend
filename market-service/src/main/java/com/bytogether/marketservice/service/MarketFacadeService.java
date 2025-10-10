@@ -1,26 +1,23 @@
 package com.bytogether.marketservice.service;
 
-import com.bytogether.marketservice.client.DivisionServiceClient;
-import com.bytogether.marketservice.client.UserServiceClient;
 import com.bytogether.marketservice.client.dto.response.DivisionResponseDto;
 import com.bytogether.marketservice.client.dto.response.MockUserDto;
 import com.bytogether.marketservice.constant.MarketStatus;
-import com.bytogether.marketservice.dto.request.CreateMarketRequest;
-import com.bytogether.marketservice.dto.request.ExtendMarketRequest;
-import com.bytogether.marketservice.dto.request.MarketListRequest;
-import com.bytogether.marketservice.dto.request.PutMarketRequest;
+import com.bytogether.marketservice.dto.request.*;
 import com.bytogether.marketservice.dto.response.*;
 import com.bytogether.marketservice.entity.Market;
-import com.bytogether.marketservice.entity.Search;
 import com.bytogether.marketservice.exception.MarketException;
 import com.bytogether.marketservice.service.sub.*;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,14 +32,15 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional
 public class MarketFacadeService {
-    private final CartService cartService;
     private final CategoryService categoryService;
     private final ImageService imageService;
     private final MarketService marketService;
     private final SearchService searchService;
     private final ViewService viewService;
-    private final DivisionServiceClient divisionServiceClient;
-    private final UserServiceClient userServiceClient;
+
+    private final DivisionService divisionService;
+    private final UserService userService;
+
 
     // 마켓글 작성 - private
     public CreateMarketResponse createMarketPost(Long requestUserID, CreateMarketRequest createMarketRequest) {
@@ -51,9 +49,7 @@ public class MarketFacadeService {
         categoryService.validateCategoryId(createMarketRequest.getCategoryId());
 
         // 좌표 기반 행정구역 조회
-        DivisionResponseDto division =
-                divisionServiceClient.getDivisionByCoord(createMarketRequest.getLatitude().doubleValue(), createMarketRequest.getLongitude().doubleValue())
-                        .orElseThrow(() -> new MarketException("Invalid coordinates: no division found", HttpStatus.BAD_REQUEST));
+        DivisionResponseDto division = divisionService.getDivisionByCoord(createMarketRequest.getLatitude().doubleValue(), createMarketRequest.getLongitude().doubleValue());
 
         // 이미지 파일 MIME 타입 검사
         imageService.isAllowedMimeType(createMarketRequest.getImages());
@@ -93,12 +89,25 @@ public class MarketFacadeService {
     }
 
     // 특정 사용자가 작성한 마켓글 조회
-    public void getMyMarketPosts(Long targetUserId) {
+    public MarketListResponse getSomeonesMarketPosts(Long targetUserId, @Valid DefaultPageRequest defaultPageRequest) {
 
         // 특정 사용자가 작성한 마켓글 조회
-        List<Market> myMarkets = marketService.getMarketsByAuthorId(targetUserId);
+        Page<Market> myMarkets = marketService.getMarketsByAuthorId(targetUserId, PageRequest.of(defaultPageRequest.getPageNum(), defaultPageRequest.getPageSize()));
 
-        // 응답 반환 (추후 구현)
+        // 작성자 정보 조회 (User Service API 호출)
+        MockUserDto userById = userService.getUserById(targetUserId);
+
+        List<MockUserDto> users = new ArrayList<>();
+        for (int i = 0; i < myMarkets.getContent().size(); i++) {
+            users.add(userById);
+        }
+
+        // 응답 생성하기
+        MarketListResponse marketListResponse = MarketListResponse.fromEntities(myMarkets, users);
+
+
+        // 응답 반환
+        return marketListResponse;
     }
 
     public PutMarketResponse updateMarketPost(Long requestUserID, Long marketId, @Valid PutMarketRequest putMarketRequest) {
@@ -155,43 +164,91 @@ public class MarketFacadeService {
         return ExtendMarketResponse.fromEntity(market);
     }
 
+    // 마켓글 상세 조회 - 비로그인은 requestUserID null로 호출
     public MarketDetailResponse getMarketPostDetailWithLogin(Long requestUserID, Long marketId) {
         // 마켓글 가져오기
         Market byMarketId = marketService.findByMarketId(marketId);
 
         // 조회수 증가 및 기록
-        viewService.recordView(requestUserID, marketId);
+        if (requestUserID != null) {
+            viewService.recordViewAndIncrement(requestUserID, marketId);
+        } else {
+            viewService.incrementViewCount(marketId);
+        }
 
         // 응답 생성하기
         MarketDetailResponse marketDetailResponse = MarketDetailResponse.fromEntity(byMarketId);
 
         // 임시 mock user api 호출
-        MockUserDto userById = userServiceClient.getUserById(byMarketId.getAuthorId());
+        MockUserDto userById = userService.getUserById(byMarketId.getAuthorId());
 
         marketDetailResponse.setAuthorNickname(userById.getNickname()); // TODO: 실제 닉네임으로 교체
         marketDetailResponse.setAuthorProfileImageUrl(userById.getImageUrl()); // TODO: 실제 프로필 이미지 URL로 교체
 
 
+        // 현재 모집 참여 인원 수 조회 (chat Service API 호출) - TODO: 추후 구현 - 2025-10-10
+
         return marketDetailResponse;
     }
 
-    public MarketListResponse getMarketPostsWithLogin(Long requestUserID, MarketListRequest marketListRequest) {
-        // 카테고리 ID 유효성 검사
-        if( marketListRequest.getCategoryId() != null) {
+    //  마켓글 목록 조회 - 비로그인은 requestUserID null로 호출
+    public MarketListResponse getMarketPosts(Long requestUserID, MarketListRequest marketListRequest) {
+
+        // 1. 카테고리 ID 유효성 검사
+        // 2. 행정구역 ID 유효성 검사 + 인접동 목록 조회
+        // 3. 검색 기록 추가 ( USER_ID, DIVISION_ID, DEPTH, CATEGORY_ID, KEYWORD)
+
+        // 4. 검색 (행정구역, 카테고리, 상태, 키워드, 페이징, 정렬)
+        //   - 행정구역: 인접동 목록 포함
+        //   - 카테고리: categoryId (categoryId)
+        //   - 상태: status (기본값 RECRUITING)
+        //   - 키워드: keyword (마켓글 제목, 내용)
+        //   - 정렬: 최신순 (마켓글 ID 내림차순)
+        //   - 페이징: pageNum (기본값 0), pageSize (기본값 20)
+
+        // 5. 작성자 닉네임, 프로필 이미지 URL 조회 (User Service API 호출)
+        // 6. 현재 모집 참여 인원 수 조회 (chat Service API 호출) - TODO: 추후 구현 - 2025-10-10
+
+        // 7. 응답 생성하기
+
+        // 1. 카테고리 ID 유효성 검사
+        if (marketListRequest.getCategoryId() != null) {
             categoryService.validateCategoryId(marketListRequest.getCategoryId());
         }
-        // 행정구역 ID 유효성 검사
+
+        // 2. 행정구역 ID 유효성 검사 + 인접동 목록 조회
+        List<DivisionResponseDto> requestDivisions = null;
+        if (marketListRequest.getDepth() == 0) {
+            DivisionResponseDto divisionByCode = divisionService.getDivisionByCode(marketListRequest.getDivisionId());
+            requestDivisions = List.of(divisionByCode);
+        } else {
+            requestDivisions = divisionService.getNearDivisionsByCode(marketListRequest.getDepth(), marketListRequest.getDivisionId());
+        }
+
+        // 3. 검색 기록 추가 ( USER_ID, DIVISION_ID, DEPTH, CATEGORY_ID, KEYWORD)
+        // 카테고리나 키워드 둘 중 하나라도 있으면 검색 기록 저장
+        if (requestUserID != null) {
+            if (marketListRequest.getCategoryId() != null || (marketListRequest.getKeyword() != null && !marketListRequest.getKeyword().isBlank())) {
+                searchService.saveSearchFromRequest(marketListRequest, requestUserID);
+            }
+        }
 
 
-        // 검색 기록 추가 ( USER_ID, DIVISION_ID, DEPTH, CATEGORY_ID, KEYWORD)
-        Search newSearch = new Search();
-        newSearch.setUserId(requestUserID);
-        newSearch.setDivisionId(marketListRequest.getDivisionId());
-        newSearch.setDepth(marketListRequest.getDepth());
-        newSearch.setCategoryId(marketListRequest.getCategoryId());
-        newSearch.setKeyword(marketListRequest.getKeyword());
-        searchService.saveSearch(newSearch);
+        // 4. 검색 (행정구역, 카테고리, 상태, 키워드, 페이징, 정렬)
+        Page<Market> markets = marketService.searchMarkets(requestDivisions, marketListRequest);
+
+        // 5. 작성자 닉네임, 프로필 이미지 URL 조회 (User Service API 호출)
+        List<Long> authorIds = markets.stream()
+                .map(Market::getAuthorId)
+                .toList();
+        List<MockUserDto> users = userService.getUsersByIds(authorIds);
+
+        // 6. 현재 모집 참여 인원 수 조회 (chat Service API 호출) - TODO: 추후 구현 - 2025-10-10
+
+        // 7. 응답 생성하기
+        MarketListResponse marketListResponse = MarketListResponse.fromEntities(markets, users);
 
 
+        return marketListResponse;
     }
 }

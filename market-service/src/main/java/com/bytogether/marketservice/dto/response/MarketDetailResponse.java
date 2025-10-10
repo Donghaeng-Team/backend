@@ -30,6 +30,7 @@ public class MarketDetailResponse {
     private Integer recruitMin; // from Entity
 
     private Integer recruitMax; // from Entity
+    private Integer recruitNow; // api 요청으로 가져오기 TODO: 추후 구현 필요 - 2025-10-10
     private MarketStatus status; // from Entity
     private String title; // from Entity
     private String content; // from Entity

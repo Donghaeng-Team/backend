@@ -1,5 +1,6 @@
 package com.bytogether.marketservice.service.sub;
 
+import com.bytogether.marketservice.dto.request.MarketListRequest;
 import com.bytogether.marketservice.entity.Search;
 import com.bytogether.marketservice.repository.SearchRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,4 +27,17 @@ public class SearchService {
         searchRepository.save(newSearch);
     }
 
+    // 요청 기반 검색 기록 저장
+    @Async
+    public void saveSearchFromRequest(MarketListRequest marketListRequest, Long requestUserID) {
+        Search newSearch = new Search();
+
+        newSearch.setUserId(requestUserID);
+        newSearch.setDivisionId(marketListRequest.getDivisionId());
+        newSearch.setDepth(marketListRequest.getDepth());
+        newSearch.setCategoryId(marketListRequest.getCategoryId());
+        newSearch.setKeyword(marketListRequest.getKeyword());
+
+        saveSearch(newSearch);
+    }
 }

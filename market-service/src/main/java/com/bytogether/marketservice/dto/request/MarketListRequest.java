@@ -1,10 +1,11 @@
 package com.bytogether.marketservice.dto.request;
 
+import com.bytogether.marketservice.constant.MarketSort;
 import com.bytogether.marketservice.constant.MarketStatus;
+import com.bytogether.marketservice.dto.validation.annotation.MarketSortSubset;
+import com.bytogether.marketservice.dto.validation.annotation.MarketStatusSubset;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -15,14 +16,21 @@ import lombok.Setter;
  * @since 2025-10-01
  */
 
+// 필드 요약
+// - divisionId (String, NotBlank, Pattern: 8자리 숫자) : 행정구역 코드
+// - depth (Integer, NotNull, Min: 0, Max: 3) : 조회 깊이
+// - status (MarketStatus, MarketStatusSubset) : 마켓 상태
+// - categoryId (String) : 카테고리 ID (startsWith 조건)
+// - keyword (String) : 검색 키워드 (마켓글 제목, 내용)
+// - sort (MarketSort, MarketSortSubset) : 정렬 기준
+
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class MarketListRequest {
+public class MarketListRequest extends DefaultPageRequest {
 
     // 행정구역 코드
     @NotBlank(message = "divisionId must not be blank")
+    @Pattern(regexp = "^\\d{8}$")
     private String divisionId;
 
     // 조회 깊이
@@ -42,17 +50,35 @@ public class MarketListRequest {
     //    RECRUITING, // 모집 중
     //    ENDED, // 모집 완료
     //    CANCELLED, // 모집 취소
-    @Pattern(
-            regexp = "^(RECRUITING|ENDED|CANCELLED)?$",
-            message = "status must be one of RECRUITING, ENDED, CANCELLED or empty"
-    )
+    @MarketStatusSubset(anyOf = {MarketStatus.RECRUITING, MarketStatus.ENDED, MarketStatus.CANCELLED, MarketStatus.REMOVED}, message = "status must be one of {RECRUITING, ENDED, CANCELLED}")
     private MarketStatus status = MarketStatus.RECRUITING;
 
-    @Min(value = 0, message = "pageSize must be at least 0")
-    private Integer pageNum = 0;
 
+    // 카테고리 ID (startsWith 조건)
     private String categoryId;
 
+    // 검색 키워드 (마켓글 제목, 내용)
     private String keyword;
+
+    // 정렬 기준 (LATEST, ENDING_SOON, CHEAPEST, MOST_VIEWED)
+    @MarketSortSubset(anyOf = {MarketSort.LATEST, MarketSort.ENDING_SOON, MarketSort.CHEAPEST, MarketSort.MOST_VIEWED}, message = "sort must be one of {LATEST, ENDING_SOON, CHEAPEST, MOST_VIEWED}")
+    private MarketSort sort = MarketSort.LATEST;
+
+    // Setter에서 빈 문자열 처리
+    public void setStatus(String statusStr) {
+        if (statusStr == null || statusStr.isBlank()) {
+            this.status = null;  // 빈 값은 null로 변환
+        } else {
+            this.status = MarketStatus.valueOf(statusStr);
+        }
+    }
+
+    public void setSort(String sortStr) {
+        if (sortStr == null || sortStr.isBlank()) {
+            this.sort = null;  // 빈 값은 null로 변환
+        } else {
+            this.sort = MarketSort.valueOf(sortStr);
+        }
+    }
 
 }
