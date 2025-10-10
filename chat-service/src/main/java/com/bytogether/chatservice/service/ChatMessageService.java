@@ -5,6 +5,7 @@ import com.bytogether.chatservice.dto.response.ChatMessagePageResponse;
 import com.bytogether.chatservice.dto.response.ChatMessageResponse;
 import com.bytogether.chatservice.entity.ChatMessage;
 import com.bytogether.chatservice.entity.ChatRoomParticipantHistory;
+import com.bytogether.chatservice.mapper.ChatMessageMapper;
 import com.bytogether.chatservice.repository.ChatMessageRepository;
 import com.bytogether.chatservice.repository.ChatRoomParticipantHistoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class ChatMessageService {
 
     private final ChatMessageRepository messageRepository;
     private final ChatRoomParticipantHistoryRepository historyRepository;
+    private final ChatMessageMapper messageMapper;
     // private final UserService userService; // 닉네임 조회용 (MSA 환경에서는 FeignClient 등)
 
     /**
@@ -127,30 +129,13 @@ public class ChatMessageService {
 
         // DTO 변환
         List<ChatMessageResponse> messageResponses = resultMessages.stream()
-                .map(this::convertToResponse)
+                .map(this.messageMapper::toResponse)
                 .collect(Collectors.toList());
 
         return ChatMessagePageResponse.builder()
                 .messages(messageResponses)
                 .hasMore(hasMore)
                 .nextCursor(nextCursor)
-                .build();
-    }
-
-    /**
-     * Entity -> DTO 변환
-     */
-    private ChatMessageResponse convertToResponse(ChatMessage message) {
-        // TODO: FeignClient를 통해 유저 정보 획득
-        String nickname = "User#" + message.getSenderUserId(); // 임시
-
-        return ChatMessageResponse.builder()
-                .id(message.getId())
-                .senderId(message.getSenderUserId())
-                .senderNickname(nickname)
-                .messageContent(message.getMessageContent())
-                .messageType(message.getMessageType())
-                .sentAt(message.getSentAt())
                 .build();
     }
 }
