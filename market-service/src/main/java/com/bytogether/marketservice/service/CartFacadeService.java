@@ -1,12 +1,21 @@
 package com.bytogether.marketservice.service;
 
 
+import com.bytogether.marketservice.client.dto.response.MockUserDto;
+import com.bytogether.marketservice.dto.request.CartListRequest;
+import com.bytogether.marketservice.dto.response.CartResponse;
+import com.bytogether.marketservice.dto.response.MarketListResponse;
 import com.bytogether.marketservice.entity.Cart;
 import com.bytogether.marketservice.entity.Market;
 import com.bytogether.marketservice.service.sub.CartService;
 import com.bytogether.marketservice.service.sub.MarketService;
+import com.bytogether.marketservice.service.sub.UserService;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,30 +35,39 @@ public class CartFacadeService {
     private final CartService cartService;
     private final MarketService marketService;
 
-    // 찜하기 추가
-    public void addCart(Long requestUserID, Long marketId) {
-        // 찜하기 추가
-        cartService.addCart(requestUserID, marketId);
+    private final UserService userService;
 
-        // 응답 반환 (추후 구현)
+    // 찜하기 추가
+    public CartResponse addCart(Long requestUserID, Long marketId) {
+        // 찜하기 추가
+        Cart cart = cartService.addCart(requestUserID, marketId);
+
+        // 응답 반환
+        return new CartResponse(cart.getId());
     }
 
+    // 찜하기 삭제
     public void deleteCart(Long requestUserID, Long cartId) {
         //  찜하기 삭제
         cartService.deleteCart(requestUserID, cartId);
-
-        // 응답 반환 (추후 구현)
     }
 
-    public void getMyCarts(Long requestUserID) {
+    // 내가 찜한 목록 보기
+    public MarketListResponse getMyCarts(Long requestUserID, @Valid CartListRequest cartListRequest) {
         // 찜하기 목록 조회
-        List<Cart> myCarts = cartService.getMyCarts(requestUserID);
-
-        // 마켓 정보 조회
-        List<Market> markets = marketService.getMarketsByIds(
-                myCarts.stream().map(Cart::getMarketId).toList()
+        Page<Cart> myCarts = cartService.getMyCarts(requestUserID,
+                PageRequest.of(cartListRequest.getPageNum(), cartListRequest.getPageSize())
         );
 
-        // 결과 반환 (추후 구현)
+        // 마켓 정보 조회
+        List<Market> markets = marketService.getMarketsByIds(myCarts.getContent().stream().map(Cart::getMarketId).toList());
+
+        // 마켓 작성자 정보 조회
+        List<Long> authorIds = markets.stream().map(Market::getAuthorId).distinct().toList();
+        List<MockUserDto> authors = userService.getUsersByIds(authorIds);
+
+        MarketListResponse marketListResponse = MarketListResponse.fromEntities(new PageImpl<>(markets, myCarts.getPageable(), myCarts.getTotalElements()), authors);
+
+        return marketListResponse;
     }
 }

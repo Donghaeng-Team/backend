@@ -2,10 +2,13 @@ package com.bytogether.marketservice.repository;
 
 import com.bytogether.marketservice.constant.CartStatus;
 import com.bytogether.marketservice.entity.Cart;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 
 /**
@@ -16,7 +19,9 @@ import java.util.List;
 
 @Repository
 public interface CartRepository extends JpaRepository<Cart, Long> {
-    List<Cart> findByUserIdAndStatus(Long userId, CartStatus status);
+    Page<Cart> findByUserIdAndStatus(Long userId, CartStatus status, Pageable pageable);
 
     List<Cart> findByMarketIdAndStatus(Long marketId, CartStatus status);
+
+    Optional<Cart> findByUserIdAndMarketIdAndStatus(Long userId, Long marketId, CartStatus status);
 }
