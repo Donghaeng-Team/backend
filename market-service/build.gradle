@@ -47,6 +47,13 @@ dependencies {
     // jts, hibernate-spatial -> PostGIS
     implementation 'org.locationtech.jts:jts-core:1.19.0'
     implementation 'org.hibernate:hibernate-spatial:6.2.7.Final'
+
+    // QueryDSL 의존성
+    implementation 'com.querydsl:querydsl-jpa:5.1.0:jakarta'
+    annotationProcessor "com.querydsl:querydsl-apt:5.1.0:jakarta"
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
     // actuator
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
@@ -77,13 +84,36 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
+// ✅ QueryDSL QClass 생성 경로 설정
+def querydslDir = "$buildDir/generated/querydsl"
+
+sourceSets {
+    main {
+        java {
+            srcDir querydslDir
+        }
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.annotationProcessorPath = configurations.annotationProcessor
+}
+
+// ✅ Q 클래스가 빌드 시 자동 생성되게 설정
+tasks.named('compileJava') {
+    doFirst {
+        file(querydslDir).mkdirs()
+    }
+}
+
+// end of settings for QueryDSL
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
 
 dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
     }
-}
-
-tasks.named('test') {
-    useJUnitPlatform()
 }
