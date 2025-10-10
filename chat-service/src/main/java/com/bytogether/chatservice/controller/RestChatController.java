@@ -1,9 +1,7 @@
 package com.bytogether.chatservice.controller;
 
 import com.bytogether.chatservice.dto.common.ApiResponse;
-import com.bytogether.chatservice.dto.response.ChatMessagePageResponse;
-import com.bytogether.chatservice.dto.response.ChatMessageResponse;
-import com.bytogether.chatservice.dto.response.ChatRoomResponse;
+import com.bytogether.chatservice.dto.response.*;
 import com.bytogether.chatservice.entity.ChatMessage;
 import com.bytogether.chatservice.repository.ChatMessageRepository;
 import com.bytogether.chatservice.repository.ChatRoomRepository;
@@ -19,9 +17,12 @@ import java.util.List;
  * 채팅방 목록을 조회하고 채팅방 메시지를 확인
  * 그 외 공동구매 관련 액션을 처리하는 컨트롤러
  *
+ * v1.02
+ * 계획 확인용 수도코드 작성
+ *
  * @author jhj010311@gmail.com
- * @version 1.01
- * @since 2025-10-09
+ * @version 1.02
+ * @since 2025-10-10
  */
 
 @RestController
@@ -40,17 +41,17 @@ public class RestChatController {
         ├─ GET    /api/chat                    목록 조회
         ├─ GET    /api/chat/{id}               개별 채팅창 페이지 접속
 
-        참가자 관리
-        ├─ POST   /api/chat/{id}/join          입장
-        ├─ POST   /api/chat/{id}/leave         퇴장
-        ├─ GET    /api/chat/{id}/participants  참가자 목록
-        └─ POST   /api/chat/{id}/kick          강퇴
-
         메시지
         └─ GET    /api/chat/{id}/messages      메시지 조회
 
+        참가자 관리
+        ├─ GET    /api/chat/{id}/participants  참가자 목록
+        ├─ POST   /api/chat/{id}/leave         퇴장
+        └─ POST   /api/chat/{id}/kick          강퇴
+
         공동구매 액션
         ├─ POST   /api/chat/{id}/confirm-buyer        구매 의사 확정
+        ├─ POST   /api/chat/{id}/cancel--buyer        구매 의사 취소
         ├─ POST   /api/chat/{id}/extend-deadline      기한 연장
         ├─ POST   /api/chat/{id}/close-recruitment    모집 마감
         └─ POST   /api/chat/{id}/confirm-purchase     구매 확정
@@ -87,6 +88,79 @@ public class RestChatController {
         } else {
             chatMessagePageResponse = chatMessageService.getMessagesBeforeCursor(chatRoomId, userId, cursor, size);
         }
+
+        return null;
+    }
+
+    @GetMapping("/{id}/participants")
+    public ApiResponse<ParticipantListResponse> getParticipants(@RequestBody @PathVariable("id") Long chatRoomId) {
+        // TODO: 참가자 목록 정보 쿼리
+
+
+        return null;
+    }
+
+    @PostMapping("/{id}/leave")
+    public ApiResponse<String> leaveChatRoom(@PathVariable("id") Long chatRoomId) {
+        // TODO: 채팅방 탈퇴 처리 및 탈퇴한 채팅방 정보 담아서 반환
+        // String 말고 좋은 방법 있는지 검토
+
+        return null;
+    }
+
+    @PostMapping("/{id}/kick")
+    public ApiResponse<String> kickParticipant(@PathVariable("id") Long chatRoomId,
+                                               @RequestParam Long targetUserId,
+                                               @RequestHeader("X-User-Id") Long requesterId) {
+        // TODO: 참가자 강퇴 처리 및 참가자 정보 담아서 반환
+        // String 말고 좋은 방법 있는지 검토
+
+        // TODO: 방장 인증 필요
+
+        return null;
+    }
+
+    @PostMapping("/{id}/confirm-buyer")
+    public ApiResponse<BuyerConfirmResponse> confirmBuyer(@PathVariable("id") Long chatRoomId,
+                                                          @RequestHeader("X-User-Id") Long userId) {
+        // TODO: 공동구매 참가시 처리 후 해당 정보 반환
+
+        return null;
+    }
+
+    @PostMapping("/{id}/cancel-buyer")
+    public ApiResponse<BuyerConfirmResponse> cancelBuyer(@PathVariable("id") Long chatRoomId,
+                                                         @RequestHeader("X-User-Id") Long userId) {
+        // TODO: 공동구매 참가 취소시 처리 후 해당 정보 반환
+
+        return null;
+    }
+
+    @PostMapping("/{id}/extend-deadline")
+    public ApiResponse<ExtendDeadlineResponse> extendDeadline(@PathVariable("id") Long chatRoomId,
+                                              @RequestParam Integer hours,  // 연장할 시간
+                                              @RequestHeader("X-User-Id") Long userId) {
+        // TODO: 방장이 채팅방 마감기한을 연장신청할 경우의 처리
+        // TODO: 방장 인증 필요
+
+        return null;
+    }
+
+    @PostMapping("/{id}/close-recruitment")
+    public ApiResponse<RecruitmentCloseResponse> closeRecruitment(@PathVariable("id") Long chatRoomId,
+                                                @RequestHeader("X-User-Id") Long userId) {
+        // TODO: 방장이 직접 공동구매를 마감신청하는 케이스의 처리를 담당
+        // 방장이 직접, 혹은 마감기한이 지나면 자동으로 공동구매 모집을 마감
+
+        // TODO: 방장 인증 필요
+
+        return null;
+    }
+
+    @PostMapping("/{id}/confirm-purchase")
+    public ApiResponse<String> confirmPurchase(@PathVariable("id") Long chatRoomId) {
+        // TODO: 채팅방 탈퇴 처리 및 탈퇴한 채팅방 정보 담아서 반환
+        // String 말고 좋은 방법 있는지 검토
 
         return null;
     }
