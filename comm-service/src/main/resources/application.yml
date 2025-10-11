@@ -1,0 +1,12 @@
+spring:
+  config:
+    import: "configserver:http://localhost:8888"
+  application:
+    name: comm-service
+  profiles:
+    active: ${profile:docker}
+
+
+s3:
+  bucket:
+    commImg: "sesac-bytogether-bucket"
