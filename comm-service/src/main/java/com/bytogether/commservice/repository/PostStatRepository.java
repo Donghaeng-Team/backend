@@ -8,8 +8,8 @@ import java.util.List;
 
 public interface PostStatRepository extends JpaRepository<PostStat, Long> {
 
-    List<PostStat> findByRegionAndDeletedFalse(String divisionCode, Pageable pageable);
+    List<PostStat> findByRegion(String divisionCode, Pageable pageable);
 
-    List<PostStat> findByRegionAndTagAndDeletedFalse(String divisionCode, String tag, Pageable pageable);
+    List<PostStat> findByRegionAndTag(String divisionCode, String tag, Pageable pageable);
 
 }
