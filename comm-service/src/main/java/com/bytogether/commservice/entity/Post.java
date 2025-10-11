@@ -17,7 +17,7 @@ import java.util.List;
 @Getter
 @Setter
 @Where(clause = "deleted=false")
-@SQLDelete(sql = "UPDATE posts SET deleted = true, deleted_at = now() WHERE id = ?")
+@SQLDelete(sql = "UPDATE posts SET deleted = true WHERE post_id = ?")
 @Table(name = "posts")
 public class Post {
     @Id
@@ -84,11 +84,6 @@ public class Post {
         }
     }
 
-    // 편의 메서드
-    public void addComment(Comment comment) {
-        comments.add(comment);
-        comment.setPost(this);
-    }
 
 
 
