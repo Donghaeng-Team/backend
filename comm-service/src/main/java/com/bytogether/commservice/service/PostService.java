@@ -1,12 +1,15 @@
 package com.bytogether.commservice.service;
 
 import com.bytogether.commservice.Exception.BusinessException;
+import com.bytogether.commservice.Exception.NeverOccuredException;
 import com.bytogether.commservice.dto.*;
+import com.bytogether.commservice.dto.Enum.PostStatus;
 import com.bytogether.commservice.entity.Post;
 import com.bytogether.commservice.entity.PostStat;
 import com.bytogether.commservice.repository.PostRepository;
 import com.bytogether.commservice.repository.PostStatRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -15,14 +18,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PostService {
 
     private final PostStatRepository postStatRepository;
     private final PostRepository postRepository;
+    private final S3Service s3Service;
 
     // 고정 페이징: 10개씩, 최신순
     private static final int DEFAULT_PAGE_SIZE = 10;
@@ -37,9 +43,9 @@ public class PostService {
         List<PostStat> posts;
 
         if ("all".equalsIgnoreCase(tag)) {
-            posts = postStatRepository.findByRegionAndDeletedFalse(divisionCode, pageable);
+            posts = postStatRepository.findByRegion(divisionCode, pageable);
         } else {
-            posts = postStatRepository.findByRegionAndTagAndDeletedFalse(divisionCode, tag, pageable);
+            posts = postStatRepository.findByRegionAndTag(divisionCode, tag, pageable);
         }
 
         return posts.stream()
@@ -51,7 +57,7 @@ public class PostService {
      * com-02 : 게시글 상세 조회
      */
     public PostDetailResponse getPostDetail(Long postId) {
-        Post post = postRepository.findByPostIdAndDeletedIsFalse(postId)
+        Post post = postRepository.findByPostId(postId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다. id=" + postId));
 
         PostStat stat = postStatRepository.findById(postId)
@@ -70,7 +76,7 @@ public class PostService {
      */
     public List<PostListResponse> getPostsByUser(Long userId) {
         Pageable pageable = PageRequest.of(0, DEFAULT_PAGE_SIZE, DEFAULT_SORT);
-        List<Post> posts = postRepository.findByAuthorIdAndDeletedIsFalse(userId, pageable);
+        List<Post> posts = postRepository.findByAuthorId(userId, pageable);
 
         return posts.stream()
                 .map(PostListResponse::fromPostEntity)
@@ -79,107 +85,116 @@ public class PostService {
 
 
 
-
     //**  private **//
     /**
      * com-04 : 특정  유저가 게시글 작성
      */
     @Transactional
-    public PostResponse createPost(Long userId, PostCreateAndUpdateRequest req){
-
-        // 1. 필수 필드 검증
-        validatePostRequest(req);
-
-        // 2. 이미지 접근 검증
-        validateImageAccess(userId, req.getImages());
-
-        // 3. 썸네일 기록
-        String thumbnailUrl = extractThumbnail(req);
-
-        //4. Post 생성
+    public PostResponse createPostInit(Long userId, PostCreateAndUpdateRequest req){
         Post post = Post.builder()
-                .region(req.getRegion())
-                .tag(req.getTag())
                 .authorId(userId)
-                .title(req.getTitle())
-                .content(req.getContent())
-                .imageUrls(req.getImages() != null && !req.getImages().isEmpty()
-                        ? req.getImages().stream()
-                        .map(PostImageRegister::getS3Key)
-                        .toList()
-                        : null)
-                .thumbnailUrl(thumbnailUrl)
-                .build();
-        postRepository.save(post);
-
-
-        // 5. 통계(PostStat) 생성
-        PostStat stat = PostStat.builder()
-                .post(post)
                 .region(req.getRegion())
                 .tag(req.getTag())
-                .title(req.getTitle())
-                .previewContent(extractPreview(req.getContent()))
-                .thumbnailUrl(thumbnailUrl)
-                .createdAt(LocalDateTime.now())
-                .deleted(false)
+                .title("(작성중)")
+                .content("") // 비어 있음
+                .status(PostStatus.TEMP) // 아직 미완성 상태
                 .build();
-
-        postStatRepository.save(stat);
-
-
-        // 6. 반환.
+        postRepository.saveAndFlush(post);
         return PostResponse.from(post);
-
     }
 
 
     /**
      * com-05 : 게시글 수정 (작성자 본인만)
      */
+    @Transactional
     public PostResponse  updatePost(Long userId, Long postId, PostCreateAndUpdateRequest req) {
         // 1. 게시글 존재 여부 확인
-        Post post = postRepository.findById(postId)
+        Post post = postRepository.findByPostIdIncludeTemp(postId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
+
+        // 1.5 동작 수행 전 post의 상태 확인
+        PostStatus firstStatus = post.getStatus();
+        LocalDateTime now = LocalDateTime.now();
 
         // 2. 작성자 검증
         if (!post.getAuthorId().equals(userId)) {
-            throw new BusinessException(HttpStatus.FORBIDDEN, "본인만 수정할 수 있습니다.");
+            throw new BusinessException(HttpStatus.FORBIDDEN, "본인만 생성/수정할 수 있습니다.");
         }
 
-        // 3. 필드 수정
-        if (req.getTitle() != null && !req.getTitle().isBlank()) {
-            post.setTitle(req.getTitle());
-        }
-        if (req.getContent() != null && !req.getContent().isBlank()) {
-            post.setContent(req.getContent());
-        }
-        if (req.getTag() != null) {
-            post.setTag(req.getTag());
-        }
-        if (req.getRegion() != null) {
+        // 3. 기존 이미지 목록 보관
+        List<String> oldImages = post.getImageUrls() != null
+                ? new ArrayList<>(post.getImageUrls())
+                : new ArrayList<>();
+
+
+        // 4. 필드 수정
             post.setRegion(req.getRegion());
-        }
-        if (req.getImages() != null && !req.getImages().isEmpty()) {
+            post.setTag(req.getTag());
+            post.setTitle(req.getTitle());
+            post.setContent(req.getContent());
+            post.setCreatedAt(now);
             post.setImageUrls(
                     req.getImages().stream()
                             .map(PostImageRegister::getS3Key)
                             .toList()
             );
-        }
+            String thumbnailUrl = req.getImages().stream()
+                    .filter(img->img.getOrder()!=null && img.getOrder() == 0)
+                    .map(PostImageRegister::getS3Key)
+                    .findFirst().orElse(null);
+            post.setThumbnailUrl(thumbnailUrl);
+            post.setStatus(PostStatus.PUBLISHED);
+
 
         postRepository.save(post);
 
-        // 4. PostStat 동기화
-        PostStat stat = postStatRepository.findById(postId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "PostStat 데이터가 존재하지 않습니다."));
 
-        stat.setTitle(post.getTitle());
-        stat.setTag(post.getTag());
-        stat.setRegion(post.getRegion());
-        stat.setPreviewContent(extractPreview(post.getContent()));
-        stat.setThumbnailUrl(extractThumbnail(req));
+        //5. PostStat 동기화
+        PostStat stat ;
+        log.info("[PostStat Sync] postId={}, firstStatus={}", postId, firstStatus);
+
+        switch (firstStatus) {
+            case TEMP -> {
+                // 새 게시글 최초 발행
+                stat = PostStat.builder()
+                        .post(post)
+                        .region(req.getRegion())
+                        .tag(req.getTag())
+                        .title(req.getTitle())
+                        .previewContent(extractPreview(req.getContent()))
+                        .createdAt(now)
+                        .thumbnailUrl(thumbnailUrl)
+                        .status(PostStatus.PUBLISHED)
+                        .build();
+                log.info("[PostStat Create] 신규 생성 - postId={}, region={}, tag={}", postId, req.getRegion(), req.getTag());
+            }
+
+            case PUBLISHED -> {
+                // 기존 게시글 업데이트
+                stat = postStatRepository.findById(postId)
+                        .orElseThrow(() -> {
+                            log.error("[DataMismatch] PostStat 누락 - postId={}, status={}", postId, firstStatus);
+                            return new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "PostStat 데이터가 존재하지 않습니다.");
+                        });
+
+                stat.setTitle(post.getTitle());
+                stat.setTag(post.getTag());
+                stat.setRegion(post.getRegion());
+                stat.setPreviewContent(extractPreview(post.getContent()));
+                stat.setThumbnailUrl(extractThumbnail(req));
+                log.debug("[PostStat Update] postId={}, updated title={}", postId, stat.getTitle());
+            }
+
+            default -> throw new NeverOccuredException("로직적 불가능한 상태 - 게시물 최초 상태: " + firstStatus);
+        }
+
         postStatRepository.save(stat);
+
+        // 3️⃣ S3에서 이전 이미지 전부 삭제 (비동기)
+        if (!oldImages.isEmpty()) {
+            s3Service.deleteFilesAsync(oldImages);
+        }
 
         return PostResponse.from(post);
     }
@@ -187,7 +202,7 @@ public class PostService {
     /**
      * com-06 : 게시글 삭제 (작성자 본인만)
      */
-
+    @Transactional
     public void deletePost(Long userId, Long postId) {
         // 1. 게시글 조회
         Post post = postRepository.findById(postId)
@@ -204,7 +219,7 @@ public class PostService {
         // 4. PostStat 업데이트 (삭제 플래그 true)
         PostStat stat = postStatRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "PostStat 데이터가 존재하지 않습니다."));
-        stat.setDeleted(true);
+        stat.setStatus(PostStatus.DELETED);
         postStatRepository.save(stat);
 
     }
@@ -212,13 +227,14 @@ public class PostService {
     /**
      * com-07 : 게시글 좋아요 증가
      */
+    @Transactional
     public void increaseLikeCount(Long userId, Long postId) {
         // 게시글 확인 (삭제된 게시글 방지용)
         PostStat stat = postStatRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
 
-        if (stat.isDeleted()) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "삭제된 게시글에는 좋아요를 누를 수 없습니다.");
+        if (stat.getStatus() != PostStatus.PUBLISHED) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "유효하지 않은 게시글에는 좋아요를 누를 수 없습니다.");
         }
 
         stat.setLikeCount(stat.getLikeCount() + 1);
@@ -229,26 +245,8 @@ public class PostService {
 
 
 
+
     /// Common Methods
-
-
-    private void validatePostRequest(PostCreateAndUpdateRequest req) {
-        if (req.getTitle() == null || req.getTitle().isBlank()) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "제목은 필수입니다.");
-        }
-        if (req.getContent() == null || req.getContent().isBlank()) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "내용은 필수입니다.");
-        }
-    }
-    private void validateImageAccess(Long userId, List<PostImageRegister> images) {
-        if (images == null || images.isEmpty()) return;
-
-        for (PostImageRegister img : images) {
-            if (!img.getS3Key().startsWith("posts/" + userId + "/")) {
-                throw new BusinessException(HttpStatus.FORBIDDEN, "본인 영역 외 이미지 접근 금지");
-            }
-        }
-    }
     private String extractPreview(String content) {
         if (content == null) return "";
         return content.length() > 100 ? content.substring(0, 100) + "..." : content;
