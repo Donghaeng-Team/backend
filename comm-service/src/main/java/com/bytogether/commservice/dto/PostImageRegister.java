@@ -12,12 +12,13 @@ import lombok.*;
 @Builder
 public class PostImageRegister {
 
-    /** S3 객체 키. 예: posts/2025/09/30/uuid/filename.jpg */
+    /** S3 객체 키. 예: posts/post_id/{order}-uuid-filename.jpg */
     @NotBlank
     private String s3Key;
 
     /** 표시 순서. 0부터 시작 권장 */
     @Min(0)
+    @NotNull
     private Integer order;
 
     /** 캡션(선택) */
@@ -31,12 +32,12 @@ public class PostImageRegister {
     @Pattern(regexp = "^image/.+$", message = "이미지는 image/* 만 허용됩니다")
     private String contentType;
 
-    @Positive
+    @PositiveOrZero
     private Long size;
 
-    @Positive
+    @PositiveOrZero
     private Integer width;
 
-    @Positive
+    @PositiveOrZero
     private Integer height;
 }
