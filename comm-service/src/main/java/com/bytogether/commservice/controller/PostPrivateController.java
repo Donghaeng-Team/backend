@@ -22,16 +22,16 @@ public class PostPrivateController {
      * POST /api/v1/posts/private
      */
     @PostMapping
-    public ResponseEntity<ApiResponse<?>> createPost(
+    public ResponseEntity<ApiResponse<?>> createPostInit(
             @RequestHeader("X-User-Id") Long userId,
             @RequestBody PostCreateAndUpdateRequest request) {
         log.info("게시글 작성 요청 - userId: {}", userId);
-        return ResponseEntity.ok(ApiResponse.success(postService.createPost(userId, request)));
+        return ResponseEntity.ok(ApiResponse.success(postService.createPostInit(userId, request)));
     }
 
     /**
      * com-05
-     * 게시글 수정 (작성자 본인만)
+     * 게시글 최초 생성 및 수정 (작성자 본인만)
      * PUT /api/v1/posts/private/{postId}
      */
     @PutMapping("/{postId}")

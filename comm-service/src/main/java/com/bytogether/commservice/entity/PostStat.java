@@ -1,7 +1,9 @@
 package com.bytogether.commservice.entity;
 
+import com.bytogether.commservice.dto.Enum.PostStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Where;
 
 import java.time.LocalDateTime;
 
@@ -11,10 +13,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Where(clause = "status = 'PUBLISHED'")
 @Table( name = "post_stats",
         indexes = {
-        @Index(name = "idx_region_createdAt", columnList = "region, createdAt"),
-        @Index(name = "idx_region_tag_createdAt", columnList = "region, tag, createdAt")
+        @Index(name = "idx_status_region_createdAt", columnList = "status, region, createdAt DESC"),
+        @Index(name = "idx_status_region_tag_createdAt", columnList = "status, region, tag, createdAt DESC")
+
         })
 public class PostStat {
     @Id
@@ -48,13 +52,14 @@ public class PostStat {
     @Column(nullable = false)
     private String previewContent;
 
-    @Column(nullable = false)
+    @Column(nullable = false,updatable = false,name = "created_at")
     private LocalDateTime createdAt;
 
     @Column
     private String thumbnailUrl;
 
     @Column(nullable = false)
-    private boolean deleted;
+    @Enumerated(EnumType.STRING)
+    private PostStatus status;
 
 }

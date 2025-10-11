@@ -17,8 +17,9 @@ public class ImagePresignController {
 
     private final S3Service s3Service;
 
-    @PostMapping("/upload-url")
+    @PostMapping("/upload-url/{postId}")
     public UploadUrlsResponse generateUploadUrls(@RequestHeader("X-User-Id") Long userId,
+                                                 @PathVariable Long postId,
                                                  @RequestBody UploadUrlsRequest request) {
         if (request.getFiles().size() > 5) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "이미지는 최대 5개까지 업로드할 수 있습니다.");
@@ -26,7 +27,13 @@ public class ImagePresignController {
 
         List<UploadUrlsResponse.UploadUrl> urls = request.getFiles().stream()
                 .map(file -> {
-                    String s3Key = "comm-service/posts/" + userId + "/" + file.getIndex() + "-" + UUID.randomUUID() + "-" + file.getFileName();
+                    String s3Key = String.format(
+                            "comm-service/posts/%d/%d-%s-%s",
+                            postId,
+                            file.getIndex(),
+                            UUID.randomUUID(),
+                            file.getFileName()
+                    );
                     String presignedUrl = s3Service.generatePresignedUrl(s3Key, file.getContentType());
                     return new UploadUrlsResponse.UploadUrl(presignedUrl, s3Key);
                 })
