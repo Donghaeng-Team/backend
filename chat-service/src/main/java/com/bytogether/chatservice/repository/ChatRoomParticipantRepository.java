@@ -1,28 +1,31 @@
 package com.bytogether.chatservice.repository;
 
+import com.bytogether.chatservice.dto.response.ChatRoomResponse;
 import com.bytogether.chatservice.entity.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * 채팅방 참가자 엔티티에 대한 데이터베이스 접근을 담당하는 레포지토리
  *
+ * 1.01
+ * 스크롤 로딩용 메서드 구현
+ *
  * @author jhj010311@gmail.com
- * @version 1.0
- * @since 2025-10-07
+ * @version 1.01
+ * @since 2025-10-13
  */
 
 @Repository
 public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomParticipant, Long> {
-
-    Optional<ChatRoomParticipant> findByChatRoomIdAndUserId(Long chatRoomId, Long userId);
-
-    List<ChatRoomParticipant> findByChatRoomIdAndStatus(Long chatRoomId, ParticipantStatus status);
 
     List<ChatRoomParticipant> findByChatRoomIdAndIsBuyerFalse(Long chatRoomId);
 
@@ -37,4 +40,43 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
     List<ChatRoomParticipant> findByUserIdAndStatus(Long userId, ParticipantStatus status);
 
     boolean existsByChatRoomIdAndUserIdAndIsPermanentlyBannedTrue(Long chatRoomId, Long userId);
+
+    boolean existsByChatRoomIdAndUserIdAndStatus(Long id, Long userId, ParticipantStatus participantStatus);
+
+
+    /**
+     * 내 채팅방 목록 - 최초 로드
+     * listOrderTime을 커서로 사용
+     */
+    @Query("""
+            SELECT p FROM ChatRoomParticipant p
+            JOIN FETCH p.chatRoom cr
+            WHERE p.userId = :userId
+            AND p.status IN :statuses
+            ORDER BY p.listOrderTime DESC, p.id DESC
+            """)
+    List<ChatRoomParticipant> findMyRecentChatRooms(
+            @Param("userId") Long userId,
+            @Param("statuses") List<ParticipantStatus> statuses,
+            Pageable pageable);
+
+    /**
+     * 내 채팅방 목록 - 다음 페이지 (커서 기반)
+     * listOrderTime이 cursor보다 이전인 것들 조회
+     */
+    @Query("""
+            SELECT p FROM ChatRoomParticipant p
+            JOIN FETCH p.chatRoom cr
+            WHERE p.userId = :userId
+            AND p.status IN :statuses
+            AND (p.listOrderTime < :cursor
+                OR (p.listOrderTime = :cursor AND p.id < :id))
+            ORDER BY p.listOrderTime DESC, p.id DESC
+            """)
+    List<ChatRoomParticipant> findMyChatRoomsBeforeCursor(
+            @Param("userId") Long userId,
+            @Param("statuses") List<ParticipantStatus> statuses,
+            @Param("cursor") LocalDateTime cursor,
+            @Param("id") Long id,
+            Pageable pageable);
 }
