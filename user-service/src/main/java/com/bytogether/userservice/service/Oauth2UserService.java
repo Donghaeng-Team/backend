@@ -19,20 +19,24 @@ public class Oauth2UserService{
 
     private final UserRepository userRepository;
 
+    //OAuth2User 정보
     @Transactional
     public User processOAuth2User(OAuth2User oAuth2User, String registrationId) {
 
         // User정보 추출 ( Oauth Provider의 id와 수신된 user정보 )
-        OAuth2UserInfo oAuth2UserInfo = getOAuth2UserInfo (registrationId, oAuth2User);
+        OAuth2UserInfo oAuth2UserInfo = getOAuth2UserInfo(registrationId, oAuth2User);
 
         log.info("Processing OAuth2 user - Provider: {}, ProviderId: {}",
                 oAuth2UserInfo.getProvider(), oAuth2UserInfo.getProviderId());
 
-        // 공통 처리
+        User user = userRepository.findByProviderId(oAuth2UserInfo.getProviderId())
+                .orElseGet(() -> createUser(oAuth2UserInfo));
+
         return userRepository.findByProviderId(oAuth2UserInfo.getProviderId())
                 .orElseGet(() -> createUser(oAuth2UserInfo));
     }
 
+    //OAuth2User 정보 가져오기
     private OAuth2UserInfo getOAuth2UserInfo(String registrationId, OAuth2User oAuth2User) {
         if ("kakao".equals(registrationId)) {
             return new KakaoUerInfo(oAuth2User.getAttributes());
@@ -42,13 +46,15 @@ public class Oauth2UserService{
         throw new IllegalArgumentException("Unsupported provider: " + registrationId);
     }
 
+    //Oauth2User 생성
     private User createUser(OAuth2UserInfo userInfo) {
         return userRepository.save(User.builder()
                 .providerId(userInfo.getProviderId())
                 .provider(userInfo.getProvider())
+                .avatar(userInfo.getAvatar())
                 .email(userInfo.getEmail())
                 .role(Role.USER)
-                .nickname(userInfo.getNickname())
+                .nickname(userInfo.getNickname()+"_"+userInfo.getProvider()+"_"+userInfo.getProviderId())
                 .build());
     }
 }
