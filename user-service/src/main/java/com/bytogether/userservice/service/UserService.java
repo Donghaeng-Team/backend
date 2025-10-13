@@ -21,7 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -35,10 +34,8 @@ public class UserService {
     private final AuthService authService;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
-    private final RefreshTokenService refreshTokenService;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final TokenAuditLogService tokenAuditLogService;
     private final MailService mailService;
 
     //사용자 등록
@@ -71,7 +68,7 @@ public class UserService {
         userRepository.save(newUser);
         //3. 이메일 인증 발송
         mailService.sendAuthEmailVerify(newUser.getEmail(), registerRequest.getNickname());
-    };
+    }
 
     @Transactional
     public LoginResponse login(LoginRequest loginRequest){
