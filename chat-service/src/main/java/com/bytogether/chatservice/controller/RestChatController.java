@@ -8,9 +8,11 @@ import com.bytogether.chatservice.repository.ChatRoomRepository;
 import com.bytogether.chatservice.service.ChatMessageService;
 import com.bytogether.chatservice.service.ChatRoomService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -20,9 +22,12 @@ import java.util.List;
  * v1.02
  * 계획 확인용 수도코드 작성
  *
+ * v1.03
+ * 리턴값을 ResponseEntity로 수정
+ *
  * @author jhj010311@gmail.com
- * @version 1.02
- * @since 2025-10-10
+ * @version 1.03
+ * @since 2025-10-13
  */
 
 @RestController
@@ -61,22 +66,41 @@ public class RestChatController {
     // note: 리턴값은 dto.common.ApiResponse로 통일
 
     @GetMapping
-    public ApiResponse<List<ChatRoomResponse>> chatRoomList() {
-        // TODO: 로그인한 유저의 id를 사용하여 유저가 참가한 활성 상태의 채팅방 리스트를 쿼리
+    public ResponseEntity<ApiResponse<ChatRoomListPageResponse>> chatRoomList(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime cursor,
+                                                                            @RequestParam(required = false) Long participantId,
+                                                                            @RequestParam(defaultValue = "20") int size,
+                                                                            @RequestHeader("X-User-Id") Long userId) {
+        // TODO: 로그인한 유저의 id를 사용하여 유저가 참가한 적 있는 모든 채팅방 리스트를 쿼리
         // 현재 공동구매에 참가한 인원 정보도 넣어줘야 함
 
-        return null;
+        ChatRoomListPageResponse chatRoomList = null;
+
+        if(cursor == null){
+            chatRoomList = chatRoomService.getMyChatRooms(userId, size);
+        } else {
+            chatRoomList = chatRoomService.getMyChatRooms(userId, cursor, participantId, size);
+        }
+
+
+        ApiResponse<ChatRoomListPageResponse> response = new ApiResponse<>(true, "success", chatRoomList);
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<ChatRoomResponse> enterChatRoom(@PathVariable String id) {
+    public ResponseEntity<ApiResponse<ChatRoomResponse>> enterChatRoom(@PathVariable Long id, @RequestHeader("X-User-Id") Long userId) {
         // TODO: 채팅방 id를 사용하여 개별 채팅방을 오픈
+
+        if(chatRoomService.enterChatRoom(id, userId)){
+
+        }
+
 
         return null;
     }
 
     @GetMapping("/{id}/messages")
-    public ApiResponse<ChatMessagePageResponse> getMessages(@PathVariable("id") Long chatRoomId,
+    public ResponseEntity<ApiResponse<ChatMessagePageResponse>> getMessages(@PathVariable("id") Long chatRoomId,
                                                             @RequestParam(required = false) Long cursor,
                                                             @RequestParam(defaultValue = "50") int size,
                                                             @RequestHeader("X-User-Id") Long userId) {
@@ -93,7 +117,7 @@ public class RestChatController {
     }
 
     @GetMapping("/{id}/participants")
-    public ApiResponse<ParticipantListResponse> getParticipants(@RequestBody @PathVariable("id") Long chatRoomId) {
+    public ResponseEntity<ApiResponse<ParticipantListResponse>> getParticipants(@RequestBody @PathVariable("id") Long chatRoomId) {
         // TODO: 참가자 목록 정보 쿼리
 
 
@@ -101,7 +125,7 @@ public class RestChatController {
     }
 
     @PostMapping("/{id}/leave")
-    public ApiResponse<String> leaveChatRoom(@PathVariable("id") Long chatRoomId) {
+    public ResponseEntity<ApiResponse<String>> leaveChatRoom(@PathVariable("id") Long chatRoomId) {
         // TODO: 채팅방 탈퇴 처리 및 탈퇴한 채팅방 정보 담아서 반환
         // String 말고 좋은 방법 있는지 검토
 
@@ -109,7 +133,7 @@ public class RestChatController {
     }
 
     @PostMapping("/{id}/kick")
-    public ApiResponse<String> kickParticipant(@PathVariable("id") Long chatRoomId,
+    public ResponseEntity<ApiResponse<String>> kickParticipant(@PathVariable("id") Long chatRoomId,
                                                @RequestParam Long targetUserId,
                                                @RequestHeader("X-User-Id") Long requesterId) {
         // TODO: 참가자 강퇴 처리 및 참가자 정보 담아서 반환
@@ -121,7 +145,7 @@ public class RestChatController {
     }
 
     @PostMapping("/{id}/confirm-buyer")
-    public ApiResponse<BuyerConfirmResponse> confirmBuyer(@PathVariable("id") Long chatRoomId,
+    public ResponseEntity<ApiResponse<BuyerConfirmResponse>> confirmBuyer(@PathVariable("id") Long chatRoomId,
                                                           @RequestHeader("X-User-Id") Long userId) {
         // TODO: 공동구매 참가시 처리 후 해당 정보 반환
 
@@ -129,7 +153,7 @@ public class RestChatController {
     }
 
     @PostMapping("/{id}/cancel-buyer")
-    public ApiResponse<BuyerConfirmResponse> cancelBuyer(@PathVariable("id") Long chatRoomId,
+    public ResponseEntity<ApiResponse<BuyerConfirmResponse>> cancelBuyer(@PathVariable("id") Long chatRoomId,
                                                          @RequestHeader("X-User-Id") Long userId) {
         // TODO: 공동구매 참가 취소시 처리 후 해당 정보 반환
 
@@ -137,7 +161,7 @@ public class RestChatController {
     }
 
     @PostMapping("/{id}/extend-deadline")
-    public ApiResponse<ExtendDeadlineResponse> extendDeadline(@PathVariable("id") Long chatRoomId,
+    public ResponseEntity<ApiResponse<ExtendDeadlineResponse>> extendDeadline(@PathVariable("id") Long chatRoomId,
                                               @RequestParam Integer hours,  // 연장할 시간
                                               @RequestHeader("X-User-Id") Long userId) {
         // TODO: 방장이 채팅방 마감기한을 연장신청할 경우의 처리
@@ -147,7 +171,7 @@ public class RestChatController {
     }
 
     @PostMapping("/{id}/close-recruitment")
-    public ApiResponse<RecruitmentCloseResponse> closeRecruitment(@PathVariable("id") Long chatRoomId,
+    public ResponseEntity<ApiResponse<RecruitmentCloseResponse>> closeRecruitment(@PathVariable("id") Long chatRoomId,
                                                 @RequestHeader("X-User-Id") Long userId) {
         // TODO: 방장이 직접 공동구매를 마감신청하는 케이스의 처리를 담당
         // 방장이 직접, 혹은 마감기한이 지나면 자동으로 공동구매 모집을 마감
@@ -158,7 +182,7 @@ public class RestChatController {
     }
 
     @PostMapping("/{id}/confirm-purchase")
-    public ApiResponse<String> confirmPurchase(@PathVariable("id") Long chatRoomId) {
+    public ResponseEntity<ApiResponse<String>> confirmPurchase(@PathVariable("id") Long chatRoomId) {
         // TODO: 채팅방 탈퇴 처리 및 탈퇴한 채팅방 정보 담아서 반환
         // String 말고 좋은 방법 있는지 검토
 
