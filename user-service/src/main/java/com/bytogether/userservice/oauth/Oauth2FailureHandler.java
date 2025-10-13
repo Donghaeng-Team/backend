@@ -1,4 +1,4 @@
-package com.bytogether.userservice.util.handler;
+package com.bytogether.userservice.oauth;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

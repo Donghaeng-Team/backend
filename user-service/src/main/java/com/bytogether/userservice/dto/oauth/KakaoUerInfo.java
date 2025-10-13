@@ -36,7 +36,7 @@ public class KakaoUerInfo implements OAuth2UserInfo {
         Map<String, Object> kakaoAccount = getKakaoAccount();
         String email = (String) kakaoAccount.get("email");
         if(email == null || email.trim().isEmpty()) {
-           return temporalEmailAccount();
+            return temporalEmailAccount();
         }
         return email;
     }
