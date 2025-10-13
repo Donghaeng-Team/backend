@@ -1,4 +1,4 @@
-package com.bytogether.userservice.dto.request;
+package com.bytogether.userservice.dto.response;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -7,9 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-@Setter
 @Builder
-public class NicknameCheckRequest {
-
+public class ChangeNicknameResponse {
     private String nickname;
 }
