@@ -18,7 +18,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MockUserDto {
+public class UserDto {
     private Long userId;
     private String nickname;
     private String imageUrl;

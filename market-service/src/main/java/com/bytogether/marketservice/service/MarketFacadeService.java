@@ -1,7 +1,7 @@
 package com.bytogether.marketservice.service;
 
 import com.bytogether.marketservice.client.dto.response.DivisionResponseDto;
-import com.bytogether.marketservice.client.dto.response.MockUserDto;
+import com.bytogether.marketservice.client.dto.response.UserDto;
 import com.bytogether.marketservice.constant.MarketStatus;
 import com.bytogether.marketservice.dto.request.*;
 import com.bytogether.marketservice.dto.response.*;
@@ -85,7 +85,7 @@ public class MarketFacadeService {
 
 
         // 마켓글 상태 변경 (취소)
-        marketService.changeStatus(market, MarketStatus.REMOVED);
+        marketService.changeStatus(market, MarketStatus.CANCELLED);
     }
 
     // 특정 사용자가 작성한 마켓글 조회
@@ -95,9 +95,9 @@ public class MarketFacadeService {
         Page<Market> myMarkets = marketService.getMarketsByAuthorId(targetUserId, PageRequest.of(defaultPageRequest.getPageNum(), defaultPageRequest.getPageSize()));
 
         // 작성자 정보 조회 (User Service API 호출)
-        MockUserDto userById = userService.getUserById(targetUserId);
+        UserDto userById = userService.getUserById(targetUserId);
 
-        List<MockUserDto> users = new ArrayList<>();
+        List<UserDto> users = new ArrayList<>();
         for (int i = 0; i < myMarkets.getContent().size(); i++) {
             users.add(userById);
         }
@@ -180,7 +180,7 @@ public class MarketFacadeService {
         MarketDetailResponse marketDetailResponse = MarketDetailResponse.fromEntity(byMarketId);
 
         // 임시 mock user api 호출
-        MockUserDto userById = userService.getUserById(byMarketId.getAuthorId());
+        UserDto userById = userService.getUserById(byMarketId.getAuthorId());
 
         marketDetailResponse.setAuthorNickname(userById.getNickname()); // TODO: 실제 닉네임으로 교체
         marketDetailResponse.setAuthorProfileImageUrl(userById.getImageUrl()); // TODO: 실제 프로필 이미지 URL로 교체
@@ -241,7 +241,7 @@ public class MarketFacadeService {
         List<Long> authorIds = markets.stream()
                 .map(Market::getAuthorId)
                 .toList();
-        List<MockUserDto> users = userService.getUsersByIds(authorIds);
+        List<UserDto> users = userService.getUsersByIds(authorIds);
 
         // 6. 현재 모집 참여 인원 수 조회 (chat Service API 호출) - TODO: 추후 구현 - 2025-10-10
 

@@ -1,8 +1,10 @@
 package com.bytogether.marketservice.service.sub;
 
 import com.bytogether.marketservice.client.UserServiceClient;
-import com.bytogether.marketservice.client.dto.response.MockUserDto;
+import com.bytogether.marketservice.client.dto.response.UserDto;
+import com.bytogether.marketservice.exception.MarketException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,12 +22,20 @@ import java.util.List;
 public class UserService {
     private final UserServiceClient userServiceClient;
 
-    public MockUserDto getUserById(Long userId) {
-        return userServiceClient.getUserById(userId);
+    public UserDto getUserById(Long userId) {
+        List<UserDto> usersByIds = userServiceClient.getUsersByIds(List.of(userId));
+        if (usersByIds.isEmpty()) {
+            throw new MarketException("User not found for id: "+ userId, HttpStatus.NOT_FOUND);
+        }
+        return userServiceClient.getUsersByIds(List.of(userId)).stream().findFirst().orElse(null);
     }
 
-    public List<MockUserDto> getUsersByIds(List<Long> authorIds) {
-        return userServiceClient.getUsersByIds(authorIds);
+    public List<UserDto> getUsersByIds(List<Long> authorIds) {
+        List<UserDto> usersByIds = userServiceClient.getUsersByIds(authorIds);
+        if (usersByIds.isEmpty()) {
+            throw new MarketException("Users not found for ids: "+ authorIds, HttpStatus.NOT_FOUND);
+        }
+        return usersByIds;
     }
 
 }

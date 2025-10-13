@@ -1,7 +1,8 @@
 package com.bytogether.marketservice.client;
 
-import com.bytogether.marketservice.client.dto.response.MockUserDto;
+import com.bytogether.marketservice.client.dto.response.UserDto;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
 
@@ -13,16 +14,11 @@ import java.util.List;
  * @since 2025-09-31
  */
 
-// TODO: 실제 User Service가 준비되면 구현체로 변경 - 2025-10-10
 @FeignClient(name = "user-service")
 public interface UserServiceClient {
 
-    default MockUserDto getUserById(Long userId) {
-        return new MockUserDto(userId, "mockUser", "mockImageUrl");
-    }
+    @PostMapping("/internal/v1/user/usersinfo")
+    List<UserDto> getUsersByIds(List<Long> authorIds);
 
-    default List<MockUserDto> getUsersByIds(List<Long> authorIds) {
-        return authorIds.stream().map(id -> new MockUserDto(id, "mockUser" + id, "mockImageUrl" + id)).toList();
-    }
 
 }
