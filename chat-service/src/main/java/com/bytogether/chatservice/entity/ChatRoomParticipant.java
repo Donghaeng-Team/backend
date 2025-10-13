@@ -54,6 +54,10 @@ public class ChatRoomParticipant {
     @Column(name = "last_left_at")
     private LocalDateTime lastLeftAt;
 
+    // 채팅방 정렬용 컬럼
+    @Column(name = "list_order_time")
+    private LocalDateTime listOrderTime;
+
     // 공동구매 참여 여부
     @Column(name = "is_buyer")
     @Builder.Default

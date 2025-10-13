@@ -66,9 +66,13 @@ public class ChatRoom {
     @Column(name = "recruitment_closed_at")
     private LocalDateTime recruitmentClosedAt;
 
+    // 상품 분배까지 끝내고 방장이 완전히 종료시킨 시각
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
+    // 이 채팅방에서 마지막으로 채팅이 오간 시각
+    @Column(name = "last_message_at")
+    private LocalDateTime lastMessageAt;
 
     // 타임스탬프
     @CreationTimestamp
