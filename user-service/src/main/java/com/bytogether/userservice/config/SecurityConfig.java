@@ -1,18 +1,16 @@
 package com.bytogether.userservice.config;
 
-import com.bytogether.userservice.util.handler.Oauth2FailureHandler;
-import com.bytogether.userservice.util.handler.Oauth2SuccessHandler;
+import com.bytogether.userservice.oauth.Oauth2FailureHandler;
+import com.bytogether.userservice.oauth.Oauth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 @Configuration
 @EnableWebSecurity
@@ -36,7 +34,7 @@ public class SecurityConfig {
                 )
                 .oauth2Login(auth -> auth
                         .redirectionEndpoint(endpoint -> endpoint
-                                .baseUri("//login/oauth2/code/kakao"))
+                                .baseUri("/login/oauth2/code/{registrationId}"))
                         .successHandler(successHandler)
                         .failureHandler(failureHandler));
         return http.build();
