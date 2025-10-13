@@ -188,6 +188,10 @@ public class UserService {
         User user = getOptionalUserById(userId).orElseThrow(
                 () -> new RuntimeException("사용자의 정보가 없습니다.")
         );
+        if(existsByNickname(request.getNickname())){
+            throw new IllegalStateException("사용할수 없는 닉네임 입니다");
+        };
+
         String newNickname = request.getNickname();
         user.setNickname(newNickname);
         User savedUser = userRepository.save(user);
