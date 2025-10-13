@@ -43,29 +43,20 @@ public class CartService {
     }
 
     // 찜하기 삭제
-    public void deleteCart(Long userId, Long cartId) {
+    public void deleteCart(Long userId, Long marketId) {
         // 존재하는 찜하기인지 확인
-        Optional<Cart> cart = cartRepository.findById(cartId);
+        Optional<Cart> byUserIdAndMarketIdAndStatus = cartRepository.findByUserIdAndMarketIdAndStatus(userId, marketId, CartStatus.ADDED);
 
-
-        if (cart.isPresent()) {
-            // 존재 시
-
-            // 해당 찜하기가 요청한 유저의 찜하기인지 확인
-            if (!cart.get().getUserId().equals(userId)) {
-                throw new MarketException("Unauthorized access to cart", HttpStatus.FORBIDDEN);
-            }
-
-            // 상태가 ADDED인지 확인
-            if (cart.get().getStatus() != CartStatus.ADDED) {
-                return; // 이미 REMOVED 상태인 경우 아무 작업도 수행하지 않음
-            }
-
-            // 찜하기 상태를 REMOVED로 변경
-            Cart existingCart = cart.get();
+        if (byUserIdAndMarketIdAndStatus.isEmpty()) {
+            // 찜하기가 존재하지 않음
+            return; // 존재하지 않으면 아무 작업도 수행하지 않음
+        }else {
+            // 찜하기가 존재함
+            Cart existingCart = byUserIdAndMarketIdAndStatus.get();
             existingCart.setStatus(CartStatus.REMOVED);
             cartRepository.save(existingCart);
         }
+
     }
 
     // 내 찜하기 목록 조회

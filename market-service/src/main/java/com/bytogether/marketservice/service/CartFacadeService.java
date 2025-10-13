@@ -47,9 +47,9 @@ public class CartFacadeService {
     }
 
     // 찜하기 삭제
-    public void deleteCart(Long requestUserID, Long cartId) {
+    public void deleteCart(Long requestUserID, Long marketId) {
         //  찜하기 삭제
-        cartService.deleteCart(requestUserID, cartId);
+        cartService.deleteCart(requestUserID, marketId);
     }
 
     // 내가 찜한 목록 보기

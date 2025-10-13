@@ -37,9 +37,9 @@ public class CartController {
     }
 
     // 2. 찜하기 삭제 deleteCart - private
-    @DeleteMapping("/{cartId}")
-    public ResponseEntity<ApiResponse<?>> deleteCart(@RequestHeader(value = "X-User-Id", required = true) Long requestUserID, @PathVariable Long cartId) {
-        cartFacadeService.deleteCart(requestUserID, cartId);
+    @DeleteMapping("/{marketId}")
+    public ResponseEntity<ApiResponse<?>> deleteCart(@RequestHeader(value = "X-User-Id", required = true) Long requestUserID, @PathVariable Long marketId) {
+        cartFacadeService.deleteCart(requestUserID, marketId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
