@@ -54,7 +54,7 @@ public class MarketController {
     }
 
     // 3. 마켓글 삭제 (취소) deleteMarketPost - private (완료)
-    // TODO: 실제로는 삭제가 아닌 취소
+    // 실제로는 삭제가 아닌 취소
     @DeleteMapping("/{marketId}")
     public ResponseEntity<ApiResponse<Boolean>> deleteMarketPost(@RequestHeader(value = "X-User-Id", required = true) Long requestUserID, @PathVariable Long marketId) {
         marketFacadeService.deleteMarketPost(requestUserID, marketId);
