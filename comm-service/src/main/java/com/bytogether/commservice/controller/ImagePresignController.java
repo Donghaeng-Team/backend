@@ -28,7 +28,7 @@ public class ImagePresignController {
         List<UploadUrlsResponse.UploadUrl> urls = request.getFiles().stream()
                 .map(file -> {
                     String s3Key = String.format(
-                            "comm-service/posts/%d/%d-%s-%s",
+                            "comm-service/posts/%d/%d_%s_%s",
                             postId,
                             file.getIndex(),
                             UUID.randomUUID(),
