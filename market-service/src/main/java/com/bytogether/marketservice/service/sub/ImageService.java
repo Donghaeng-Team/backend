@@ -24,11 +24,13 @@ import java.util.concurrent.CompletableFuture;
 @Service
 @RequiredArgsConstructor
 public class ImageService {
-    @Value("${cloud.aws.s3.bucket.image-dir:static/market/images/}")
-    private String IMAGE_DIR = "static/market/images/"; // 이미지 저장 디렉토리
+    // 최종 static/market/new/images/ 1 / 1 _ 57c5c426-702e-4528-a98f-070ccac85484 _ 오리지널파일네임 .png
+    // dir + marketId + / + order + _ + UUID + _ + originalFileName + 확장자
+    @Value("${cloud.aws.s3.bucket.image-dir:static/market/new/images/}")
+    private String IMAGE_DIR;
 
-    @Value("${cloud.aws.s3.bucket.thumbnail-dir:static/market/thumbnails/}")
-    private String THUMBNAIL_DIR = "static/market/thumbnails/"; // 썸네일 이미지 접두사
+    @Value("${cloud.aws.s3.bucket.thumbnail-dir:static/market/new/thumbnails/}")
+    private String THUMBNAIL_DIR;
 
     private static final List<String> ALLOWED_MIME_TYPES = List.of("image/jpeg", "image/jpg", "image/png", "image/webp");
 
@@ -55,6 +57,9 @@ public class ImageService {
             // 이미지 확장자가 MIME 타입과 일치하는지 확인
             String fileExtension = image.getOriginalFilename().substring(image.getOriginalFilename().lastIndexOf(".") + 1).toLowerCase();
             String mimeType = image.getContentType();
+            if (mimeType == null) {
+                throw new MarketException("MIME type is null for image: " + image.getOriginalFilename(), HttpStatus.BAD_REQUEST);
+            }
             if ((fileExtension.equals("jpg") || fileExtension.equals("jpeg")) && !mimeType.equals("image/jpeg") && !mimeType.equals("image/jpg")) {
                 throw new MarketException("File extension does not match MIME type for image: " + image.getOriginalFilename(), HttpStatus.BAD_REQUEST);
             }
@@ -84,15 +89,11 @@ public class ImageService {
 
             MultipartFile image = images.get(i);
             String originalFilename = image.getOriginalFilename();
-            String extension = originalFilename != null && originalFilename.contains(".")
-                    ? originalFilename.substring(originalFilename.lastIndexOf("."))
-                    : "";
 
-            // 고유한 파일명 생성 ( marketId + order + UUID + 확장자 )
+            // 고유한 파일명 생성 ( order_uuid_originalFileName )
             String uuid = java.util.UUID.randomUUID().toString();
-            String uniqueFilename = marketId + "_" + (i + 1) + "_" + uuid + extension;
-            System.out.println("uniqueFilename = " + uniqueFilename);
-            String imagePath = IMAGE_DIR + uniqueFilename;
+            String uniqueFilename = (i + 1) + "_" + uuid + "_" + originalFilename;
+            String imagePath = IMAGE_DIR + marketId + "/" + uniqueFilename;
 
             // 이미지 업로드
             futures.add(CompletableFuture.runAsync(() -> imageHandler.uploadImageByS3(image, imagePath)));
@@ -104,8 +105,9 @@ public class ImageService {
 
             if (i == 0) {
                 // 썸네일 이미지 추가 (0번 인덱스)
-                String thumbnailUniqueFilename = marketId + "_" + i + "_" + uuid + extension;
-                Image newThumbnailImage = Image.createImage(marketId, 0, originalFilename, thumbnailUniqueFilename, THUMBNAIL_DIR + thumbnailUniqueFilename, image.getContentType());
+                String thumbnailUniqueFilename = i + "_" + uuid + "_" + originalFilename;
+                String thumbnailPath = THUMBNAIL_DIR + marketId + "/" + thumbnailUniqueFilename;
+                Image newThumbnailImage = Image.createImage(marketId, 0, originalFilename, thumbnailUniqueFilename, thumbnailPath, image.getContentType());
                 newImages.add(newThumbnailImage);
             }
 
