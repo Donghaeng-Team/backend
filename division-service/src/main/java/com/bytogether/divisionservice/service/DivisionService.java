@@ -36,14 +36,14 @@ public class DivisionService {
 
     // 읍면동 검색 (읍면동 코드로) - 완성
     public Optional<Division> getDivisionByCode(Emd emd) {
-        return divisionRepository.findById(emd.getEmyCode());
+        return divisionRepository.findById(emd.getEmdCode());
     }
 
     //읍면동 리스트 검색 (읍면동 코드로) - 완성 (최적화는 이후에 현재 쿼리 여러번 날림 - 250923 14:26)
     public List<Optional<Division>> getDivisionListByCodeList(@Valid Emds emds) {
         List<Optional<Division>> list = new ArrayList<>();
         emds.getEmdList().forEach(emd -> {
-            Optional<Division> byCode = divisionRepository.findById(emd.getEmyCode());
+            Optional<Division> byCode = divisionRepository.findById(emd.getEmdCode());
             list.add(byCode);
         });
 
@@ -52,7 +52,7 @@ public class DivisionService {
 
     // 인접동 검색 (읍면동 코드로) - 완성
     public List<Division> getNearDivisionByCode(EmdDepth emdDepth) {
-        return divisionRepository.getNearDivisionByCode(emdDepth.getEmyCode(), emdDepth.getDepth());
+        return divisionRepository.getNearDivisionByCode(emdDepth.getEmdCode(), emdDepth.getDepth());
     }
 
     // 인접동 검색 (좌표로) - 완성

@@ -1,13 +1,7 @@
 package com.bytogether.userservice.service;
 
-import com.bytogether.userservice.dto.request.EmailCheckRequest;
-import com.bytogether.userservice.dto.request.LoginRequest;
-import com.bytogether.userservice.dto.request.NicknameCheckRequest;
-import com.bytogether.userservice.dto.request.RegisterRequest;
-import com.bytogether.userservice.dto.response.EmailCheckResponse;
-import com.bytogether.userservice.dto.response.LoginResponse;
-import com.bytogether.userservice.dto.response.NickNameCheckResponse;
-import com.bytogether.userservice.dto.response.UserInfoResponse;
+import com.bytogether.userservice.dto.request.*;
+import com.bytogether.userservice.dto.response.*;
 import com.bytogether.userservice.model.*;
 import com.bytogether.userservice.repository.RefreshTokenRepository;
 
@@ -28,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -39,43 +34,9 @@ public class UserService {
     private final AuthService authService;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
-    private final RefreshTokenService refreshTokenService;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final TokenAuditLogService tokenAuditLogService;
-
-    public Boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
-
-    public Boolean existsByNickname(String nickname) {
-       return userRepository.existsByNickname(nickname);
-    }
-
-    public UserInfoResponse findUserByUserId(Long userId) {
-       User targetUser = userRepository.findById(userId).orElseThrow(
-                () -> new UsernameNotFoundException("User with userId " + userId + " not found")
-        );
-
-       return UserInfoResponse.builder()
-                .email(targetUser.getEmail())
-                .nickName(targetUser.getNickname())
-                .avatarUrl(targetUser.getAvatar())
-                .build();
-    }
-
-//    public UserInfoResponse findUsersByUserId(Long userId) {
-//        User targetUsers = userRepository.findUsersByIds(userId).orElseThrow(
-//                () -> new UsernameNotFoundException("User with userId " + userId + " not found")
-//        );
-//
-//        return UserInfoResponse.builder()
-//                .email(targetUser.getEmail())
-//                .nickName(targetUser.getNickname())
-//                .avatarUrl(targetUser.getAvatar())
-//                .build();
-//    }
-
+    private final MailService mailService;
 
     //사용자 등록
     @Transactional
@@ -100,32 +61,35 @@ public class UserService {
                 .password(registerRequest.getPassword())
                 .provider(InitialProvider.LOCAL)
                 .role(Role.USER)
-//                .verify(false)
+                .verify(false)
                 .build();
 
         log.info(newUser.toString());
         userRepository.save(newUser);
-//        //3. 이메일 인증 발송
-//        mailService.sendAuthEmailVerify(newUser.getEmail(), registerRequest.getNickname());
-    };
+        //3. 이메일 인증 발송
+        mailService.sendAuthEmailVerify(newUser.getEmail(), registerRequest.getNickname());
+    }
 
     @Transactional
     public LoginResponse login(LoginRequest loginRequest){
-        //1. 사용자 조회
-        User user = getOptionalUser(loginRequest.getEmail()).orElseThrow(
+        //1. 사용자 조회 및 비번 일치확인
+        User user = getOptionalUserByEmailAndProvider(
+                loginRequest.getEmail(), InitialProvider.LOCAL)
+                .orElseThrow(
                 () -> new RuntimeException("사용자의 정보가 없거나 비밀번호가 일치하지 않습니다. 요청 이메일: " +loginRequest.getEmail())
         );
+        if(!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())){
+            throw new BadCredentialsException("사용자의 비밀번호가 일치하지 않습니다.");
+        };
+        Long userId = user.getId();
+        Role role = user.getRole();
 
         //2. 이메일 인증 여부확인
 //        if(!user.getVerify()){
 //            throw new BadCredentialsException("이메일 인증이 완료되지 않았습니다");
 //        }
 
-        //3. 토큰 발행
-        Long userId = user.getId();
-        Role role = user.getRole();
-
-        //4.Redis에서 저장된 refreshToken삭제
+        //3.Redis에서 저장된 refreshToken삭제 후 토큰 재발행
         refreshTokenRepository.findByUserId(userId)
                 .ifPresent(refreshTokenRepository::delete);
 
@@ -145,7 +109,7 @@ public class UserService {
     }
 
     public LoginResponse refresh(HttpServletRequest request, HttpServletResponse response) {
-        //1. Token추출
+        //1. Toke 추출
         Optional<String> refreshTokenOptional = authService.getRefreshToken(request);
         if (refreshTokenOptional.isEmpty()) {
             throw new BadCredentialsException("Refresh Token을 발견하지 못했습니다.");
@@ -201,17 +165,119 @@ public class UserService {
                 : NickNameCheckResponse.available();
     }
 
-    public Optional<User> getOptionalUser(String email) {
-        Optional<User> result = userRepository.findByEmail(email);
-        log.info("getOptionalUser email: "+ email);
-        log.info("조회 결과 존재 여부: {}", result.isPresent());
-        if (result.isPresent()) {
-            User user = result.get();
+    //사용자의 비밀번호 변경
+    public void changePassword(Long userId, ChangePasswordRequest request){
+        User user = getOptionalUserById(userId).orElseThrow(
+                () -> new RuntimeException("사용자의 정보가 없습니다.")
+        );
+
+        if(!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())){
+            throw new BadCredentialsException("사용자의 비밀번호가 일치하지 않습니다");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        userRepository.save(user);
+        log.info("사용자의 비밀번호가 변경되었습니다");
+    }
+
+    //사용자의 닉네임 변경
+    public ChangeNicknameResponse changeNickname(Long userId, ChangeNicknameRequest request){
+        User user = getOptionalUserById(userId).orElseThrow(
+                () -> new RuntimeException("사용자의 정보가 없습니다.")
+        );
+        if(existsByNickname(request.getNickname())){
+            throw new IllegalStateException("사용할수 없는 닉네임 입니다");
+        };
+
+        String newNickname = request.getNickname();
+        user.setNickname(newNickname);
+        User savedUser = userRepository.save(user);
+        log.info("사용자의 닉네임이 변경: "+ savedUser.getNickname());
+        return ChangeNicknameResponse.builder()
+                .nickname(savedUser.getNickname())
+                .build();
+    }
+
+    //사용자의 비밀번호 찾기 기능
+    public void findPassword(EmailRequestDto request){
+        String userEmail = request.getEmail();
+        User user = getOptionalUserByEmailAndProvider(userEmail, InitialProvider.LOCAL).orElseThrow(
+                () -> new RuntimeException("사용자가 없습니다")
+        );
+        //사용자의 계정으로 이메일 발송
+        mailService.sendPasswordEmailVerify(user.getEmail(), user.getNickname());
+    }
+
+    //사용자의 비밀번호 재설정
+    public void reverifyEmail(EmailRequestDto request){
+        String userEmail = request.getEmail();
+        User user = getOptionalUserByEmailAndProvider(userEmail, InitialProvider.LOCAL).orElseThrow(
+                () -> new RuntimeException("사용자가 없습니다")
+        );
+        //사용자의 계정으로 이메일 발송
+        mailService.sendAuthEmailVerify(user.getEmail(), user.getNickname());
+    }
+
+    private Boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    private Boolean existsByNickname(String nickname) {
+        return userRepository.existsByNickname(nickname);
+    }
+
+    public UserInfoResponse findUserByUserId(Long userId) {
+        User targetUser = userRepository.findById(userId).orElseThrow(
+                () -> new UsernameNotFoundException("User with userId " + userId + " not found")
+        );
+
+        return UserInfoResponse.builder()
+                .email(targetUser.getEmail())
+                .nickName(targetUser.getNickname())
+                .avatarUrl(targetUser.getAvatar())
+                .build();
+    }
+
+   //다수의 사용자 정보조회
+    public List<UserInternalResponse> findAllUSers(UsersInfoRequest request) {
+        List<User> users = userRepository.findAllById(request.getUserIds());
+        List<UserInternalResponse> responses = users.stream()
+                .map(user -> new UserInternalResponse(
+                        user.getId(),
+                        user.getNickname(),
+                        user.getAvatar()
+                )).
+                toList();
+        return responses;
+    }
+
+    public Optional<User> getOptionalUserByEmailAndProvider(String email, InitialProvider provider) {
+        Optional<User> result = userRepository.findByEmailAndProvider(email, provider);
+        OptionalUserQueryResult( "email", email, result );
+        return result;
+    }
+
+    public Optional<User> getOptionalUserById(Long userId) {
+        Optional<User> result = userRepository.findById(userId);
+        OptionalUserQueryResult( "userId", userId, result );
+        return result;
+    }
+
+    public Optional<User> getOptionalUserByIdAndProvider(Long userId, InitialProvider provider) {
+        Optional<User> result = userRepository.findByIdAndProvider(userId, provider);
+        OptionalUserQueryResult( "userId", userId, result );
+        return result;
+    }
+
+    private void OptionalUserQueryResult(String queryInfo, Object queryValue, Optional<User> optionalUser) {
+        log.info("getOptionalUser with "+ queryInfo);
+        log.info("조회 결과 존재 여부: {}", optionalUser.isPresent());
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
             log.info("조회된 사용자: ID={}, Email={}", user.getId(), user.getEmail());
         } else {
-            log.error("사용자를 찾을 수 없음: {}", email);
+            log.error("사용자를 찾을 수 없음: {}", queryInfo);
         }
-        return result;
     }
 
 }

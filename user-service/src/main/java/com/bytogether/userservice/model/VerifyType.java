@@ -3,7 +3,7 @@ package com.bytogether.userservice.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 public enum VerifyType {
-    EMAIL, PASSWORD, PASSWORD_VERIFY;
+    EMAIL, PASSWORD;
 
     @JsonCreator
     public static VerifyType from (String value){
