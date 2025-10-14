@@ -1,7 +1,8 @@
 package com.bytogether.marketservice.service.sub;
 
 import com.bytogether.marketservice.client.UserServiceClient;
-import com.bytogether.marketservice.client.dto.response.UserDto;
+import com.bytogether.marketservice.client.dto.request.UsersInfoRequest;
+import com.bytogether.marketservice.client.dto.response.UserInternalResponse;
 import com.bytogether.marketservice.exception.MarketException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,16 +23,20 @@ import java.util.List;
 public class UserService {
     private final UserServiceClient userServiceClient;
 
-    public UserDto getUserById(Long userId) {
-        List<UserDto> usersByIds = userServiceClient.getUsersByIds(List.of(userId));
+    public UserInternalResponse getUserById(Long userId) {
+        UsersInfoRequest usersInfoRequest = new UsersInfoRequest();
+        usersInfoRequest.setUserIds(List.of(userId));
+        List<UserInternalResponse> usersByIds = userServiceClient.getUsersByIds(usersInfoRequest);
         if (usersByIds.isEmpty()) {
             throw new MarketException("User not found for id: "+ userId, HttpStatus.NOT_FOUND);
         }
-        return userServiceClient.getUsersByIds(List.of(userId)).stream().findFirst().orElse(null);
+        return usersByIds.stream().findFirst().orElse(null);
     }
 
-    public List<UserDto> getUsersByIds(List<Long> authorIds) {
-        List<UserDto> usersByIds = userServiceClient.getUsersByIds(authorIds);
+    public List<UserInternalResponse> getUsersByIds(List<Long> authorIds) {
+        UsersInfoRequest usersInfoRequest = new UsersInfoRequest();
+        usersInfoRequest.setUserIds(authorIds);
+        List<UserInternalResponse> usersByIds = userServiceClient.getUsersByIds(usersInfoRequest);
         if (usersByIds.isEmpty()) {
             throw new MarketException("Users not found for ids: "+ authorIds, HttpStatus.NOT_FOUND);
         }

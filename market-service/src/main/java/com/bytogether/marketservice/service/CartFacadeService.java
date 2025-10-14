@@ -1,7 +1,7 @@
 package com.bytogether.marketservice.service;
 
 
-import com.bytogether.marketservice.client.dto.response.UserDto;
+import com.bytogether.marketservice.client.dto.response.UserInternalResponse;
 import com.bytogether.marketservice.dto.request.CartListRequest;
 import com.bytogether.marketservice.dto.response.CartResponse;
 import com.bytogether.marketservice.dto.response.MarketListResponse;
@@ -64,7 +64,7 @@ public class CartFacadeService {
 
         // 마켓 작성자 정보 조회
         List<Long> authorIds = markets.stream().map(Market::getAuthorId).distinct().toList();
-        List<UserDto> authors = userService.getUsersByIds(authorIds);
+        List<UserInternalResponse> authors = userService.getUsersByIds(authorIds);
 
         MarketListResponse marketListResponse = MarketListResponse.fromEntities(new PageImpl<>(markets, myCarts.getPageable(), myCarts.getTotalElements()), authors);
 

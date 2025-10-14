@@ -1,8 +1,10 @@
 package com.bytogether.marketservice.client;
 
-import com.bytogether.marketservice.client.dto.response.UserDto;
+import com.bytogether.marketservice.client.dto.request.UsersInfoRequest;
+import com.bytogether.marketservice.client.dto.response.UserInternalResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -18,7 +20,7 @@ import java.util.List;
 public interface UserServiceClient {
 
     @PostMapping("/internal/v1/user/usersinfo")
-    List<UserDto> getUsersByIds(List<Long> authorIds);
+    List<UserInternalResponse> getUsersByIds(@RequestBody UsersInfoRequest usersInfoRequest);
 
 
 }

@@ -1,7 +1,7 @@
 package com.bytogether.marketservice.service;
 
 import com.bytogether.marketservice.client.dto.response.DivisionResponseDto;
-import com.bytogether.marketservice.client.dto.response.UserDto;
+import com.bytogether.marketservice.client.dto.response.UserInternalResponse;
 import com.bytogether.marketservice.constant.MarketStatus;
 import com.bytogether.marketservice.dto.request.*;
 import com.bytogether.marketservice.dto.response.*;
@@ -95,9 +95,9 @@ public class MarketFacadeService {
         Page<Market> myMarkets = marketService.getMarketsByAuthorId(targetUserId, PageRequest.of(defaultPageRequest.getPageNum(), defaultPageRequest.getPageSize()));
 
         // 작성자 정보 조회 (User Service API 호출)
-        UserDto userById = userService.getUserById(targetUserId);
+        UserInternalResponse userById = userService.getUserById(targetUserId);
 
-        List<UserDto> users = new ArrayList<>();
+        List<UserInternalResponse> users = new ArrayList<>();
         for (int i = 0; i < myMarkets.getContent().size(); i++) {
             users.add(userById);
         }
@@ -179,11 +179,12 @@ public class MarketFacadeService {
         // 응답 생성하기
         MarketDetailResponse marketDetailResponse = MarketDetailResponse.fromEntity(byMarketId);
 
-        // 임시 mock user api 호출
-        UserDto userById = userService.getUserById(byMarketId.getAuthorId());
+        // 작성자 닉네임, 프로필 이미지 URL 조회 (User Service API 호출)
+        UserInternalResponse userById = userService.getUserById(byMarketId.getAuthorId());
 
-        marketDetailResponse.setAuthorNickname(userById.getNickname()); // TODO: 실제 닉네임으로 교체
-        marketDetailResponse.setAuthorProfileImageUrl(userById.getImageUrl()); // TODO: 실제 프로필 이미지 URL로 교체
+
+        marketDetailResponse.setAuthorNickname(userById.getNickName());
+        marketDetailResponse.setAuthorProfileImageUrl(userById.getImageUrl());
 
 
         // 현재 모집 참여 인원 수 조회 (chat Service API 호출) - TODO: 추후 구현 - 2025-10-10
@@ -241,7 +242,7 @@ public class MarketFacadeService {
         List<Long> authorIds = markets.stream()
                 .map(Market::getAuthorId)
                 .toList();
-        List<UserDto> users = userService.getUsersByIds(authorIds);
+        List<UserInternalResponse> users = userService.getUsersByIds(authorIds);
 
         // 6. 현재 모집 참여 인원 수 조회 (chat Service API 호출) - TODO: 추후 구현 - 2025-10-10
 

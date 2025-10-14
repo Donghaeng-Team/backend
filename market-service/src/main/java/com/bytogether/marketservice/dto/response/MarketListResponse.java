@@ -1,7 +1,7 @@
 package com.bytogether.marketservice.dto.response;
 
 
-import com.bytogether.marketservice.client.dto.response.UserDto;
+import com.bytogether.marketservice.client.dto.response.UserInternalResponse;
 import com.bytogether.marketservice.entity.Market;
 import lombok.*;
 import org.springframework.data.domain.Page;
@@ -27,14 +27,14 @@ import java.util.List;
 public class MarketListResponse extends DefaultPageResponse {
     private List<MarketSimpleResponse> markets;
 
-    public static MarketListResponse fromEntities(Page<Market> markets, List<UserDto> users) {
+    public static MarketListResponse fromEntities(Page<Market> markets, List<UserInternalResponse> users) {
         List<MarketSimpleResponse> marketResponses = markets.stream()
                 .map(market -> {
-                    UserDto user = users.stream()
+                    UserInternalResponse user = users.stream()
                             .filter(u -> u.getUserId().equals(market.getAuthorId()))
                             .findFirst()
                             .orElse(null);
-                    return MarketSimpleResponse.fromEntity(market, 0, user.getNickname(), user.getImageUrl());
+                    return MarketSimpleResponse.fromEntity(market, 0, user.getNickName(), user.getImageUrl());
                 })
                 .toList();
 
