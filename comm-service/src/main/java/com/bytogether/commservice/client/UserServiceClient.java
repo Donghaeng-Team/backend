@@ -1,6 +1,5 @@
 package com.bytogether.commservice.client;
 
-import com.bytogether.commservice.client.dto.UserDto;
 import com.bytogether.commservice.client.dto.UserInternalResponse;
 import com.bytogether.commservice.client.dto.UsersInfoRequest;
 import org.springframework.cloud.openfeign.FeignClient;
