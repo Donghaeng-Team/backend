@@ -23,4 +23,11 @@ public class DivisionController {
         return divisionService.getDivisionByCoordinates(coordinate);
     }
 
+    // 읍면동 검색 (읍면동 코드로) - 완성
+    @GetMapping("/public/by-code")
+    public Optional<Division> getDivisionByCode(@Valid Emd emd) {
+        return divisionService.getDivisionByCode(emd);
+    }
+
+
 }
