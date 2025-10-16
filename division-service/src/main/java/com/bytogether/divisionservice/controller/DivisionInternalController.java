@@ -24,11 +24,12 @@ public class DivisionInternalController {
     }
 
 
-    // 읍면동 검색 (읍면동 코드로) - 완성
-    @GetMapping("/by-code")
-    public Optional<Division> getDivisionByCode(@Valid Emd emd) {
-        return divisionService.getDivisionByCode(emd);
-    }
+    // public 으로 이동 - 251016
+//    // 읍면동 검색 (읍면동 코드로) - 완성
+//    @GetMapping("/by-code")
+//    public Optional<Division> getDivisionByCode(@Valid Emd emd) {
+//        return divisionService.getDivisionByCode(emd);
+//    }
 
     //읍면동 리스트 검색 (읍면동 코드로) - 완성 (최적화는 이후에 현재 쿼리 여러번 날림 - 250923 14:26)
     @PostMapping("/list/by-code")
