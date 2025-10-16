@@ -34,7 +34,7 @@ public class ChatMessage {
     @JoinColumn(name = "chat_room_id", nullable = false)
     private ChatRoom chatRoom;
 
-    @Column(name = "sender_user_id", nullable = false)
+    @Column(name = "sender_user_id", nullable = true)
     private Long senderUserId;
 
     @Column(name = "message_content", nullable = false, columnDefinition = "TEXT")
@@ -61,5 +61,15 @@ public class ChatMessage {
     public void softDelete() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
+    }
+
+    // 시스템 메시지 생성 팩토리 메서드
+    public static ChatMessage systemMessage(ChatRoom room, String content) {
+        return ChatMessage.builder()
+                .chatRoom(room)
+                .senderUserId(null)  // NULL로 설정
+                .messageType(MessageType.SYSTEM)
+                .messageContent(content)
+                .build();
     }
 }

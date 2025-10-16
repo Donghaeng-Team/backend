@@ -25,7 +25,9 @@ import java.time.LocalDateTime;
                 @Index(name = "idx_participant_room_status",
                         columnList = "chat_room_id, status"),
                 @Index(name = "idx_participant_user",
-                        columnList = "user_id, status")
+                        columnList = "user_id, status"),
+                @Index(name = "idx_participant_user_order",
+                        columnList = "user_id, list_order_time DESC")
         }
 )
 @Getter
