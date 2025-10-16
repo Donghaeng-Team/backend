@@ -25,9 +25,13 @@ import java.util.List;
  * v1.03
  * 리턴값을 ResponseEntity로 수정
  *
+ * v1.04
+ * api 및 pathVariable 수정
+ * id -> roomId
+ *
  * @author jhj010311@gmail.com
- * @version 1.03
- * @since 2025-10-13
+ * @version 1.04
+ * @since 2025-10-15
  */
 
 @RestController
