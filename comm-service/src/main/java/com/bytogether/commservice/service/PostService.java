@@ -44,14 +44,19 @@ public class PostService {
     /**
      * com-01 :  게시글 목록 가져오기
      */
-    public List<PostListResponse> getPostsList(String divisionCode,String tag){
+    public List<PostListResponse> getPostsList(String divisionCode,String tag,String keyword){
         Pageable pageable = PageRequest.of(0, DEFAULT_PAGE_SIZE, DEFAULT_SORT);
+        List<PostStat> postStats;
 
 
-        // 게시글 목록 조회
-        List<PostStat> postStats = "all".equalsIgnoreCase(tag)
-                ? postStatRepository.findByRegion(divisionCode, pageable)
-                : postStatRepository.findByRegionAndTag(divisionCode, tag, pageable);
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            postStats = postStatRepository.searchPosts(divisionCode, tag, keyword, pageable);
+        } else {
+            postStats = "all".equalsIgnoreCase(tag)
+                    ? postStatRepository.findByRegion(divisionCode, pageable)
+                    : postStatRepository.findByRegionAndTag(divisionCode, tag, pageable);
+        }
+
 
         // userIds 추출
         List<Long> userIds = postStats.stream()
