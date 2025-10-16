@@ -1,5 +1,6 @@
 package com.bytogether.commservice.dto;
 
+import com.bytogether.commservice.client.dto.UserDto;
 import com.bytogether.commservice.entity.Post;
 import com.bytogether.commservice.entity.PostStat;
 import lombok.*;
@@ -25,6 +26,7 @@ public class PostDetailResponse {
     private String thumbnailUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private UserDto userDto;
 
     // 📊 PostStat (통계 데이터)
     private long likeCount;
@@ -32,7 +34,7 @@ public class PostDetailResponse {
     private long viewCount;
 
     // ✅ 정적 팩토리 메서드
-    public static PostDetailResponse from(Post post, PostStat stat) {
+    public static PostDetailResponse from(Post post, PostStat stat, UserDto userInfo) {
         return PostDetailResponse.builder()
                 // Post 필드
                 .postId(post.getPostId())
@@ -45,6 +47,7 @@ public class PostDetailResponse {
                 .thumbnailUrl(post.getThumbnailUrl())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
+                .userDto(userInfo)
 
                 // PostStat 필드
                 .likeCount(stat != null ? stat.getLikeCount() : 0)
