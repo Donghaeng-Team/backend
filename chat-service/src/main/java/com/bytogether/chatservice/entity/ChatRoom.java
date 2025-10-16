@@ -49,8 +49,8 @@ public class ChatRoom {
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
-    @Column(name = "max_participants", nullable = false)
-    private Integer maxParticipants;
+    @Column(name = "max_buyers", nullable = false)
+    private Integer maxBuyers;
 
     @Column(name = "thumbnail_url", length = 500)
     private String thumbnailUrl;

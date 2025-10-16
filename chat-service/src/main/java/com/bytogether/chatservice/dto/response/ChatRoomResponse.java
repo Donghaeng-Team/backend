@@ -13,9 +13,13 @@ import java.time.LocalDateTime;
  * 1.01
  * 사용자의 채팅방 정렬 및 부가적인 각종 표시용 데이터 추가
  *
+ * 1.03
+ * currentParticipants -> currentBuyers, maxParticipants -> maxBuyers 명칭 변경
+ * currentBuyers 타입 Long -> Integer 변경
+ *
  * @author jhj010311@gmail.com
- * @version 1.01
- * @since 2025-10-13
+ * @version 1.03
+ * @since 2025-10-16
  */
 
 @Getter
@@ -29,8 +33,8 @@ public class ChatRoomResponse {
     private Long marketId;
     private String title;
     private String thumbnailUrl;
-    private Integer maxParticipants;
-    private Long currentParticipants;
+    private Integer maxBuyers;
+    private Integer currentBuyers;
     private ChatRoomStatus status;
     private ParticipantStatus participantStatus;
     private boolean isBuyer;
