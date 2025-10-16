@@ -42,6 +42,7 @@ public class CreateMarketRequest {
 
     @NotNull
     @Min(2)
+    @Max(20)
     private Integer recruitMax; // 최대 모집 인원
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

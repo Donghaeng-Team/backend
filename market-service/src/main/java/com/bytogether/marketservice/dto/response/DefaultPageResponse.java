@@ -20,4 +20,6 @@ public class DefaultPageResponse {
     private Integer totalPages;
     private Integer currentPage;
     private Integer pageSize;
+    private Boolean hasNext;
+    private Boolean hasPrevious;
 }

@@ -43,6 +43,8 @@ public class MarketListResponse extends DefaultPageResponse {
         marketListResponse.setTotalPages(markets.getTotalPages());
         marketListResponse.setCurrentPage(markets.getNumber());
         marketListResponse.setPageSize(markets.getSize());
+        marketListResponse.setHasNext(markets.hasNext());
+        marketListResponse.setHasPrevious(markets.hasPrevious());
 
         return marketListResponse;
     }
