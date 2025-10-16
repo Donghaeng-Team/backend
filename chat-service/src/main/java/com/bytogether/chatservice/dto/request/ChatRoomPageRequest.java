@@ -11,15 +11,17 @@ import java.time.LocalDateTime;
 /**
  * 채팅방 목록조회를 요청하는 dto
  *
+ * ChatRoomListRequest -> ChatRoomPageRequest 명칭 변경
+ *
  * @author jhj010311@gmail.com
- * @version 1.0
- * @since 2025-10-15
+ * @version 1.01
+ * @since 2025-10-16
  */
 
 @Getter
 @Setter
 @NoArgsConstructor
-public class ChatRoomListRequest {
+public class ChatRoomPageRequest {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime cursor;
 
