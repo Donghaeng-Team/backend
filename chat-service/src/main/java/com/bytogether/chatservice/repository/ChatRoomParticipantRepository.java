@@ -104,4 +104,12 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
                         row -> ((Long) row[1]).intValue()
                 ));
     }
+
+    @Query("""
+        SELECT p FROM ChatRoomParticipant p
+        WHERE p.chatRoom.id = :roomId
+        AND p.status = :status
+        ORDER BY p.firstJoinedAt ASC
+        """)
+    List<ChatRoomParticipant> findByChatRoomIdAndStatus(@Param("roomId") Long roomId, @Param("status") ParticipantStatus status);
 }

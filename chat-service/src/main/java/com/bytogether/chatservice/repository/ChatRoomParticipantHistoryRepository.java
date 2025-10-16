@@ -35,4 +35,6 @@ public interface ChatRoomParticipantHistoryRepository extends JpaRepository<Chat
             @Param("chatRoomId") Long chatRoomId,
             @Param("userId") Long userId,
             @Param("messageTime") LocalDateTime messageTime);
+
+    List<ChatRoomParticipantHistory> findAllByUserIdAndChatRoomIdOrderByJoinedAtDesc(Long userId, Long chatRoomId);
 }

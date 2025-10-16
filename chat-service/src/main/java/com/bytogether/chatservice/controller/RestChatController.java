@@ -1,6 +1,7 @@
 package com.bytogether.chatservice.controller;
 
 import com.bytogether.chatservice.dto.common.ApiResponse;
+import com.bytogether.chatservice.dto.request.ChatMessagePageRequest;
 import com.bytogether.chatservice.dto.request.ChatRoomPageRequest;
 import com.bytogether.chatservice.dto.response.*;
 import com.bytogether.chatservice.service.ChatMessageService;
@@ -93,28 +94,25 @@ public class RestChatController {
     }
 
     @GetMapping("/{roomId}/messages")
-    public ResponseEntity<ApiResponse<ChatMessagePageResponse>> getMessages(@PathVariable("roomId") Long chatRoomId,
-                                                            @RequestParam(required = false) Long cursor,
-                                                            @RequestParam(defaultValue = "50") int size,
+    public ResponseEntity<ApiResponse<ChatMessagePageResponse>> getMessages(ChatMessagePageRequest request,
                                                             @RequestHeader("X-User-Id") Long userId) {
 
-        ChatMessagePageResponse chatMessagePageResponse = new ChatMessagePageResponse();
+        ChatMessagePageResponse chatMessagePageResponse;
 
-        if(cursor == null){
-            chatMessagePageResponse = chatMessageService.getRecentMessages(chatRoomId, userId, size);
+        if(request.getCursor() == null){
+            chatMessagePageResponse = chatMessageService.getRecentMessages(request.getRoomId(), userId, request.getSize());
         } else {
-            chatMessagePageResponse = chatMessageService.getMessagesBeforeCursor(chatRoomId, userId, cursor, size);
+            chatMessagePageResponse = chatMessageService.getMessagesBeforeCursor(request.getRoomId(), userId, request.getCursor(), request.getSize());
         }
 
-        return null;
+        return ResponseEntity.ok(ApiResponse.success(chatMessagePageResponse));
     }
 
     @GetMapping("/{roomId}/participants")
-    public ResponseEntity<ApiResponse<ParticipantListResponse>> getParticipants(@PathVariable("roomId") Long chatRoomId) {
+    public ResponseEntity<ApiResponse<ParticipantListResponse>> getParticipants(@PathVariable("roomId") Long roomId) {
         // TODO: 참가자 목록 정보 쿼리
 
-
-        return null;
+        return ResponseEntity.ok(ApiResponse.success(chatRoomService.getParticipants(roomId)));
     }
 
     @PostMapping("/{roomId}/exit")

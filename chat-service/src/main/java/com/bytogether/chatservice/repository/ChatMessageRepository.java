@@ -1,6 +1,8 @@
 package com.bytogether.chatservice.repository;
 
+import com.bytogether.chatservice.dto.common.ViewablePeriod;
 import com.bytogether.chatservice.entity.*;
+import com.bytogether.chatservice.service.ChatMessageService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -94,4 +96,19 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
                                           @Param("endTime") LocalDateTime endTime);
 
     long countByChatRoomIdAndIsDeletedFalse(Long chatRoomId);
+
+
+    // 새로운 - 복수 구간 (Custom Repository 필요)
+    List<ChatMessage> findMessagesInPeriods(
+            Long chatRoomId,
+            List<ViewablePeriod> periods,
+            Pageable pageable
+    );
+
+    List<ChatMessage> findMessagesInPeriodsBeforeCursor(
+            Long chatRoomId,
+            Long cursorId,
+            List<ViewablePeriod> periods,
+            Pageable pageable
+    );
 }
