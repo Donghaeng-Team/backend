@@ -10,9 +10,12 @@ import java.time.LocalDateTime;
 /**
  * 채팅방 참가자에 대한 정보를 담는 엔티티
  *
+ * v1.01
+ * list_order_time 관련 인덱스 추가
+ *
  * @author jhj010311@gmail.com
- * @version 1.0
- * @since 2025-10-07
+ * @version 1.01
+ * @since 2025-10-15
  */
 
 @Entity

@@ -12,9 +12,12 @@ import java.util.List;
 /**
  * 채팅방에 대한 정보를 담는 엔티티
  *
+ * v1.01
+ * 시스템 메시지를 위한 테이블 변경사항 반영
+ *
  * @author jhj010311@gmail.com
- * @version 1.0
- * @since 2025-10-07
+ * @version 1.01
+ * @since 2025-10-15
  */
 
 @Entity
