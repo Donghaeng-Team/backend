@@ -43,8 +43,9 @@ dependencies {
 
     // config client, eureka client
     implementation 'org.springframework.cloud:spring-cloud-starter-config'
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
+    // k8s service로 대체
+//    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
 
     compileOnly 'org.projectlombok:lombok'

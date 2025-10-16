@@ -1,6 +1,6 @@
 spring:
   config:
-    import: "configserver:http://config-server:8888"
+    import: "configserver:http://config-service"
   application:
     name: api-gateway
   profiles:

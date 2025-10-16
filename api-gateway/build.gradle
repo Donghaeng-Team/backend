@@ -31,14 +31,17 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.cloud:spring-cloud-starter-config'
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webmvc'
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+
+//    eureka 독립 - k8s service로 대체
+//    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
     implementation 'io.jsonwebtoken:jjwt-impl:0.12.6'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
     //local - dev
-    implementation 'io.opentelemetry:opentelemetry-exporter-zipkin'
+//    implementation 'io.opentelemetry:opentelemetry-exporter-zipkin'
 
     // for k8s
     implementation 'io.micrometer:micrometer-tracing-bridge-otel'
