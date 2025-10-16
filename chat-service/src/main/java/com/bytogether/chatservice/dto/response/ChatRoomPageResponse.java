@@ -21,7 +21,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ChatRoomListPageResponse {
+public class ChatRoomPageResponse {
 
     private List<ChatRoomResponse> chatRooms;
     private Boolean hasMore;  // 다음 페이지 존재 여부
