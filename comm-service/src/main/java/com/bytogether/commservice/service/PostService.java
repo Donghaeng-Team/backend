@@ -168,7 +168,7 @@ public class PostService {
                             .toList()
             );
             String thumbnailUrl = req.getImages().stream()
-                    .filter(img->img.getOrder()!=null && img.getOrder() == 0)
+                    .filter(img->img.getOrder()!=null && img.getOrder() == 1)
                     .map(PostImageRegister::getS3Key)
                     .findFirst().orElse(null);
             post.setThumbnailUrl(thumbnailUrl);
