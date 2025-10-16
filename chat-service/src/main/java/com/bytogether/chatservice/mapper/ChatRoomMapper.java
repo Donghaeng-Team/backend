@@ -1,6 +1,6 @@
 package com.bytogether.chatservice.mapper;
 
-import com.bytogether.chatservice.dto.response.ChatRoomListPageResponse;
+import com.bytogether.chatservice.dto.response.ChatRoomPageResponse;
 import com.bytogether.chatservice.dto.response.ChatRoomResponse;
 import com.bytogether.chatservice.entity.ChatRoom;
 import com.bytogether.chatservice.entity.ChatRoomParticipant;
@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -26,19 +27,19 @@ public class ChatRoomMapper {
     /**
      * ChatRoomListPageResponse 생성
      */
-    public ChatRoomListPageResponse buildPageResponse(
-            List<ChatRoomParticipant> participants,
-            int size) {
+    public ChatRoomPageResponse buildPageResponse(
+            List<ChatRoomParticipant> userParticipations,
+            Map<Long, Integer> buyerCounts, int size) {
 
         // 다음 페이지 존재 여부
-        boolean hasMore = participants.size() > size;
+        boolean hasMore = userParticipations.size() > size;
 
         // N+1개 조회했으면 마지막 하나 제거
         List<ChatRoomParticipant> resultParticipants = hasMore
-                ? participants.subList(0, size)
-                : participants;
+                ? userParticipations.subList(0, size)
+                : userParticipations;
 
-        // 커서 정보 (마지막 participant의 listOrderTime과 id)
+        // 커서 정보 (마지막 userParticipations의 listOrderTime과 id)
         LocalDateTime nextCursor = null;
         Long nextParticipantId = null;
 
@@ -50,10 +51,10 @@ public class ChatRoomMapper {
 
         // DTO 변환
         List<ChatRoomResponse> chatRooms = resultParticipants.stream()
-                .map(this::convertToResponse)
+                .map(p -> convertToResponse(p, buyerCounts))
                 .collect(Collectors.toList());
 
-        return ChatRoomListPageResponse.builder()
+        return ChatRoomPageResponse.builder()
                 .chatRooms(chatRooms)
                 .hasMore(hasMore)
                 .nextCursor(nextCursor)
@@ -64,14 +65,17 @@ public class ChatRoomMapper {
     /**
      * Participant -> DTO 변환
      */
-    public ChatRoomResponse convertToResponse(ChatRoomParticipant participant) {
+    public ChatRoomResponse convertToResponse(ChatRoomParticipant participant, Map<Long, Integer> buyerCounts) {
         ChatRoom chatRoom = participant.getChatRoom();
+        Long roomId = chatRoom.getId();
+        Integer currentParticipants = buyerCounts.get(roomId);
 
         return ChatRoomResponse.builder()
                 .id(chatRoom.getId())
                 .title(chatRoom.getTitle())
                 .thumbnailUrl(chatRoom.getThumbnailUrl())
-                .maxParticipants(chatRoom.getMaxParticipants())
+                .maxBuyers(chatRoom.getMaxBuyers())
+                .currentParticipants(currentParticipants)
                 .status(chatRoom.getStatus())
                 .listOrderTime(participant.getListOrderTime())
                 .isBuyer(participant.getIsBuyer())                    // ← 구매 의사 확정 여부

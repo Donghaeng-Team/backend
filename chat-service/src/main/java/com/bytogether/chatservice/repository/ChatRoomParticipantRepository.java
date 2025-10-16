@@ -10,8 +10,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * 채팅방 참가자 엔티티에 대한 데이터베이스 접근을 담당하는 레포지토리
@@ -79,4 +82,26 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
             @Param("cursor") LocalDateTime cursor,
             @Param("id") Long id,
             Pageable pageable);
+
+
+    // 채팅방별 구매자 수 조회
+    @Query("""
+        SELECT p.chatRoom.id, COUNT(p)
+        FROM ChatRoomParticipant p
+        WHERE p.chatRoom.id IN :roomIds
+        AND p.status = 'ACTIVE'
+        AND p.isBuyer = true
+        GROUP BY p.chatRoom.id
+        """)
+    List<Object[]> countBuyersByRoomIdsRaw(@Param("roomIds") List<Long> roomIds);
+
+    default Map<Long, Integer> countBuyersByRoomIds(List<Long> roomIds) {
+        if (roomIds.isEmpty()) return Collections.emptyMap();
+
+        return countBuyersByRoomIdsRaw(roomIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Long) row[1]).intValue()
+                ));
+    }
 }
