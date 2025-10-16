@@ -27,9 +27,10 @@ public class PostPublicController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<PostListResponse>>> getPostsList(
             @RequestParam String divisionCode,
-            @RequestParam(required = false, defaultValue = "all") String tag) {
-        log.info("게시글 목록 요청 - divisionCode: {}, tag: {}", divisionCode, tag);
-        return ResponseEntity.ok(ApiResponse.success(postService.getPostsList(divisionCode,tag)));
+            @RequestParam(required = false, defaultValue = "all") String tag,
+            @RequestParam(required = false) String keyword) {
+        log.info("게시글 목록 요청 - divisionCode: {}, tag: {}, keyword: {}", divisionCode, tag,keyword);
+        return ResponseEntity.ok(ApiResponse.success(postService.getPostsList(divisionCode,tag,keyword)));
     }
 
     /**
