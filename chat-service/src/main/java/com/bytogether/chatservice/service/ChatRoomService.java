@@ -1,6 +1,7 @@
 package com.bytogether.chatservice.service;
 
 import com.bytogether.chatservice.dto.response.ChatRoomPageResponse;
+import com.bytogether.chatservice.dto.response.ChatRoomResponse;
 import com.bytogether.chatservice.entity.ChatRoomParticipant;
 import com.bytogether.chatservice.entity.ParticipantStatus;
 import com.bytogether.chatservice.mapper.ChatRoomMapper;
@@ -98,5 +99,9 @@ public class ChatRoomService {
         // 채팅방에 참가한 상태인 유저가 맞는지 확인
 
         return participantRepository.existsByChatRoomIdAndUserIdAndStatus(roomId, userId, ParticipantStatus.ACTIVE);
+    }
+
+    public ChatRoomResponse getChatRoomDetails(Long chatRoomId) {
+        return chatRoomRepository.getChatRoomById(chatRoomId);
     }
 }

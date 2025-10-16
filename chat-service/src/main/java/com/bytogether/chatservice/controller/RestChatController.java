@@ -1,7 +1,7 @@
 package com.bytogether.chatservice.controller;
 
 import com.bytogether.chatservice.dto.common.ApiResponse;
-import com.bytogether.chatservice.dto.request.ChatRoomListRequest;
+import com.bytogether.chatservice.dto.request.ChatRoomPageRequest;
 import com.bytogether.chatservice.dto.response.*;
 import com.bytogether.chatservice.service.ChatMessageService;
 import com.bytogether.chatservice.service.ChatRoomService;
@@ -64,7 +64,7 @@ public class RestChatController {
     // note: 리턴값은 dto.common.ApiResponse로 통일
 
     @GetMapping
-    public ResponseEntity<ApiResponse<ChatRoomPageResponse>> chatRoomList(ChatRoomListRequest request,
+    public ResponseEntity<ApiResponse<ChatRoomPageResponse>> chatRoomList(ChatRoomPageRequest request,
                                                                           @RequestHeader("X-User-Id") Long userId) {
         // TODO: 로그인한 유저의 id를 사용하여 유저가 참가한 적 있는 모든 채팅방 리스트를 쿼리
         // 현재 공동구매에 참가한 인원 정보도 넣어줘야 함
@@ -78,9 +78,7 @@ public class RestChatController {
         }
 
 
-        ApiResponse<ChatRoomPageResponse> response = new ApiResponse<>(true, "success", chatRoomList);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(chatRoomList));
     }
 
     @GetMapping("/{roomId}")
@@ -88,11 +86,10 @@ public class RestChatController {
         // TODO: 채팅방 id를 사용하여 참가중인 특정 채팅방 페이지를 오픈
 
         if(chatRoomService.isParticipating(chatRoomId, userId)){
-
+            return ResponseEntity.ok(ApiResponse.success(chatRoomService.getChatRoomDetails(chatRoomId)));
         }
 
-
-        return null;
+        return ResponseEntity.badRequest().body(ApiResponse.fail("잘못된 요청입니다"));
     }
 
     @GetMapping("/{roomId}/messages")

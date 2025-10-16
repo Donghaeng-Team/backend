@@ -1,5 +1,6 @@
 package com.bytogether.chatservice.repository;
 
+import com.bytogether.chatservice.dto.response.ChatRoomResponse;
 import com.bytogether.chatservice.entity.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,4 +23,5 @@ import java.util.List;
 @Repository
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
+    ChatRoomResponse getChatRoomById(Long chatRoomId);
 }
