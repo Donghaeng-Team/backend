@@ -17,7 +17,7 @@ import org.springframework.stereotype.Controller;
  * 1.02
  * 수도코드 기초 완성
  * 샘플을 겸하는 sendMessage 메서드 작성
- * 
+ *
  *
  * @author jhj010311@gmail.com
  * @version 1.02

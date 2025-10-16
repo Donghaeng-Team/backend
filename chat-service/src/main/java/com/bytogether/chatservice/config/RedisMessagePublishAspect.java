@@ -24,6 +24,14 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * AOP 자동화를 위한 Aspect
+ *
+ * @author jhj010311@gmail.com
+ * @version 1.0
+ * @since 2025-10-15
+ */
+
 @Aspect
 @Component
 @RequiredArgsConstructor

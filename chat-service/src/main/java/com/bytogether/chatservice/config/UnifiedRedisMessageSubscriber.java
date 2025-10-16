@@ -8,6 +8,15 @@ import org.springframework.data.redis.connection.Message;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
+/**
+ * Redis 통합 메시지 구독자
+ * AOP 자동화에 최적화
+ *
+ * @author jhj010311@gmail.com
+ * @version 1.0
+ * @since 2025-10-15
+ */
+
 @Component
 @RequiredArgsConstructor
 @Slf4j

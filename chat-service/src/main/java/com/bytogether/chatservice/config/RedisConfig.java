@@ -17,9 +17,12 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 /**
  * Redis 설정
  *
+ * v1.01
+ * Redis의 AOP 자동화를 위한 설정 변경
+ *
  * @author jhj010311@gmail.com
- * @version 1.0
- * @since 2025-10-07
+ * @version 1.01
+ * @since 2025-10-15
  */
 
 @Configuration
