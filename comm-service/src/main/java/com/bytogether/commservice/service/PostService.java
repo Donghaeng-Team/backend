@@ -285,6 +285,13 @@ public class PostService {
     }
 
 
+    //이미지 업로드 시 사용되는 로직
+    public boolean isOwnerOfPost(Long postId, Long userId) {
+        return postRepository.findById(postId)
+                .map(post -> post.getAuthorId().equals(userId))
+                .orElse(false);
+    }
+
 
 
     /// Common Methods
