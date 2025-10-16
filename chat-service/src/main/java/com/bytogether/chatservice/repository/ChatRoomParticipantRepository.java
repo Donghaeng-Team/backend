@@ -19,12 +19,15 @@ import java.util.stream.Collectors;
 /**
  * 채팅방 참가자 엔티티에 대한 데이터베이스 접근을 담당하는 레포지토리
  *
- * 1.01
+ * v1.01
  * 스크롤 로딩용 메서드 구현
  *
+ * v1.02
+ * 현재 채팅방에 참가중인 인원 목록을 쿼리하는 메서드 구현
+ *
  * @author jhj010311@gmail.com
- * @version 1.01
- * @since 2025-10-13
+ * @version 1.02
+ * @since 2025-10-16
  */
 
 @Repository

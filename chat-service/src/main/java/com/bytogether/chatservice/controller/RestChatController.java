@@ -117,8 +117,15 @@ public class RestChatController {
 
     @PostMapping("/{roomId}/exit")
     public ResponseEntity<ApiResponse<String>> leaveChatRoom(@PathVariable("roomId") Long chatRoomId) {
-        // TODO: 채팅방 탈퇴 처리 및 탈퇴한 채팅방 정보 담아서 반환
-        // String 말고 좋은 방법 있는지 검토
+        // TODO: 채팅방 탈퇴 처리
+        // String 말고 ChatRoomExitResponse 사용
+
+        // 1. 채팅방 참가자인지 검증
+        // 2. 채팅방 방장인지 확인하고 처리 분기
+        // 2-1. 방장이라면 채팅방 폐쇄 처리 병행
+        // 2-2. 일반 참가자라면 공동구매 참여자인지 확인해서 공동구매는 참가취소 처리
+        // 3. 채팅방 탈퇴
+        // 4. 탈퇴 시간, 시스템 메시지 담아 반환
 
         return null;
     }
@@ -128,9 +135,14 @@ public class RestChatController {
                                                @RequestParam Long targetUserId,
                                                @RequestHeader("X-User-Id") Long requesterId) {
         // TODO: 참가자 강퇴 처리 및 참가자 정보 담아서 반환
-        // String 말고 좋은 방법 있는지 검토
+        // String 말고 말고 ChatRoomKickResponse 사용
 
         // TODO: 방장 인증 필요
+
+        // 1. 방장 권한 인증
+        // 2. 강퇴 처리
+        // 3. 강퇴 대상에게 메시지 전달(stomp 컨트롤러 api로 처리?)
+        // 4. 강퇴한 유저 정보, 강퇴 시간, 시스템 메시지 담아 반환
 
         return null;
     }
@@ -140,6 +152,10 @@ public class RestChatController {
                                                           @RequestHeader("X-User-Id") Long userId) {
         // TODO: 공동구매 참가시 처리 후 해당 정보 반환
 
+        // 1. 채팅방 참가자인지, 이미 공동구매에 참가중인지 검증
+        // 2. 공동구매 참가 처리
+        // 3. BuyerConfirmResponse 반환
+
         return null;
     }
 
@@ -147,6 +163,10 @@ public class RestChatController {
     public ResponseEntity<ApiResponse<BuyerConfirmResponse>> cancelBuyer(@PathVariable("roomId") Long chatRoomId,
                                                          @RequestHeader("X-User-Id") Long userId) {
         // TODO: 공동구매 참가 취소시 처리 후 해당 정보 반환
+
+        // 1. 채팅방 참가자인지, 공동구매에 참가중인게 맞는지 검증
+        // 2. 공동구매 불참 처리
+        // 3. BuyerConfirmResponse 반환
 
         return null;
     }
@@ -158,6 +178,11 @@ public class RestChatController {
         // TODO: 방장이 채팅방 마감기한을 연장신청할 경우의 처리
         // TODO: 방장 인증 필요
 
+        // 1. 방장 검증
+        // 2. 지정된 시간만큼 마감기한 연장
+        // 3. 채팅방에 마감기한 연장 시스템 메시지 발송
+        // 4. ExtendDeadlineResponse 반환
+
         return null;
     }
 
@@ -165,17 +190,29 @@ public class RestChatController {
     public ResponseEntity<ApiResponse<RecruitmentCloseResponse>> closeRecruitment(@PathVariable("roomId") Long chatRoomId,
                                                 @RequestHeader("X-User-Id") Long userId) {
         // TODO: 방장이 직접 공동구매를 마감신청하는 케이스의 처리를 담당
-        // 방장이 직접, 혹은 마감기한이 지나면 자동으로 공동구매 모집을 마감
+        // 방장이 직접, 혹은 마감기한이 지나면 시스템에 의해 자동으로 공동구매 모집을 마감
+        // 시스템 자동처리 쪽은 따로 구현?
 
         // TODO: 방장 인증 필요
+
+        // 1. 방장 검증
+        // 2. 공동구매 참가자가 아닌 기타 채팅방 참가자를 강퇴
+        // 3. 채팅방에 공동구매 마감 시스템 메시지 발송
+        // 4. RecruitmentCloseResponse 반환
 
         return null;
     }
 
     @PostMapping("/{roomId}/complete")
     public ResponseEntity<ApiResponse<String>> confirmPurchase(@PathVariable("roomId") Long chatRoomId) {
-        // TODO: 채팅방 탈퇴 처리 및 탈퇴한 채팅방 정보 담아서 반환
-        // String 말고 좋은 방법 있는지 검토
+        // TODO: 모든 활동이 종료된 이후 방장이 채팅방 기능 정지 처리
+        // String 말고 ChatRoomConfirmResponse 사용
+        // 모집 마감기한으로부터 시간이 일정 기간 이상 지나면 시스템이 자동으로 처리하는 기능 추가 고려
+
+        // 1. 방장 검증
+        // 2. 채팅방에 공동구매 종료 시스템 메시지 발송
+        // 3. 더 이상 채팅방에 채팅을 보낼 수 없도록 처리(원하는 경우 각 참가자별로 퇴장은 가능)
+        // 4. ChatRoomConfirmResponse 반환
 
         return null;
     }
