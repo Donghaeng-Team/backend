@@ -22,7 +22,7 @@ public class PostPrivateController {
      * POST /api/v1/posts/private
      */
     @PostMapping
-    public ResponseEntity<ApiResponse<?>> createPostInit(
+    public ResponseEntity<ApiResponse<PostResponse>> createPostInit(
             @RequestHeader("X-User-Id") Long userId,
             @RequestBody PostCreateAndUpdateRequest request) {
         log.info("게시글 작성 요청 - userId: {}", userId);
@@ -35,7 +35,7 @@ public class PostPrivateController {
      * PUT /api/v1/posts/private/{postId}
      */
     @PutMapping("/{postId}")
-    public ResponseEntity<ApiResponse<?>> updatePost(
+    public ResponseEntity<ApiResponse<PostResponse>> updatePost(
             @RequestHeader("X-User-Id") Long userId,
             @PathVariable Long postId,
             @RequestBody PostCreateAndUpdateRequest request) {
@@ -49,7 +49,7 @@ public class PostPrivateController {
      * DELETE /api/v1/posts/private/{postId}
      */
     @DeleteMapping("/{postId}")
-    public ResponseEntity<ApiResponse<?>> deletePost(
+    public ResponseEntity<ApiResponse<String>> deletePost(
             @RequestHeader("X-User-Id") Long userId,
             @PathVariable Long postId) {
         log.info("게시글 삭제 요청 - postId: {}, userId: {}", postId, userId);
@@ -63,7 +63,7 @@ public class PostPrivateController {
      * POST /api/v1/posts/private/{postId}/likes
      */
     @PostMapping("/{postId}/likes")
-    public ResponseEntity<ApiResponse<?>> increaseLike(
+    public ResponseEntity<ApiResponse<String>> increaseLike(
             @RequestHeader("X-User-Id") Long userId,
             @PathVariable Long postId) {
         log.info("게시글 좋아요 증가 요청 - postId: {}, userId: {}", postId, userId);
