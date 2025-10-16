@@ -1,19 +1,13 @@
 package com.bytogether.chatservice.controller;
 
 import com.bytogether.chatservice.dto.common.ApiResponse;
+import com.bytogether.chatservice.dto.request.ChatRoomListRequest;
 import com.bytogether.chatservice.dto.response.*;
-import com.bytogether.chatservice.entity.ChatMessage;
-import com.bytogether.chatservice.repository.ChatMessageRepository;
-import com.bytogether.chatservice.repository.ChatRoomRepository;
 import com.bytogether.chatservice.service.ChatMessageService;
 import com.bytogether.chatservice.service.ChatRoomService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 채팅방 목록을 조회하고 채팅방 메시지를 확인
@@ -29,9 +23,12 @@ import java.util.List;
  * api 및 pathVariable 수정
  * id -> roomId
  *
+ * v1.05
+ * chatRoomList 메서드 매개변수 간소화
+ *
  * @author jhj010311@gmail.com
- * @version 1.04
- * @since 2025-10-15
+ * @version 1.05
+ * @since 2025-10-16
  */
 
 @RestController
@@ -41,9 +38,6 @@ public class RestChatController {
 
     private final ChatRoomService chatRoomService;
     private final ChatMessageService chatMessageService;
-
-    private final ChatRoomRepository chatRoomRepository;
-    private final ChatMessageRepository chatMessageRepository;
 
     /*
         채팅방 기본 CRUD
@@ -70,32 +64,30 @@ public class RestChatController {
     // note: 리턴값은 dto.common.ApiResponse로 통일
 
     @GetMapping
-    public ResponseEntity<ApiResponse<ChatRoomListPageResponse>> chatRoomList(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime cursor,
-                                                                            @RequestParam(required = false) Long participantId,
-                                                                            @RequestParam(defaultValue = "20") int size,
-                                                                            @RequestHeader("X-User-Id") Long userId) {
+    public ResponseEntity<ApiResponse<ChatRoomPageResponse>> chatRoomList(ChatRoomListRequest request,
+                                                                          @RequestHeader("X-User-Id") Long userId) {
         // TODO: 로그인한 유저의 id를 사용하여 유저가 참가한 적 있는 모든 채팅방 리스트를 쿼리
         // 현재 공동구매에 참가한 인원 정보도 넣어줘야 함
 
-        ChatRoomListPageResponse chatRoomList = null;
+        ChatRoomPageResponse chatRoomList = null;
 
-        if(cursor == null){
-            chatRoomList = chatRoomService.getMyChatRooms(userId, size);
+        if(request.getCursor() == null){
+            chatRoomList = chatRoomService.getMyChatRooms(userId, request.getSize());
         } else {
-            chatRoomList = chatRoomService.getMyChatRooms(userId, cursor, participantId, size);
+            chatRoomList = chatRoomService.getMyChatRooms(userId, request.getCursor(), request.getParticipantId(), request.getSize());
         }
 
 
-        ApiResponse<ChatRoomListPageResponse> response = new ApiResponse<>(true, "success", chatRoomList);
+        ApiResponse<ChatRoomPageResponse> response = new ApiResponse<>(true, "success", chatRoomList);
 
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{roomId}")
     public ResponseEntity<ApiResponse<ChatRoomResponse>> enterChatRoom(@PathVariable("roomId") Long chatRoomId, @RequestHeader("X-User-Id") Long userId) {
-        // TODO: 채팅방 id를 사용하여 개별 채팅방을 오픈
+        // TODO: 채팅방 id를 사용하여 참가중인 특정 채팅방 페이지를 오픈
 
-        if(chatRoomService.enterChatRoom(chatRoomId, userId)){
+        if(chatRoomService.isParticipating(chatRoomId, userId)){
 
         }
 
