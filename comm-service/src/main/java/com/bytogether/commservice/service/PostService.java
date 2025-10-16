@@ -9,7 +9,9 @@ import com.bytogether.commservice.client.dto.UsersInfoRequest;
 import com.bytogether.commservice.dto.*;
 import com.bytogether.commservice.dto.Enum.PostStatus;
 import com.bytogether.commservice.entity.Post;
+import com.bytogether.commservice.entity.PostLike;
 import com.bytogether.commservice.entity.PostStat;
+import com.bytogether.commservice.repository.PostLikeRepository;
 import com.bytogether.commservice.repository.PostRepository;
 import com.bytogether.commservice.repository.PostStatRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final S3Service s3Service;
     private final UserServiceClient userServiceClient;
+    private final PostLikeRepository postLikeRepository;
 
     // 고정 페이징: 10개씩, 최신순
     private static final int DEFAULT_PAGE_SIZE = 10;
@@ -263,10 +266,23 @@ public class PostService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "유효하지 않은 게시글에는 좋아요를 누를 수 없습니다.");
         }
 
+        // ✅ 중복 좋아요 방지
+        if (postLikeRepository.existsByPostIdAndUserId(postId, userId)) {
+            throw new BusinessException(HttpStatus.CONFLICT, "이미 좋아요를 누른 게시글입니다.");
+        }
+
+        postLikeRepository.save(
+                PostLike.builder()
+                        .postId(postId)
+                        .userId(userId)
+                        .createdAt(LocalDateTime.now())
+                        .build()
+        );
+
+
         stat.setLikeCount(stat.getLikeCount() + 1);
         postStatRepository.save(stat);
     }
-
 
 
 
