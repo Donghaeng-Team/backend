@@ -78,9 +78,9 @@ public class ChatRoomService {
         return chatRoomMapper.buildPageResponse(participants, size);
     }
 
-    public boolean enterChatRoom(Long id, Long userId) {
+    public boolean enterChatRoom(Long roomId, Long userId) {
         // 채팅방에 참가한 상태인 유저가 맞는지 확인
 
-        return participantRepository.existsByChatRoomIdAndUserIdAndStatus(id, userId, ParticipantStatus.ACTIVE);
+        return participantRepository.existsByChatRoomIdAndUserIdAndStatus(roomId, userId, ParticipantStatus.ACTIVE);
     }
 }

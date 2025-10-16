@@ -41,7 +41,7 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
 
     boolean existsByChatRoomIdAndUserIdAndIsPermanentlyBannedTrue(Long chatRoomId, Long userId);
 
-    boolean existsByChatRoomIdAndUserIdAndStatus(Long id, Long userId, ParticipantStatus participantStatus);
+    boolean existsByChatRoomIdAndUserIdAndStatus(Long chatRoomId, Long userId, ParticipantStatus participantStatus);
 
 
     /**

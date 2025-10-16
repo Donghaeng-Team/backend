@@ -1,6 +1,6 @@
 package com.bytogether.chatservice.controller;
 
-import com.bytogether.chatservice.dto.response.KickNotification;
+import com.bytogether.chatservice.dto.response.KickNotificationResponse;
 import com.bytogether.chatservice.entity.ChatMessage;
 import com.bytogether.chatservice.entity.ChatRoomParticipant;
 import lombok.RequiredArgsConstructor;
@@ -73,7 +73,7 @@ public class StompChatController {
     }
 
     @MessageMapping("/user.{userId}.queue.kicked")
-    public void kickSubscribe(@DestinationVariable String userId, @Payload KickNotification kickNotification) {
+    public void kickSubscribe(@DestinationVariable String userId, @Payload KickNotificationResponse kickNotification) {
         // TODO: 강제퇴장 시스템메시지를 구독
     }
     //endregion

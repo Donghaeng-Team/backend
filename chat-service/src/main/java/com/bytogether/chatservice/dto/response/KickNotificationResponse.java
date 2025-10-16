@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class KickNotification {
+public class KickNotificationResponse {
     private Long roomId;
     private String reason;
     private LocalDateTime kickedAt;
