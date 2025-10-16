@@ -2,6 +2,10 @@ package com.bytogether.commservice.service;
 
 import com.bytogether.commservice.Exception.BusinessException;
 import com.bytogether.commservice.Exception.NeverOccuredException;
+import com.bytogether.commservice.client.UserServiceClient;
+import com.bytogether.commservice.client.dto.UserDto;
+import com.bytogether.commservice.client.dto.UserInternalResponse;
+import com.bytogether.commservice.client.dto.UsersInfoRequest;
 import com.bytogether.commservice.dto.*;
 import com.bytogether.commservice.dto.Enum.PostStatus;
 import com.bytogether.commservice.entity.Post;
@@ -20,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +35,7 @@ public class PostService {
     private final PostStatRepository postStatRepository;
     private final PostRepository postRepository;
     private final S3Service s3Service;
+    private final UserServiceClient userServiceClient;
 
     // 고정 페이징: 10개씩, 최신순
     private static final int DEFAULT_PAGE_SIZE = 10;
@@ -40,16 +47,27 @@ public class PostService {
     public List<PostListResponse> getPostsList(String divisionCode,String tag){
         Pageable pageable = PageRequest.of(0, DEFAULT_PAGE_SIZE, DEFAULT_SORT);
 
-        List<PostStat> posts;
 
-        if ("all".equalsIgnoreCase(tag)) {
-            posts = postStatRepository.findByRegion(divisionCode, pageable);
-        } else {
-            posts = postStatRepository.findByRegionAndTag(divisionCode, tag, pageable);
-        }
+        // 게시글 목록 조회
+        List<PostStat> postStats = "all".equalsIgnoreCase(tag)
+                ? postStatRepository.findByRegion(divisionCode, pageable)
+                : postStatRepository.findByRegionAndTag(divisionCode, tag, pageable);
 
-        return posts.stream()
-                .map(PostListResponse::from)
+        // userIds 추출
+        List<Long> userIds = postStats.stream()
+                .map(PostStat::getUserId)
+                .distinct()
+                .toList();
+
+        // user-service에 일괄 요청 (배치 호출)
+        List<UserInternalResponse> userResponse = userServiceClient.getUserInfo(new UsersInfoRequest(userIds));
+        List<UserDto> userList = userResponse.stream().map(UserDto::from).toList();
+
+        Map<Long, UserDto> userMap = userList.stream()
+                .collect(Collectors.toMap(UserDto::getId, u -> u));
+
+        return postStats.stream()
+                .map(stat -> PostListResponse.from(stat, userMap.get(stat.getUserId())))
                 .toList();
     }
 
@@ -68,7 +86,9 @@ public class PostService {
                         .viewCount(0)
                         .build());
 
-        return PostDetailResponse.from(post, stat);
+        UserDto userInfo = UserDto.from(userServiceClient.getUserInfo(new UsersInfoRequest(List.of(stat.getUserId()))).get(0));
+
+        return PostDetailResponse.from(post, stat,userInfo);
     }
 
     /**
@@ -159,6 +179,7 @@ public class PostService {
                 // 새 게시글 최초 발행
                 stat = PostStat.builder()
                         .post(post)
+                        .userId(userId)
                         .region(req.getRegion())
                         .tag(req.getTag())
                         .title(req.getTitle())
@@ -239,7 +260,6 @@ public class PostService {
 
         stat.setLikeCount(stat.getLikeCount() + 1);
         postStatRepository.save(stat);
-
     }
 
 
