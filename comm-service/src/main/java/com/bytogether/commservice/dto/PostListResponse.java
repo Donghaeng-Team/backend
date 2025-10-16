@@ -1,5 +1,6 @@
 package com.bytogether.commservice.dto;
 
+import com.bytogether.commservice.client.dto.UserDto;
 import com.bytogether.commservice.entity.Post;
 import com.bytogether.commservice.entity.PostStat;
 import lombok.*;
@@ -12,7 +13,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class PostListResponse {
-
     private Long postId;          // 게시글 ID
     private String title;         // 제목
     private String previewContent; // 내용 요약
@@ -25,7 +25,10 @@ public class PostListResponse {
     private long commentCount;    // 댓글 수
     private long viewCount;       // 조회 수
 
-    public static PostListResponse from(PostStat stat) {
+    private UserDto userDto;
+
+
+    public static PostListResponse from(PostStat stat,UserDto userDto) {
         return PostListResponse.builder()
                 .postId(stat.getPostId())
                 .region(stat.getRegion())
@@ -37,6 +40,7 @@ public class PostListResponse {
                 .commentCount(stat.getCommentCount())
                 .viewCount(stat.getViewCount())
                 .createdAt(stat.getCreatedAt())
+                .userDto(userDto)
                 .build();
     }
     public static PostListResponse fromPostEntity(Post post) {

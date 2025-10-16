@@ -30,6 +30,9 @@ public class PostStat {
     private Post post;
 
     @Column(nullable = false)
+    private Long userId;  // ✅ 추가: 작성자 ID
+
+    @Column(nullable = false)
     private long viewCount = 0;
 
     @Column(nullable = false)
