@@ -75,7 +75,7 @@ public class ChatRoomMapper {
                 .title(chatRoom.getTitle())
                 .thumbnailUrl(chatRoom.getThumbnailUrl())
                 .maxBuyers(chatRoom.getMaxBuyers())
-                .currentParticipants(currentParticipants)
+                .currentBuyers(currentParticipants)
                 .status(chatRoom.getStatus())
                 .listOrderTime(participant.getListOrderTime())
                 .isBuyer(participant.getIsBuyer())                    // ← 구매 의사 확정 여부
