@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -157,24 +158,28 @@ public class PostService {
 
 
         // 4. 필드 수정
-            post.setRegion(req.getRegion());
-            post.setTag(req.getTag());
-            post.setTitle(req.getTitle());
-            post.setContent(req.getContent());
+        post.setRegion(req.getRegion());
+        post.setTag(req.getTag());
+        post.setTitle(req.getTitle());
+        post.setContent(req.getContent());
+        post.setImageUrls(
+                req.getImages().stream()
+                        .map(PostImageRegister::getS3Key)
+                        .toList()
+        );
+        String thumbnailUrl = req.getImages().stream()
+                .filter(img->img.getOrder()!=null && img.getOrder() == 0)
+                .map(PostImageRegister::getS3Key)
+                .map(s3Key -> s3Key.replaceFirst("1_", "0_"))
+                .findFirst().orElse(null);
+        post.setThumbnailUrl(thumbnailUrl);
+        post.setStatus(PostStatus.PUBLISHED);
+
+        if(firstStatus == PostStatus.PUBLISHED){
+            post.setUpdatedAt(now);
+        }else if(firstStatus == PostStatus.TEMP){
             post.setCreatedAt(now);
-            post.setImageUrls(
-                    req.getImages().stream()
-                            .map(PostImageRegister::getS3Key)
-                            .toList()
-            );
-            String thumbnailUrl = req.getImages().stream()
-                    .filter(img->img.getOrder()!=null && img.getOrder() == 1)
-                    .map(PostImageRegister::getS3Key)
-                    .findFirst().orElse(null);
-            post.setThumbnailUrl(thumbnailUrl);
-            post.setStatus(PostStatus.PUBLISHED);
-
-
+        }
         postRepository.save(post);
 
 
@@ -287,8 +292,8 @@ public class PostService {
 
     //이미지 업로드 시 사용되는 로직
     public boolean isOwnerOfPost(Long postId, Long userId) {
-        return postRepository.findById(postId)
-                .map(post -> post.getAuthorId().equals(userId))
+        return postRepository.findByPostIdIncludeTemp(postId)
+                .map(post -> Objects.equals(post.getAuthorId(), userId))
                 .orElse(false);
     }
 
