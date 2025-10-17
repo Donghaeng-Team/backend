@@ -92,14 +92,31 @@ jobs:
           for SERVICE in ${{ steps.detect.outputs.targets }}; do
             echo "🏗️ Building and pushing $SERVICE ..."
 
+            if [ ! -f "$SERVICE/build.gradle" ]; then
+              echo "⚠️ Skipping $SERVICE (no build.gradle found)"
+              continue
+            fi
+
             cd $SERVICE
             chmod +x ./gradlew
             ./gradlew clean build -x test
 
-            docker build -t $SERVICE:$TAG .
+            # ⚙️ Dockerfile 경로 지정 로직 추가
+            if [ -f "Dockerfile_$SERVICE" ]; then
+              DOCKER_FILE="Dockerfile_$SERVICE"
+            elif [ -f "Dockerfile" ]; then
+              DOCKER_FILE="Dockerfile"
+            else
+              echo "❌ No Dockerfile found for $SERVICE, skipping."
+              cd ..
+              continue
+            fi
+
+            echo "🧱 Using Dockerfile: $DOCKER_FILE"
+
+            docker build -t $SERVICE:$TAG -f $DOCKER_FILE .
             docker tag $SERVICE:$TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$SERVICE:$TAG
             docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$SERVICE:$TAG
-
             cd ..
           done
 
