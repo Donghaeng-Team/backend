@@ -18,7 +18,7 @@ public class PostPrivateController {
 
     /**
      * com-04
-     * 게시글 작성 (유저가 작성)
+     * 게시글 초기 작성
      * POST /api/v1/posts/private
      */
     @PostMapping
