@@ -15,11 +15,14 @@ import java.util.List;
 /**
  * 채팅 메시지 엔티티에 대한 데이터베이스 접근을 담당하는 레포지토리
  *
- * v1.01
+ * 1.01
  * 커서 기반 페이지네이션에 필요한 메서드 삽입
  *
- * v1.02
+ * 1.02
  * 과거 참가시의 채팅도 볼 수 있는 메서드 추가(custom, impl 연계)
+ *
+ * 1.03
+ * 1.02의 내용 롤백 및 history에 의존하는 검색 제거
  *
  * @author jhj010311@gmail.com
  * @version 1.02
@@ -31,14 +34,18 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 
     /**
      * 커서 기반 페이지네이션 - 최초 로드
-     * 특정 채팅방의 최근 메시지를 N개 조회 (삭제되지 않은 메시지만)
+     * 특정 채팅방의 최근 메시지를 N개 조회 (입장/재입장 이후, 삭제되지 않은 메시지만)
      */
-    @Query("SELECT m FROM ChatMessage m " +
-            "WHERE m.chatRoom.id = :chatRoomId " +
-            "AND m.isDeleted = false " +
-            "ORDER BY m.sentAt DESC, m.id DESC")
+    @Query("""
+        SELECT m FROM ChatMessage m 
+        WHERE m.chatRoom.id = :chatRoomId 
+        AND m.sentAt >= :joinedAt
+        AND m.isDeleted = false 
+        ORDER BY m.sentAt DESC, m.id DESC
+        """)
     List<ChatMessage> findRecentMessages(
             @Param("chatRoomId") Long chatRoomId,
+            @Param("joinedAt") LocalDateTime joinedAt,
             Pageable pageable
     );
 
@@ -46,14 +53,18 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
      * 커서 기반 페이지네이션 - 이전 메시지 로드
      * 특정 커서(메시지 ID) 이전의 메시지를 N개 조회
      */
-    @Query("SELECT m FROM ChatMessage m " +
-            "WHERE m.chatRoom.id = :chatRoomId " +
-            "AND m.id < :cursorId " +
-            "AND m.isDeleted = false " +
-            "ORDER BY m.sentAt DESC, m.id DESC")
+    @Query("""
+        SELECT m FROM ChatMessage m 
+        WHERE m.chatRoom.id = :chatRoomId 
+        AND m.id < :cursorId 
+        AND m.sentAt >= :joinedAt
+        AND m.isDeleted = false 
+        ORDER BY m.sentAt DESC, m.id DESC
+        """)
     List<ChatMessage> findMessagesBeforeCursor(
             @Param("chatRoomId") Long chatRoomId,
             @Param("cursorId") Long cursorId,
+            @Param("joinedAt") LocalDateTime joinedAt,
             Pageable pageable);
 
 

@@ -53,11 +53,11 @@ public class ChatRoomParticipant {
 
     // 참가 정보
     @CreationTimestamp
-    @Column(name = "first_joined_at", nullable = false)
-    private LocalDateTime firstJoinedAt;
+    @Column(name = "joined_at", nullable = false)
+    private LocalDateTime joinedAt;
 
-    @Column(name = "last_left_at")
-    private LocalDateTime lastLeftAt;
+    @Column(name = "left_at")
+    private LocalDateTime leftAt;
 
     // 채팅방 정렬용 컬럼
     @Column(name = "list_order_time")
@@ -98,12 +98,12 @@ public class ChatRoomParticipant {
 
     public void leave(ParticipantStatus exitStatus) {
         this.status = exitStatus;
-        this.lastLeftAt = LocalDateTime.now();
+        this.leftAt = LocalDateTime.now();
     }
 
     public void ban() {
         this.status = ParticipantStatus.BANNED;
         this.isPermanentlyBanned = true;
-        this.lastLeftAt = LocalDateTime.now();
+        this.leftAt = LocalDateTime.now();
     }
 }

@@ -37,6 +37,8 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
 
     List<ChatRoomParticipant> findByUserIdAndStatus(Long userId, ParticipantStatus status);
 
+    Optional<ChatRoomParticipant> findByChatRoomIdAndUserId(Long chatRoomId, Long userId);
+
     boolean existsByChatRoomIdAndUserIdAndIsPermanentlyBannedTrue(Long chatRoomId, Long userId);
 
     boolean existsByChatRoomIdAndUserIdAndStatus(Long chatRoomId, Long userId, ParticipantStatus participantStatus);
@@ -125,7 +127,7 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
         SELECT p FROM ChatRoomParticipant p
         WHERE p.chatRoom.id = :roomId
         AND p.status = :status
-        ORDER BY p.firstJoinedAt ASC
+        ORDER BY p.joinedAt ASC
         """)
     List<ChatRoomParticipant> findByChatRoomIdAndStatus(@Param("roomId") Long roomId, @Param("status") ParticipantStatus status);
 }

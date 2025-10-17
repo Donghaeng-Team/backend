@@ -5,10 +5,13 @@ import com.bytogether.chatservice.dto.common.ViewablePeriod;
 import com.bytogether.chatservice.dto.response.ChatMessagePageResponse;
 import com.bytogether.chatservice.dto.response.ChatMessageResponse;
 import com.bytogether.chatservice.entity.ChatMessage;
+import com.bytogether.chatservice.entity.ChatRoomParticipant;
 import com.bytogether.chatservice.entity.ChatRoomParticipantHistory;
+import com.bytogether.chatservice.entity.ParticipantStatus;
 import com.bytogether.chatservice.mapper.ChatMessageMapper;
 import com.bytogether.chatservice.repository.ChatMessageRepository;
 import com.bytogether.chatservice.repository.ChatRoomParticipantHistoryRepository;
+import com.bytogether.chatservice.repository.ChatRoomParticipantRepository;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +33,7 @@ public class ChatMessageService {
     private static final int DEFAULT_PAGE_SIZE = 50;
 
     private final ChatMessageRepository messageRepository;
+    private final ChatRoomParticipantRepository participantRepository;
     private final ChatRoomParticipantHistoryRepository historyRepository;
     private final ChatMessageMapper messageMapper;
     // private final UserService userService; // 닉네임 조회용 (MSA 환경에서는 FeignClient 등)
@@ -43,32 +47,27 @@ public class ChatMessageService {
     }
 
     /**
-     * 채팅방 최초 접속 시 최근 메시지 조회 (페이지 크기 지정)
+     * 채팅방 최초 접속 시 최근 메시지 조회
      */
     public ChatMessagePageResponse getRecentMessages(Long chatRoomId, Long userId, int size) {
-        // 열람 가능한 시간 범위 조회
-        ChatRoomParticipantHistory currentHistory = getCurrentParticipantHistory(chatRoomId, userId);
+        // 참가자 정보 조회
+        ChatRoomParticipant participant = participantRepository
+                .findByChatRoomIdAndUserId(chatRoomId, userId)
+                .orElse(null);
 
-        // N+1개 조회하여 다음 페이지 존재 여부 확인
+        if (participant == null || participant.getStatus() != ParticipantStatus.ACTIVE) {
+            // 참가자가 아니거나 비활성 상태
+            return null;
+        }
+
+        // N+1개 조회
         Pageable pageable = PageRequest.of(0, size + 1);
 
-        List<ChatMessage> messages;
-        if (currentHistory != null && currentHistory.getViewableFrom() != null) {
-            // 열람 권한이 있는 경우 - 시간 범위 필터링
-            messages = messageRepository.findViewableMessages(
-                    chatRoomId,
-                    currentHistory.getViewableFrom(),
-                    currentHistory.getViewableUntil(),
-                    pageable
-            );
-        } else {
-            // 열람 권한이 없는 경우 - 빈 리스트 반환
-            return ChatMessagePageResponse.builder()
-                    .messages(Collections.emptyList())
-                    .hasMore(false)
-                    .nextCursor(null)
-                    .build();
-        }
+        List<ChatMessage> messages = messageRepository.findRecentMessages(
+                chatRoomId,
+                participant.getJoinedAt(),
+                pageable
+        );
 
         return buildChatMessagePageResponse(messages, size);
     }
@@ -77,28 +76,24 @@ public class ChatMessageService {
      * 이전 메시지 조회 (무한 스크롤)
      */
     public ChatMessagePageResponse getMessagesBeforeCursor(Long chatRoomId, Long userId, Long cursorId, int size) {
-        // 열람 가능한 시간 범위 조회
-        ChatRoomParticipantHistory currentHistory = getCurrentParticipantHistory(chatRoomId, userId);
+        // 참가자 정보 조회
+        ChatRoomParticipant participant = participantRepository
+                .findByChatRoomIdAndUserId(chatRoomId, userId)
+                .orElse(null);
 
-        // N+1개 조회
+        if (participant == null || participant.getStatus() != ParticipantStatus.ACTIVE) {
+            // 참가자가 아니거나 비활성 상태
+            return null;
+        }
+
         Pageable pageable = PageRequest.of(0, size + 1);
 
-        List<ChatMessage> messages;
-        if (currentHistory != null && currentHistory.getViewableFrom() != null) {
-            messages = messageRepository.findViewableMessagesBeforeCursor(
-                    chatRoomId,
-                    cursorId,
-                    currentHistory.getViewableFrom(),
-                    currentHistory.getViewableUntil(),
-                    pageable
-            );
-        } else {
-            return ChatMessagePageResponse.builder()
-                    .messages(Collections.emptyList())
-                    .hasMore(false)
-                    .nextCursor(null)
-                    .build();
-        }
+        List<ChatMessage> messages = messageRepository.findMessagesBeforeCursor(
+                chatRoomId,
+                cursorId,
+                participant.getJoinedAt(),
+                pageable
+        );
 
         return buildChatMessagePageResponse(messages, size);
     }
