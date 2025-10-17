@@ -2,6 +2,7 @@ package com.bytogether.userservice.controller;
 
 import com.bytogether.userservice.dto.request.*;
 import com.bytogether.userservice.dto.response.*;
+import com.bytogether.userservice.model.User;
 import com.bytogether.userservice.service.UserService;
 import com.bytogether.userservice.service.UserVerifyService;
 import com.bytogether.userservice.util.CookieUtil;
@@ -140,6 +141,14 @@ public class UserController {
     @PostMapping("/public/password/confirm-reset")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest resetPasswordRequest) {
         userVerifyService.resetPassword(resetPasswordRequest);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    //로그인된 사용자 정보 요청
+    @DeleteMapping("/private/me")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@RequestHeader("X-User-Id") Long userId, HttpServletResponse response) {
+        log.info("현재 로그인된 사용자의 UserID:" + userId);
+        userService.deleteUser(userId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

@@ -116,7 +116,7 @@ public class UserVerifyService {
 
     //인증 정보를 이용해 사용자 정보 얻기
     private User getUser(VerifyData verifyData) {
-        User user = userRepository.findByEmailAndProvider(verifyData.getEmail(), verifyData.getInitialProvider())
+        User user = userRepository.findByEmailAndProviderAndDeletedAtIsNull(verifyData.getEmail(), verifyData.getInitialProvider())
                 .orElseThrow(() -> new IllegalStateException("사용자가 없습니다.")
                 );
         VerifyType verifyType = verifyData.getVerifyType();

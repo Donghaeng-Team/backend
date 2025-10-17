@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -154,10 +155,19 @@ public class UserService {
         return UpdatedTokenResponse;
     }
 
+    //사용자 탈퇴
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new RuntimeException("User가 없습니다.")
+        );
+        user.setDeletedAt(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
     //이미 사용된 Email체크
     public EmailCheckResponse checkRegisteredMail(String email) {
-        boolean isRegisteredUser = userRepository.existsByEmail(email);
-        boolean isLocalUser = userRepository.existsByNickname(email);
+        boolean isRegisteredUser = userRepository.existsByEmailAndDeletedAtIsNull(email);
+        boolean isLocalUser = userRepository.existsByNicknameAndDeletedAtIsNull(email);
         return isRegisteredUser && isLocalUser?
                 EmailCheckResponse.unavailable()
                 : EmailCheckResponse.available();
@@ -165,7 +175,7 @@ public class UserService {
 
     //이미 사용된 NickName체크
     public NickNameCheckResponse checkRegisteredNickname(String nickname) {
-        boolean isRegisteredUser = userRepository.existsByNickname(nickname);
+        boolean isRegisteredUser = userRepository.existsByNicknameAndDeletedAtIsNull(nickname);
         return isRegisteredUser ?
                 NickNameCheckResponse.unavailable()
                 : NickNameCheckResponse.available();
@@ -230,7 +240,7 @@ public class UserService {
     }
 
     private Boolean existsByNickname(String nickname) {
-        return userRepository.existsByNickname(nickname);
+        return userRepository.existsByNicknameAndDeletedAtIsNull(nickname);
     }
 
     public UserInfoResponse findUserByUserId(Long userId) {
@@ -260,7 +270,7 @@ public class UserService {
     }
 
     public Optional<User> getOptionalUserByEmailAndProvider(String email, InitialProvider provider) {
-        Optional<User> result = userRepository.findByEmailAndProvider(email, provider);
+        Optional<User> result = userRepository.findByEmailAndProviderAndDeletedAtIsNull(email, provider);
         OptionalUserQueryResult( "email", email, result );
         return result;
     }
@@ -272,7 +282,7 @@ public class UserService {
     }
 
     public Optional<User> getOptionalUserByIdAndProvider(Long userId, InitialProvider provider) {
-        Optional<User> result = userRepository.findByIdAndProvider(userId, provider);
+        Optional<User> result = userRepository.findByIdAndProviderAndDeletedAtIsNull(userId, provider);
         OptionalUserQueryResult( "userId", userId, result );
         return result;
     }
