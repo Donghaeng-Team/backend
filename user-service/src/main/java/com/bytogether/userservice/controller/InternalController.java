@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @Slf4j
-@RequestMapping(("internal/v1/user"))
+@RequestMapping("internal/v1/user")
 @RequiredArgsConstructor
 public class InternalController {
 
@@ -21,6 +21,6 @@ public class InternalController {
     //내부 유저 정보
     @PostMapping("/usersinfo")
     public List<UserInternalResponse> getUsersInfo(@RequestBody UsersInfoRequest usersInfoRequest) {
-       return userService.findAllUSers(usersInfoRequest);
+       return userService.findAllUsers(usersInfoRequest);
     }
 }
