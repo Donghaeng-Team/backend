@@ -28,11 +28,8 @@ public class Oauth2UserService{
 
         log.info("Processing OAuth2 user - Provider: {}, ProviderId: {}",
                 oAuth2UserInfo.getProvider(), oAuth2UserInfo.getProviderId());
-
-        User user = userRepository.findByProviderId(oAuth2UserInfo.getProviderId())
-                .orElseGet(() -> createUser(oAuth2UserInfo));
-
-        return userRepository.findByProviderId(oAuth2UserInfo.getProviderId())
+        
+        return userRepository.findByProviderIdAndDeletedAtIsNull(oAuth2UserInfo.getProviderId())
                 .orElseGet(() -> createUser(oAuth2UserInfo));
     }
 

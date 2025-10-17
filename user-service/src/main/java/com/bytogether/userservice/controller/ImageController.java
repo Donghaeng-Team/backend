@@ -16,7 +16,7 @@ public class ImageController {
     private final ImageService imageService;
 
     @PutMapping("private/me/image")
-        public ResponseEntity<ApiResponse<?>> uploadImage(
+        public ResponseEntity<ApiResponse<ImageUploadResponse>> uploadImage(
                 @RequestHeader("X-User-Id") Long userId,
                 @RequestPart("image") MultipartFile file
                 ){
