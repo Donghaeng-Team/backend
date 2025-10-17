@@ -23,7 +23,7 @@ public class MailService {
 
     public void sendAuthEmailVerify(String email, String nickname) {
         String token = UUID.randomUUID().toString();
-        String verifyUrl = "http://localhost:3000/verify/email?token=" + token + "&email" + email;
+        String verifyUrl = "http://localhost:3000/verify/email?token=" + token + "&email=" + email;
         try {
             MimeMessage mimemessage = mailSender.createMimeMessage();
             MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimemessage, true, "UTF-8");
@@ -59,7 +59,7 @@ public class MailService {
 
     public void sendPasswordEmailVerify(String email, String nickname){
         String token = UUID.randomUUID().toString();
-        String verifyUrl = "http://localhost:3000/verify/email?token=" + token + "&email" + email;
+        String verifyUrl = "http://localhost:3000/verify/password?token=" + token + "&email=" + email;
         try{
             MimeMessage mimemessage = mailSender.createMimeMessage();
             MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimemessage, true, "UTF-8");

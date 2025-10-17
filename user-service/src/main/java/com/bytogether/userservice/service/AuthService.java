@@ -1,6 +1,7 @@
 package com.bytogether.userservice.service;
 
 import com.bytogether.userservice.dto.response.LoginResponse;
+import com.bytogether.userservice.dto.response.TokenResponse;
 import com.bytogether.userservice.model.*;
 import com.bytogether.userservice.repository.RefreshTokenRepository;
 import com.bytogether.userservice.repository.TokenAuditLogRepository;
@@ -24,7 +25,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenAuditLogService tokenAuditLogService;
 
-    public LoginResponse issueNewToken(Long userId, Role role) {
+    public TokenResponse issueNewToken(Long userId, Role role) {
         String accessToken = jwtTokenProvider.getAccessToken(userId, role);
         String refreshToken = jwtTokenProvider.getRefreshToken(userId, role);
 
@@ -40,10 +41,10 @@ public class AuthService {
         tokenAuditLogService.saveTokenLog(userId, accessToken, TokenType.ACCESS, Action.ISSUED);
         tokenAuditLogService.saveTokenLog(userId, refreshToken, TokenType.REFRESH, Action.ISSUED);
 
-        return new LoginResponse(accessToken, refreshToken);
+        return new TokenResponse(accessToken, refreshToken);
     }
 
-    public LoginResponse updateToken(Long userId, Role role) {
+    public TokenResponse updateToken(Long userId, Role role) {
         String accessToken = jwtTokenProvider.getAccessToken(userId, role);
         String refreshToken = jwtTokenProvider.getRefreshToken(userId, role);
 
@@ -59,7 +60,7 @@ public class AuthService {
         tokenAuditLogService.saveTokenLog(userId, accessToken, TokenType.ACCESS, Action.REFRESHED);
         tokenAuditLogService.saveTokenLog(userId, refreshToken, TokenType.REFRESH, Action.REFRESHED);
 
-        return new LoginResponse(accessToken, refreshToken);
+        return new TokenResponse(accessToken, refreshToken);
     }
 
     //refreshToken 추출

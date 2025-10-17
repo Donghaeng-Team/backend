@@ -35,12 +35,13 @@ public class UserController {
 
     //로그인
     @PostMapping("/public/login")
-    public ResponseEntity<ApiResponse<?>> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
-        LoginResponse tokenIssued = userService.login(loginRequest) ;
-        response.setHeader("Authorization", "Bearer "+ tokenIssued.getAccessToken());
-        Cookie newCookie = cookieUtil.createCookie("refresh_token", tokenIssued.getRefreshToken(),7L);
-        response.addCookie(newCookie);
-        return ResponseEntity.ok(ApiResponse.success(null));
+    public ResponseEntity<ApiResponse<?>> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse httpResponse) {
+        LoginResponse response = userService.login(loginRequest) ;
+        httpResponse.setHeader("Authorization", "Bearer "+ response.getAccessToken());
+        Cookie newCookie = cookieUtil.createCookie("refresh_token", response.getRefreshToken(),7L);
+        httpResponse.addCookie(newCookie);
+        UserInfoResponse userinfo = userService.findUserByUserId(response.getUserId());
+        return ResponseEntity.ok(ApiResponse.success(userinfo));
     }
 
     //로그아웃
@@ -53,7 +54,7 @@ public class UserController {
     //refreshToken을 이용한 accessToken재발급 요청
     @PostMapping("/public/refresh")
     public ResponseEntity<ApiResponse<?>> refresh(HttpServletRequest request, HttpServletResponse response) {
-        LoginResponse tokenReissued = userService.refresh(request, response);
+        TokenResponse tokenReissued = userService.refresh(request, response);
         response.setHeader("Authorization","Bearer " + tokenReissued.getAccessToken());
         Cookie newCookie = cookieUtil.createCookie("refresh_token", tokenReissued.getRefreshToken(),7L);
         response.addCookie(newCookie);

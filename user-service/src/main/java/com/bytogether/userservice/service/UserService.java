@@ -15,7 +15,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -49,7 +48,7 @@ public class UserService {
             throw new IllegalStateException("이미 사용중인 닉네임입니다");
         }
         if (!registerRequest.getPassword().equals(registerRequest.getPasswordConfirm())) {
-            throw new BadCredentialsException("패스워드가 일치하지 않습니다");
+            throw new IllegalArgumentException("패스워드가 일치하지 않습니다");
         }
 
         //2. User 생성( Password Encryption ) 및 저장
@@ -67,7 +66,9 @@ public class UserService {
         log.info(newUser.toString());
         userRepository.save(newUser);
         //3. 이메일 인증 발송
+        log.info("이메일 발송시작 ");
         mailService.sendAuthEmailVerify(newUser.getEmail(), registerRequest.getNickname());
+        log.info("이메일 발송완료");
     }
 
     @Transactional
@@ -79,7 +80,7 @@ public class UserService {
                 () -> new RuntimeException("사용자의 정보가 없거나 비밀번호가 일치하지 않습니다. 요청 이메일: " +loginRequest.getEmail())
         );
         if(!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())){
-            throw new BadCredentialsException("사용자의 비밀번호가 일치하지 않습니다.");
+            throw new IllegalArgumentException("사용자의 비밀번호가 일치하지 않습니다.");
         };
         Long userId = user.getId();
         Role role = user.getRole();
@@ -93,8 +94,12 @@ public class UserService {
         refreshTokenRepository.findByUserId(userId)
                 .ifPresent(refreshTokenRepository::delete);
 
-        LoginResponse newTokenResponse = authService.issueNewToken(userId, role);
-        return newTokenResponse;
+        TokenResponse newTokenResponse = authService.issueNewToken(userId, role);
+        return LoginResponse.builder()
+                .accessToken(newTokenResponse.getAccessToken())
+                .refreshToken(newTokenResponse.getRefreshToken())
+                .userId(userId)
+                .build();
     };
 
     // Cookie의 refreshToken의 value와 기간 초기화, DB의 token삭제,
@@ -108,16 +113,16 @@ public class UserService {
         log.info("토큰의 유효기간이 0으로 재설정되었습니다.");
     }
 
-    public LoginResponse refresh(HttpServletRequest request, HttpServletResponse response) {
+    public TokenResponse refresh(HttpServletRequest request, HttpServletResponse response) {
         //1. Toke 추출
         Optional<String> refreshTokenOptional = authService.getRefreshToken(request);
         if (refreshTokenOptional.isEmpty()) {
-            throw new BadCredentialsException("Refresh Token을 발견하지 못했습니다.");
+            throw new IllegalArgumentException("Refresh Token을 발견하지 못했습니다.");
         }
 
         String refreshTokenValue = refreshTokenOptional.get();
         if(refreshTokenValue.isEmpty()){
-            throw new BadCredentialsException("Refresh Token이 유효하지 않습니다");
+            throw new IllegalStateException("Refresh Token이 유효하지 않습니다");
         }
 
         //2. 토큰 검증
@@ -125,10 +130,10 @@ public class UserService {
         try {
             claims = jwtTokenProvider.getPayload(refreshTokenValue);
         } catch (ExpiredJwtException e) {
-            throw new BadCredentialsException("Refresh Token의 유효기간이 만료되었습니다");
+            throw new IllegalArgumentException("Refresh Token의 유효기간이 만료되었습니다");
         }
         if (claims.getExpiration().before(new Date())) {
-            throw new BadCredentialsException("Refresh Token이 만료되었습니다");
+            throw new IllegalArgumentException("Refresh Token이 만료되었습니다");
         }
 
         //3. 사용자 정보추출
@@ -138,14 +143,14 @@ public class UserService {
 
         // 4.Redis에서 저장된 토큰과 비교
         RefreshToken storedToken = refreshTokenRepository.findByUserId(userId)
-                .orElseThrow(() -> new BadCredentialsException("저장된 Refresh Token이 없습니다"));
+                .orElseThrow(() -> new IllegalArgumentException("저장된 Refresh Token이 없습니다"));
 
         if (!storedToken.getRefreshToken().equals(refreshTokenValue)) {
-            throw new BadCredentialsException("Refresh Token이 일치하지 않습니다");
+            throw new IllegalArgumentException("Refresh Token이 일치하지 않습니다");
         }
         //5.토큰 발행
         refreshTokenRepository.delete(storedToken); //새 토큰 저장을 위해 기존 토큰 삭제
-        LoginResponse UpdatedTokenResponse = authService.updateToken(userId, role);
+        TokenResponse UpdatedTokenResponse = authService.updateToken(userId, role);
         return UpdatedTokenResponse;
     }
 
@@ -172,7 +177,7 @@ public class UserService {
         );
 
         if(!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())){
-            throw new BadCredentialsException("사용자의 비밀번호가 일치하지 않습니다");
+            throw new IllegalArgumentException("사용자의 비밀번호가 일치하지 않습니다");
         }
 
         user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -235,11 +240,12 @@ public class UserService {
                 .email(targetUser.getEmail())
                 .nickName(targetUser.getNickname())
                 .avatarUrl(targetUser.getAvatar())
+                .provider(targetUser.getProvider())
                 .build();
     }
 
    //다수의 사용자 정보조회
-    public List<UserInternalResponse> findAllUSers(UsersInfoRequest request) {
+    public List<UserInternalResponse> findAllUsers(UsersInfoRequest request) {
         List<User> users = userRepository.findAllById(request.getUserIds());
         List<UserInternalResponse> responses = users.stream()
                 .map(user -> new UserInternalResponse(

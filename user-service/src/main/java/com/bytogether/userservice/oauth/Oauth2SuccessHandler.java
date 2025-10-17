@@ -1,6 +1,7 @@
 package com.bytogether.userservice.oauth;
 
 import com.bytogether.userservice.dto.response.LoginResponse;
+import com.bytogether.userservice.dto.response.TokenResponse;
 import com.bytogether.userservice.model.User;
 import com.bytogether.userservice.service.AuthService;
 import com.bytogether.userservice.service.Oauth2UserService;
@@ -45,17 +46,17 @@ public class Oauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         User user = oauth2UserService.processOAuth2User(oAuth2User, registrationId);
         log.info("user info: {}",user.toString());
 
-        LoginResponse loginResponse = authService.issueNewToken(user.getId(), user.getRole());
-        log.info("loginResponse: {}", loginResponse);
+        TokenResponse tokenResponse = authService.issueNewToken(user.getId(), user.getRole());
+        log.info("loginResponse: {}", tokenResponse);
 
 
-        response.setHeader("authorization", loginResponse.getAccessToken());
-        Cookie newCookie = cookieUtil.createCookie("refresh_token", loginResponse.getRefreshToken(),7L);
+        response.setHeader("authorization", tokenResponse.getAccessToken());
+        Cookie newCookie = cookieUtil.createCookie("refresh_token", tokenResponse.getRefreshToken(),7L);
         response.addCookie(newCookie);
 
         String redirectUrl = UriComponentsBuilder.fromUriString("http://localhost:3000/auth/callback")
                 .queryParam("provider", registrationId)
-                .queryParam("access_token", loginResponse.getAccessToken())
+                .queryParam("access_token", tokenResponse.getAccessToken())
                 .build()
                 .toUriString();
 
