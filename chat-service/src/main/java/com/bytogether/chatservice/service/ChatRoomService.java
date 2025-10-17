@@ -27,8 +27,8 @@ import java.util.stream.Collectors;
  * 채팅방 목록 담당 서비스
  *
  * @author jhj010311@gmail.com
- * @version 1.0
- * @since 2025-10-13
+ * @version 1.01
+ * @since 2025-10-17
  */
 
 @Service
@@ -105,8 +105,26 @@ public class ChatRoomService {
         return participantRepository.existsByChatRoomIdAndUserIdAndStatus(roomId, userId, ParticipantStatus.ACTIVE);
     }
 
-    public ChatRoomResponse getChatRoomDetails(Long chatRoomId) {
-        return chatRoomRepository.getChatRoomById(chatRoomId);
+    public boolean isBuyer(Long roomId, Long userId) {
+        // 공동구매에 참가한 상태인 유저가 맞는지 확인
+
+        return participantRepository.existsByChatRoomIdAndUserIdAndIsBuyerTrue(roomId, userId);
+    }
+
+    public boolean isCreator(Long roomId, Long userId) {
+        // 방장인지 확인
+
+        return userId == chatRoomRepository.getCreatorUserIdById(roomId);
+    }
+
+    public ChatRoomResponse getChatRoomDetails(Long roomId) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다. ID: " + roomId));
+
+        Integer currentBuyers = participantRepository.countBuyersByRoomId(roomId);
+        Integer currentParticipants = participantRepository.countParticipantsByRoomId(roomId);
+
+        return chatRoomMapper.convertToResponse(room, currentBuyers, currentParticipants);
     }
 
     public ParticipantListResponse getParticipants(Long roomId) {
@@ -121,8 +139,8 @@ public class ChatRoomService {
                 .findByChatRoomIdAndStatus(roomId, ParticipantStatus.ACTIVE);
 
         // 3. 참가자 수 계산
-        int totalCount = participants.size();
-        int buyerCount = (int) participants.stream()
+        int currentParticipants = participants.size();
+        int currentBuyers = (int) participants.stream()
                 .filter(ChatRoomParticipant::getIsBuyer)
                 .count();
 
@@ -146,7 +164,7 @@ public class ChatRoomService {
 //                            .profileImage(userInfo != null ? userInfo.getProfileImage() : null)
                             .isBuyer(participant.getIsBuyer())
                             .isCreator(userId.equals(creatorUserId))
-                            .joinedAt(participant.getFirstJoinedAt())
+                            .joinedAt(participant.getJoinedAt())
                             .build();
                 }).sorted((a, b) -> {
                     // 7. 정렬 (방장 > 구매자 > 일반 참가자 > 가입 시간 순)
@@ -163,9 +181,22 @@ public class ChatRoomService {
                 }).collect(Collectors.toList());
 
         return ParticipantListResponse.builder()
-                .totalCount(totalCount)
-                .buyerCount(buyerCount)
+                .currentParticipants(currentParticipants)
+                .currentBuyers(currentBuyers)
                 .participants(participantResponses)
                 .build();
+    }
+
+    public String leaveChatRoom(Long roomId, Long userId) {
+        // ChatRoomParticipant 테이블에 반영 :
+        // isBuyer, buyerConfirmedAt null로 초기화,
+        // leftAt 및 updatedAt 현재시각으로 저장, status ParticipantStatus.LEFT_VOLUNTARY로 변경
+
+        // ChatRoomParticipantHistory 테이블에 반영 :
+        // leftAt 현재시각으로 저장,
+        // exitType ParticipantStatus.LEFT_VOLUNTARY로 저장
+
+        // null 대신 "leftAt : " + leftAt 반환
+        return null;
     }
 }

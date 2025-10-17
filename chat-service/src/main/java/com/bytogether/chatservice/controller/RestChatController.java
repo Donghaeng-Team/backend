@@ -58,7 +58,7 @@ public class RestChatController {
         ├─ DELETE /api/chat/{roomId}/participate        구매 의사 취소
         ├─ PATCH  /api/chat/{roomId}/extend             기한 연장
         ├─ PATCH  /api/chat/{roomId}/close              모집 마감
-        └─ POST   /api/chat/{roomId}/complete           구매 확정
+        └─ POST   /api/chat/{roomId}/complete           구매 확정 등으로 인한 채팅방 종료
     * */
 
     // TODO: 프론트 페이지와 직결되는 각종 REST API를 작성하기
@@ -67,7 +67,7 @@ public class RestChatController {
     @GetMapping
     public ResponseEntity<ApiResponse<ChatRoomPageResponse>> chatRoomList(ChatRoomPageRequest request,
                                                                           @RequestHeader("X-User-Id") Long userId) {
-        // TODO: 로그인한 유저의 id를 사용하여 유저가 참가한 적 있는 모든 채팅방 리스트를 쿼리
+        // 로그인한 유저의 id를 사용하여 유저가 참가한 적 있는 모든 채팅방 리스트를 쿼리
         // 현재 공동구매에 참가한 인원 정보도 넣어줘야 함
 
         ChatRoomPageResponse chatRoomList = null;
@@ -84,7 +84,7 @@ public class RestChatController {
 
     @GetMapping("/{roomId}")
     public ResponseEntity<ApiResponse<ChatRoomResponse>> enterChatRoom(@PathVariable("roomId") Long chatRoomId, @RequestHeader("X-User-Id") Long userId) {
-        // TODO: 채팅방 id를 사용하여 참가중인 특정 채팅방 페이지를 오픈
+        // 채팅방 id를 사용하여 참가중인 특정 채팅방 페이지를 오픈
 
         if(chatRoomService.isParticipating(chatRoomId, userId)){
             return ResponseEntity.ok(ApiResponse.success(chatRoomService.getChatRoomDetails(chatRoomId)));
@@ -105,33 +105,41 @@ public class RestChatController {
             chatMessagePageResponse = chatMessageService.getMessagesBeforeCursor(request.getRoomId(), userId, request.getCursor(), request.getSize());
         }
 
+        if(chatMessagePageResponse == null){
+            return ResponseEntity.badRequest().body(ApiResponse.fail("잘못된 요청입니다"));
+        }
+
         return ResponseEntity.ok(ApiResponse.success(chatMessagePageResponse));
     }
 
     @GetMapping("/{roomId}/participants")
     public ResponseEntity<ApiResponse<ParticipantListResponse>> getParticipants(@PathVariable("roomId") Long roomId) {
-        // TODO: 참가자 목록 정보 쿼리
+        // 참가자 목록 정보 쿼리
 
         return ResponseEntity.ok(ApiResponse.success(chatRoomService.getParticipants(roomId)));
     }
 
     @PostMapping("/{roomId}/exit")
-    public ResponseEntity<ApiResponse<String>> leaveChatRoom(@PathVariable("roomId") Long chatRoomId) {
+    public ResponseEntity<ApiResponse<String>> leaveChatRoom(@PathVariable("roomId") Long roomId,
+                                                             @RequestHeader("X-User-Id") Long userId) {
         // TODO: 채팅방 탈퇴 처리
         // String 말고 ChatRoomExitResponse 사용
 
         // 1. 채팅방 참가자인지 검증
-        // 2. 채팅방 방장인지 확인하고 처리 분기
-        // 2-1. 방장이라면 채팅방 폐쇄 처리 병행
-        // 2-2. 일반 참가자라면 공동구매 참여자인지 확인해서 공동구매는 참가취소 처리
-        // 3. 채팅방 탈퇴
-        // 4. 탈퇴 시간, 시스템 메시지 담아 반환
+        if(chatRoomService.isParticipating(roomId, userId)){
+            // 2. 채팅방 탈퇴
+            // stomp쪽에서 처리 병행
+            String response = chatRoomService.leaveChatRoom(roomId, userId);
 
-        return null;
+            // 3. 탈퇴 시간, 시스템 메시지 담아 반환
+
+        }
+
+        return ResponseEntity.badRequest().body(ApiResponse.fail("잘못된 요청입니다"));
     }
 
     @PostMapping("/{roomId}/kick")
-    public ResponseEntity<ApiResponse<String>> kickParticipant(@PathVariable("roomId") Long chatRoomId,
+    public ResponseEntity<ApiResponse<String>> kickParticipant(@PathVariable("roomId") Long roomId,
                                                @RequestParam Long targetUserId,
                                                @RequestHeader("X-User-Id") Long requesterId) {
         // TODO: 참가자 강퇴 처리 및 참가자 정보 담아서 반환
@@ -204,15 +212,16 @@ public class RestChatController {
     }
 
     @PostMapping("/{roomId}/complete")
-    public ResponseEntity<ApiResponse<String>> confirmPurchase(@PathVariable("roomId") Long chatRoomId) {
+    public ResponseEntity<ApiResponse<String>> completePurchase(@PathVariable("roomId") Long chatRoomId) {
         // TODO: 모든 활동이 종료된 이후 방장이 채팅방 기능 정지 처리
-        // String 말고 ChatRoomConfirmResponse 사용
-        // 모집 마감기한으로부터 시간이 일정 기간 이상 지나면 시스템이 자동으로 처리하는 기능 추가 고려
+        // 공동구매 완료 말고 방장 판단에 의한 임의시점의 중도해산도 포함
+        // String 말고 ChatRoomCompleteResponse 사용
+        // 모집 마감기한으로부터 시간이 일정 기간 이상 지나면 시스템이 자동으로 처리하는 기능 추가 고려 >> 별도 클래스에서 처리
 
         // 1. 방장 검증
         // 2. 채팅방에 공동구매 종료 시스템 메시지 발송
-        // 3. 더 이상 채팅방에 채팅을 보낼 수 없도록 처리(원하는 경우 각 참가자별로 퇴장은 가능)
-        // 4. ChatRoomConfirmResponse 반환
+        // 3. 더 이상 채팅방에 채팅을 보낼 수 없도록 동결 처리(원하는 경우 각 참가자별로 퇴장은 가능)
+        // 4. ChatRoomCompleteResponse 반환
 
         return null;
     }
