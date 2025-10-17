@@ -7,6 +7,7 @@ import com.bytogether.chatservice.dto.response.*;
 import com.bytogether.chatservice.service.ChatMessageService;
 import com.bytogether.chatservice.service.ChatRoomService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -122,107 +123,168 @@ public class RestChatController {
     @PostMapping("/{roomId}/exit")
     public ResponseEntity<ApiResponse<String>> leaveChatRoom(@PathVariable("roomId") Long roomId,
                                                              @RequestHeader("X-User-Id") Long userId) {
-        // TODO: 채팅방 탈퇴 처리
-        // String 말고 ChatRoomExitResponse 사용
-
         // 1. 채팅방 참가자인지 검증
-        if(chatRoomService.isParticipating(roomId, userId)){
-            // 2. 채팅방 탈퇴
-            // stomp쪽에서 처리 병행
-            String response = chatRoomService.leaveChatRoom(roomId, userId);
-
-            // 3. 탈퇴 시간, 시스템 메시지 담아 반환
-
+        if(!chatRoomService.isParticipating(roomId, userId)){
+            return ResponseEntity.badRequest().body(ApiResponse.fail("참가 중인 채팅방이 아닙니다"));
         }
 
-        return ResponseEntity.badRequest().body(ApiResponse.fail("잘못된 요청입니다"));
+        // 2. 방장은 퇴장 불가
+        if(chatRoomService.isCreator(roomId, userId)) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail("방장은 채팅방을 닫기 전에 퇴장할 수 없습니다"));
+        }
+
+        // 3. 채팅방 탈퇴
+        String response = chatRoomService.leaveChatRoom(roomId, userId);
+
+        // TODO: STOMP를 통한 시스템 메시지 발송 필요
+        // stompService.sendSystemMessage(roomId, userId + "님이 퇴장했습니다");
+
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PostMapping("/{roomId}/kick")
     public ResponseEntity<ApiResponse<String>> kickParticipant(@PathVariable("roomId") Long roomId,
-                                               @RequestParam Long targetUserId,
-                                               @RequestHeader("X-User-Id") Long requesterId) {
-        // TODO: 참가자 강퇴 처리 및 참가자 정보 담아서 반환
-        // String 말고 말고 ChatRoomKickResponse 사용
-
-        // TODO: 방장 인증 필요
-
+                                                               @RequestParam Long targetUserId,
+                                                               @RequestHeader("X-User-Id") Long requesterId) {
         // 1. 방장 권한 인증
-        // 2. 강퇴 처리
-        // 3. 강퇴 대상에게 메시지 전달(stomp 컨트롤러 api로 처리?)
-        // 4. 강퇴한 유저 정보, 강퇴 시간, 시스템 메시지 담아 반환
+        if(!chatRoomService.isCreator(roomId, requesterId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.fail("방장만 강퇴할 수 있습니다"));
+        }
 
-        return null;
+        // 2. 대상이 참가자인지 확인
+        if(!chatRoomService.isParticipating(roomId, targetUserId)) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.fail("해당 사용자는 채팅방 참가자가 아닙니다"));
+        }
+
+        // 3. 자기 자신은 강퇴 불가
+        if(requesterId.equals(targetUserId)) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.fail("자기 자신은 강퇴할 수 없습니다"));
+        }
+
+        // 4. 강퇴 처리
+        String result = chatRoomService.kickParticipant(roomId, targetUserId);
+
+        // TODO: STOMP를 통한 강퇴 알림
+        // stompService.notifyKicked(roomId, targetUserId);
+        // stompService.sendSystemMessage(roomId, targetUserId + "님이 강퇴되었습니다");
+
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
     @PostMapping("/{roomId}/participate")
     public ResponseEntity<ApiResponse<BuyerConfirmResponse>> confirmBuyer(@PathVariable("roomId") Long chatRoomId,
-                                                          @RequestHeader("X-User-Id") Long userId) {
-        // TODO: 공동구매 참가시 처리 후 해당 정보 반환
+                                                                          @RequestHeader("X-User-Id") Long userId) {
+        // 1. 채팅방 참가자인지 검증
+        if(!chatRoomService.isParticipating(chatRoomId, userId)) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.fail("참가 중인 채팅방이 아닙니다"));
+        }
 
-        // 1. 채팅방 참가자인지, 이미 공동구매에 참가중인지 검증
-        // 2. 공동구매 참가 처리
-        // 3. BuyerConfirmResponse 반환
+        // 2. 이미 구매자인지 확인
+        if(chatRoomService.isBuyer(chatRoomId, userId)) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.fail("이미 공동구매에 참가 중입니다"));
+        }
 
-        return null;
+        // 3. 공동구매 참가 처리
+        BuyerConfirmResponse response = chatRoomService.confirmBuyer(chatRoomId, userId);
+
+        // TODO: STOMP를 통한 알림
+        // stompService.sendSystemMessage(roomId, userId + "님이 공동구매에 참가했습니다");
+
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @DeleteMapping("/{roomId}/participate")
     public ResponseEntity<ApiResponse<BuyerConfirmResponse>> cancelBuyer(@PathVariable("roomId") Long chatRoomId,
-                                                         @RequestHeader("X-User-Id") Long userId) {
-        // TODO: 공동구매 참가 취소시 처리 후 해당 정보 반환
+                                                                         @RequestHeader("X-User-Id") Long userId) {
+        // 1. 채팅방 참가자인지 검증
+        if(!chatRoomService.isParticipating(chatRoomId, userId)) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.fail("참가 중인 채팅방이 아닙니다"));
+        }
 
-        // 1. 채팅방 참가자인지, 공동구매에 참가중인게 맞는지 검증
-        // 2. 공동구매 불참 처리
-        // 3. BuyerConfirmResponse 반환
+        // 2. 구매자인지 확인
+        if(!chatRoomService.isBuyer(chatRoomId, userId)) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.fail("공동구매에 참가하지 않은 상태입니다"));
+        }
 
-        return null;
+        // 3. 공동구매 참가 취소
+        BuyerConfirmResponse response = chatRoomService.cancelBuyer(chatRoomId, userId);
+
+        // TODO: STOMP를 통한 알림
+        // stompService.sendSystemMessage(roomId, userId + "님이 공동구매 참가를 취소했습니다");
+
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PatchMapping("/{roomId}/extend")
     public ResponseEntity<ApiResponse<ExtendDeadlineResponse>> extendDeadline(@PathVariable("roomId") Long chatRoomId,
-                                              @RequestParam Integer hours,  // 연장할 시간
-                                              @RequestHeader("X-User-Id") Long userId) {
-        // TODO: 방장이 채팅방 마감기한을 연장신청할 경우의 처리
-        // TODO: 방장 인증 필요
-
+                                                                              @RequestParam Integer hours,
+                                                                              @RequestHeader("X-User-Id") Long userId) {
         // 1. 방장 검증
-        // 2. 지정된 시간만큼 마감기한 연장
-        // 3. 채팅방에 마감기한 연장 시스템 메시지 발송
-        // 4. ExtendDeadlineResponse 반환
+        if(!chatRoomService.isCreator(chatRoomId, userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.fail("방장만 기한을 연장할 수 있습니다"));
+        }
 
-        return null;
+        // 2. 유효한 시간인지 검증
+        if(hours <= 0 || hours > 72) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.fail("연장 시간은 1시간 이상 72시간 이하여야 합니다"));
+        }
+
+        // 3. 기한 연장 처리
+        ExtendDeadlineResponse response = chatRoomService.extendDeadline(chatRoomId, hours);
+
+        // TODO: STOMP를 통한 시스템 메시지
+        // stompService.sendSystemMessage(roomId, "모집 기한이 " + hours + "시간 연장되었습니다");
+
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PatchMapping("/{roomId}/close")
     public ResponseEntity<ApiResponse<RecruitmentCloseResponse>> closeRecruitment(@PathVariable("roomId") Long chatRoomId,
-                                                @RequestHeader("X-User-Id") Long userId) {
-        // TODO: 방장이 직접 공동구매를 마감신청하는 케이스의 처리를 담당
-        // 방장이 직접, 혹은 마감기한이 지나면 시스템에 의해 자동으로 공동구매 모집을 마감
-        // 시스템 자동처리 쪽은 따로 구현?
-
-        // TODO: 방장 인증 필요
-
+                                                                                  @RequestHeader("X-User-Id") Long userId) {
         // 1. 방장 검증
-        // 2. 공동구매 참가자가 아닌 기타 채팅방 참가자를 강퇴
-        // 3. 채팅방에 공동구매 마감 시스템 메시지 발송
-        // 4. RecruitmentCloseResponse 반환
+        if(!chatRoomService.isCreator(chatRoomId, userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.fail("방장만 모집을 마감할 수 있습니다"));
+        }
 
-        return null;
+        // 2. 모집 마감 처리
+        RecruitmentCloseResponse response = chatRoomService.closeRecruitment(chatRoomId);
+
+        // TODO: STOMP를 통한 시스템 메시지
+        // stompService.sendSystemMessage(roomId, "공동구매 모집이 마감되었습니다");
+        // 구매자가 아닌 참가자들에게 퇴장 알림 필요
+
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PostMapping("/{roomId}/complete")
-    public ResponseEntity<ApiResponse<String>> completePurchase(@PathVariable("roomId") Long chatRoomId) {
-        // TODO: 모든 활동이 종료된 이후 방장이 채팅방 기능 정지 처리
-        // 공동구매 완료 말고 방장 판단에 의한 임의시점의 중도해산도 포함
-        // String 말고 ChatRoomCompleteResponse 사용
-        // 모집 마감기한으로부터 시간이 일정 기간 이상 지나면 시스템이 자동으로 처리하는 기능 추가 고려 >> 별도 클래스에서 처리
-
+    public ResponseEntity<ApiResponse<String>> completePurchase(@PathVariable("roomId") Long chatRoomId,
+                                                                @RequestHeader("X-User-Id") Long userId) {
         // 1. 방장 검증
-        // 2. 채팅방에 공동구매 종료 시스템 메시지 발송
-        // 3. 더 이상 채팅방에 채팅을 보낼 수 없도록 동결 처리(원하는 경우 각 참가자별로 퇴장은 가능)
-        // 4. ChatRoomCompleteResponse 반환
+        if(!chatRoomService.isCreator(chatRoomId, userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.fail("방장만 채팅방을 종료할 수 있습니다"));
+        }
 
-        return null;
+        // 2. 채팅방 종료 처리
+        String result = chatRoomService.completePurchase(chatRoomId);
+
+        // TODO: STOMP를 통한 종료 알림
+        // stompService.sendSystemMessage(roomId, "공동구매가 종료되었습니다");
+        // 모든 참가자에게 채팅방 종료 알림
+
+        // TODO: 스케줄러 등록
+        // 모집 마감으로부터 일정 시간 후 자동 종료를 위한 스케줄러 작업 필요
+
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 }

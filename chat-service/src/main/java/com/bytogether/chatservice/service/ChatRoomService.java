@@ -1,12 +1,7 @@
 package com.bytogether.chatservice.service;
 
-import com.bytogether.chatservice.dto.response.ChatRoomPageResponse;
-import com.bytogether.chatservice.dto.response.ChatRoomResponse;
-import com.bytogether.chatservice.dto.response.ParticipantListResponse;
-import com.bytogether.chatservice.dto.response.ParticipantResponse;
-import com.bytogether.chatservice.entity.ChatRoom;
-import com.bytogether.chatservice.entity.ChatRoomParticipant;
-import com.bytogether.chatservice.entity.ParticipantStatus;
+import com.bytogether.chatservice.dto.response.*;
+import com.bytogether.chatservice.entity.*;
 import com.bytogether.chatservice.mapper.ChatRoomMapper;
 import com.bytogether.chatservice.repository.ChatRoomParticipantHistoryRepository;
 import com.bytogether.chatservice.repository.ChatRoomParticipantRepository;
@@ -187,16 +182,161 @@ public class ChatRoomService {
                 .build();
     }
 
+    @Transactional
     public String leaveChatRoom(Long roomId, Long userId) {
-        // ChatRoomParticipant 테이블에 반영 :
-        // isBuyer, buyerConfirmedAt null로 초기화,
-        // leftAt 및 updatedAt 현재시각으로 저장, status ParticipantStatus.LEFT_VOLUNTARY로 변경
+        ChatRoomParticipant participant = participantRepository
+                .findByChatRoomIdAndUserId(roomId, userId)
+                .orElseThrow(() -> new NotFoundException("참가 정보를 찾을 수 없습니다"));
 
-        // ChatRoomParticipantHistory 테이블에 반영 :
-        // leftAt 현재시각으로 저장,
-        // exitType ParticipantStatus.LEFT_VOLUNTARY로 저장
+        // ChatRoomParticipant 테이블 업데이트
+        participant.setIsBuyer(false);
+        participant.setBuyerConfirmedAt(null);
+        participant.setLeftAt(LocalDateTime.now());
+        participant.setStatus(ParticipantStatus.LEFT_VOLUNTARY);
+        participant.setUpdatedAt(LocalDateTime.now());
 
-        // null 대신 "leftAt : " + leftAt 반환
-        return null;
+        participantRepository.save(participant);
+
+        // ChatRoomParticipantHistory 테이블에 기록
+        ChatRoomParticipantHistory history = ChatRoomParticipantHistory.builder()
+                .chatRoom(participant.getChatRoom())
+                .userId(userId)
+                .joinedAt(participant.getJoinedAt())
+                .leftAt(LocalDateTime.now())
+                .exitType(ExitType.VOLUNTARY)
+                .build();
+
+        historyRepository.save(history);
+
+        return "leftAt: " + participant.getLeftAt();
+    }
+
+    @Transactional
+    public String kickParticipant(Long roomId, Long targetUserId) {
+        ChatRoomParticipant participant = participantRepository
+                .findByChatRoomIdAndUserId(roomId, targetUserId)
+                .orElseThrow(() -> new NotFoundException("참가자를 찾을 수 없습니다"));
+
+        participant.setStatus(ParticipantStatus.BANNED);
+        participant.setLeftAt(LocalDateTime.now());
+        participant.setIsBuyer(false);
+        participant.setBuyerConfirmedAt(null);
+
+        participantRepository.save(participant);
+
+        // 히스토리 기록
+        ChatRoomParticipantHistory history = ChatRoomParticipantHistory.builder()
+                .chatRoom(participant.getChatRoom())
+                .userId(targetUserId)
+                .joinedAt(participant.getJoinedAt())
+                .leftAt(LocalDateTime.now())
+                .exitType(ExitType.KICKED)
+                .build();
+
+        historyRepository.save(history);
+
+        return "kickedAt: " + LocalDateTime.now();
+    }
+
+    @Transactional
+    public BuyerConfirmResponse confirmBuyer(Long roomId, Long userId) {
+        ChatRoomParticipant participant = participantRepository
+                .findByChatRoomIdAndUserId(roomId, userId)
+                .orElseThrow(() -> new NotFoundException("참가 정보를 찾을 수 없습니다"));
+
+        participant.setIsBuyer(true);
+        participant.setBuyerConfirmedAt(LocalDateTime.now());
+
+        participantRepository.save(participant);
+
+        int currentBuyers = participantRepository.countBuyersByRoomId(roomId);
+
+        return BuyerConfirmResponse.builder()
+                .userId(userId)
+                .isBuyer(true)
+                .confirmedAt(LocalDateTime.now())
+                .currentBuyers(currentBuyers)
+                .build();
+    }
+
+    @Transactional
+    public BuyerConfirmResponse cancelBuyer(Long roomId, Long userId) {
+        ChatRoomParticipant participant = participantRepository
+                .findByChatRoomIdAndUserId(roomId, userId)
+                .orElseThrow(() -> new NotFoundException("참가 정보를 찾을 수 없습니다"));
+
+        participant.setIsBuyer(false);
+        participant.setBuyerConfirmedAt(null);
+
+        participantRepository.save(participant);
+
+        int currentBuyers = participantRepository.countBuyersByRoomId(roomId);
+
+        return BuyerConfirmResponse.builder()
+                .userId(userId)
+                .isBuyer(false)
+                .confirmedAt(null)
+                .currentBuyers(currentBuyers)
+                .build();
+    }
+
+    @Transactional
+    public ExtendDeadlineResponse extendDeadline(Long roomId, Integer hours) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다"));
+
+        LocalDateTime newDeadline = room.getEndTime().plusHours(hours);
+        room.setEndTime(newDeadline);
+        room.setUpdatedAt(LocalDateTime.now());
+
+        chatRoomRepository.save(room);
+
+        return ExtendDeadlineResponse.builder()
+                .roomId(roomId)
+                .newDeadline(newDeadline)
+                .extendedHours(hours)
+                .build();
+    }
+
+    @Transactional
+    public RecruitmentCloseResponse closeRecruitment(Long roomId) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다"));
+
+        room.setStatus(ChatRoomStatus.RECRUITMENT_CLOSED);
+        room.setRecruitmentClosedAt(LocalDateTime.now());
+
+        // 구매자가 아닌 참가자들 강제 퇴장
+        List<ChatRoomParticipant> nonBuyers = participantRepository
+                .findByChatRoomIdAndStatusAndIsBuyerFalse(roomId, ParticipantStatus.ACTIVE);
+
+        for(ChatRoomParticipant participant : nonBuyers) {
+            participant.setStatus(ParticipantStatus.LEFT_NOT_BUYER);
+            participant.setLeftAt(LocalDateTime.now());
+        }
+
+        participantRepository.saveAll(nonBuyers);
+
+        int finalBuyers = participantRepository.countBuyersByRoomId(roomId);
+
+        return RecruitmentCloseResponse.builder()
+                .roomId(roomId)
+                .closedAt(LocalDateTime.now())
+                .finalBuyerCount(finalBuyers)
+                .kickedCount(nonBuyers.size())
+                .build();
+    }
+
+    @Transactional
+    public String completePurchase(Long roomId) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다"));
+
+        room.setStatus(ChatRoomStatus.COMPLETED);
+        room.setCompletedAt(LocalDateTime.now());
+
+        chatRoomRepository.save(room);
+
+        return "completedAt: " + room.getCompletedAt();
     }
 }

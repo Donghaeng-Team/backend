@@ -21,10 +21,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class RecruitmentCloseResponse {
-    private String status;            // RECRUITMENT_CLOSED
-    private Integer finalBuyerCount;  // 확정된 구매자 수
-    private Integer kickedCount;      // 자동 퇴장된 인원 수
-
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private Long roomId;
     private LocalDateTime closedAt;
+    private Integer finalBuyerCount;
+    private Integer kickedCount;
 }
