@@ -58,6 +58,7 @@ public class ImageService {
                     "static/user/image/%d/%s_%s",
                     userId, UUID.randomUUID(), file.getOriginalFilename()
             );
+            String thumbnailName = filename.replace ("image", "thumbnail");
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketname)
                     .key(filename)
@@ -74,16 +75,21 @@ public class ImageService {
             );
 
             log.info("S3 업로드 성공 - 버킷: {}, 키: {}", bucketname, filename);
+            log.info("S3 thumbnail - 버킷: {}, 키: {}", bucketname, thumbnailName);
 
             String imageUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", bucketname, "ap-northeast-2", filename);
+            String thumbnailUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", bucketname, "ap-northeast-2", thumbnailName);
 
             //4. 이미지 URL 저장 후 반환
             user.setAvatar(imageUrl);
             userRepository.save(user);
             log.info("이미지 Url 저장: {}", imageUrl);
+
             return ImageUploadResponse.builder()
                     .imageUrl(imageUrl)
+                    .thumbnailUrl(thumbnailUrl)
                     .build();
+
         } catch (Exception e) {
             log.error("파일 업로드 실패: {}", e.getMessage());
             throw new RuntimeException(e);

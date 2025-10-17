@@ -42,7 +42,7 @@ public class UserService {
     public void register(RegisterRequest registerRequest){
         //1. 중복 체크 및 패스워드 점검
         if (existsByEmail(registerRequest.getEmail())) {
-            throw new IllegalStateException("이미 가입된 이메일 계정입니다");
+            throw new IllegalStateException("이미 이메일로 가입된 계정입니다");
         }
         if (existsByNickname(registerRequest.getNickname())) {
             throw new IllegalStateException("이미 사용중인 닉네임입니다");
@@ -157,7 +157,8 @@ public class UserService {
     //이미 사용된 Email체크
     public EmailCheckResponse checkRegisteredMail(String email) {
         boolean isRegisteredUser = userRepository.existsByEmail(email);
-        return isRegisteredUser ?
+        boolean isLocalUser = userRepository.existsByNickname(email);
+        return isRegisteredUser && isLocalUser?
                 EmailCheckResponse.unavailable()
                 : EmailCheckResponse.available();
     }
@@ -224,7 +225,8 @@ public class UserService {
     }
 
     private Boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
+        Optional<User> user = getOptionalUserByEmailAndProvider(email, InitialProvider.LOCAL);
+        return user.isPresent();
     }
 
     private Boolean existsByNickname(String nickname) {
