@@ -114,9 +114,23 @@ jobs:
 
             echo "🧱 Using Dockerfile: $DOCKER_FILE"
 
-            docker build -t $SERVICE:$TAG -f $DOCKER_FILE .
+            # ECR repo 자동 생성
+            ## aws ecr describe-repositories --repository-names bytogether/$SERVICE --region $AWS_REGION > /dev/null 2>&1 || \
+            ## aws ecr create-repository --repository-name bytogether/$SERVICE --region $AWS_REGION
+
+
+            # 캐시 활용
+            docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether/$SERVICE:latest || true
+
+            docker build -t $SERVICE:$TAG -f $DOCKER_FILE . \
+              --cache-from $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether/$SERVICE:latest
+
+            #배포 태그 , 추적 태그 적용
             docker tag $SERVICE:$TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether/$SERVICE:$TAG
+            docker tag $SERVICE:$TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether/$SERVICE:latest
+
             docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether/$SERVICE:$TAG
+            docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether/$SERVICE:latest
             cd ..
           done
 
