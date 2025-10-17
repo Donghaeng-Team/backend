@@ -14,7 +14,7 @@ env:
   AWS_ACCOUNT_ID: 857360183365
   TAG: ${{ github.sha }}   # 커밋 해시 기반 버전
   EXCLUDE_DIRS: "common"
-  BASE_BRANCH: origin/spring-dev   # 비교 기준 브랜치 지정
+  BASE_BRANCH: spring-dev   # 비교 기준 브랜치 지정
 
 
 jobs:
