@@ -14,7 +14,7 @@ env:
   AWS_ACCOUNT_ID: 857360183365
   TAG: ${{ github.sha }}   # 커밋 해시 기반 버전
   EXCLUDE_DIRS: "common"
-  BASE_BRANCH: spring-dev   # 비교 기준 브랜치 지정
+  BASE_BRANCH: origin/spring-dev   # 비교 기준 브랜치 지정
 
 
 jobs:
@@ -63,10 +63,14 @@ jobs:
       - name: Detect changed services
         id: detect
         run: |
-          echo "🔍 Detecting services changed since base branch ($BASE_BRANCH)..."
-          git fetch origin $BASE_BRANCH
-          BASE=$(git merge-base HEAD $BASE_BRANCH)
-          git diff --name-only $BASE HEAD > changed_files.txt
+          echo "🔍 Detecting changed services in merge commit..."
+          git fetch --all
+
+          # 머지 커밋의 두 번째 부모(머지된 브랜치)와 비교
+          BASE=$(git rev-parse HEAD^1)
+          MERGED=$(git rev-parse HEAD^2)
+
+          git diff --name-only $BASE $MERGED > changed_files.txt
 
           echo "변경된 파일 목록:"
           cat changed_files.txt || true
