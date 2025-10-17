@@ -115,8 +115,8 @@ jobs:
             echo "🧱 Using Dockerfile: $DOCKER_FILE"
 
             docker build -t $SERVICE:$TAG -f $DOCKER_FILE .
-            docker tag $SERVICE:$TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$SERVICE:$TAG
-            docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$SERVICE:$TAG
+            docker tag $SERVICE:$TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether/$SERVICE:$TAG
+            docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether/$SERVICE:$TAG
             cd ..
           done
 
