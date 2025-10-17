@@ -13,7 +13,7 @@ env:
   AWS_REGION: ap-northeast-2
   AWS_ACCOUNT_ID: 857360183365
   TAG: ${{ github.sha }}   # 커밋 해시 기반 버전
-  EXCLUDE_DIRS: "common"
+  EXCLUDE_DIRS: "common .github"
   BASE_BRANCH: origin/spring-dev   # 비교 기준 브랜치 지정
 
 
