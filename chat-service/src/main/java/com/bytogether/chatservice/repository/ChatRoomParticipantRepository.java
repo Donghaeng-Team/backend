@@ -35,19 +35,13 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
 
     List<ChatRoomParticipant> findByChatRoomIdAndIsBuyerFalse(Long chatRoomId);
 
-    @Query("SELECT COUNT(p) FROM ChatRoomParticipant p " +
-            "WHERE p.chatRoom.id = :chatRoomId AND p.status = 'ACTIVE'")
-    long countActiveParticipants(@Param("chatRoomId") Long chatRoomId);
-
-    @Query("SELECT COUNT(p) FROM ChatRoomParticipant p " +
-            "WHERE p.chatRoom.id = :chatRoomId AND p.isBuyer = true")
-    long countBuyers(@Param("chatRoomId") Long chatRoomId);
-
     List<ChatRoomParticipant> findByUserIdAndStatus(Long userId, ParticipantStatus status);
 
     boolean existsByChatRoomIdAndUserIdAndIsPermanentlyBannedTrue(Long chatRoomId, Long userId);
 
     boolean existsByChatRoomIdAndUserIdAndStatus(Long chatRoomId, Long userId, ParticipantStatus participantStatus);
+
+    boolean existsByChatRoomIdAndUserIdAndIsBuyerTrue(Long roomId, Long userId);
 
 
     /**
@@ -107,6 +101,25 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
                         row -> ((Long) row[1]).intValue()
                 ));
     }
+
+    // 단일 채팅방 구매자 수 조회
+    @Query("""
+        SELECT COUNT(p)
+        FROM ChatRoomParticipant p
+        WHERE p.chatRoom.id = :roomId
+        AND p.status = 'ACTIVE'
+        AND p.isBuyer = true
+        """)
+    int countBuyersByRoomId(@Param("roomId") Long roomId);
+
+    // 단일 채팅방 참가자 수 조회
+    @Query("""
+        SELECT COUNT(p)
+        FROM ChatRoomParticipant p
+        WHERE p.chatRoom.id = :roomId
+        AND p.status = 'ACTIVE'
+        """)
+    int countParticipantsByRoomId(@Param("roomId") Long roomId);
 
     @Query("""
         SELECT p FROM ChatRoomParticipant p

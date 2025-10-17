@@ -15,9 +15,12 @@ import java.util.stream.Collectors;
 /**
  * 채팅방 관련 클래스 변환용
  *
+ * 1.01
+ * 단일 채팅방용 변환 메서드 추가
+ *
  * @author jhj010311@gmail.com
- * @version 1.0
- * @since 2025-10-13
+ * @version 1.01
+ * @since 2025-10-17
  */
 
 @Component
@@ -68,20 +71,38 @@ public class ChatRoomMapper {
     public ChatRoomResponse convertToResponse(ChatRoomParticipant participant, Map<Long, Integer> buyerCounts) {
         ChatRoom chatRoom = participant.getChatRoom();
         Long roomId = chatRoom.getId();
-        Integer currentParticipants = buyerCounts.get(roomId);
+        Integer currentBuyers = buyerCounts.get(roomId);
 
         return ChatRoomResponse.builder()
                 .id(chatRoom.getId())
                 .title(chatRoom.getTitle())
                 .thumbnailUrl(chatRoom.getThumbnailUrl())
                 .maxBuyers(chatRoom.getMaxBuyers())
-                .currentBuyers(currentParticipants)
+                .currentBuyers(currentBuyers)
                 .status(chatRoom.getStatus())
+                .endTime(chatRoom.getEndTime())
                 .listOrderTime(participant.getListOrderTime())
                 .isBuyer(participant.getIsBuyer())                    // ← 구매 의사 확정 여부
                 .participantStatus(participant.getStatus())           // ← 내 참가 상태
                 .isCreator(chatRoom.getCreatorUserId()                // ← 방장 여부
                         .equals(participant.getUserId()))
+                .build();
+    }
+
+    public ChatRoomResponse convertToResponse(ChatRoom room, Integer currentBuyers, Integer currentParticipants) {
+
+        return ChatRoomResponse.builder()
+                .id(room.getId())
+                .title(room.getTitle())
+                .thumbnailUrl(room.getThumbnailUrl())
+                .maxBuyers(room.getMaxBuyers())
+                .currentBuyers(currentBuyers)
+                .currentParticipants(currentParticipants)
+                .status(room.getStatus())
+                .endTime(room.getEndTime())
+                .lastMessageAt(room.getLastMessageAt())
+                .recruitmentClosedAt(room.getRecruitmentClosedAt())
+                .completedAt(room.getCompletedAt())
                 .build();
     }
 }

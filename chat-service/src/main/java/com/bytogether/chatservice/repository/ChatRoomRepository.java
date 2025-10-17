@@ -23,5 +23,5 @@ import java.util.List;
 @Repository
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
-    ChatRoomResponse getChatRoomById(Long chatRoomId);
+    Long getCreatorUserIdById(Long id);
 }
