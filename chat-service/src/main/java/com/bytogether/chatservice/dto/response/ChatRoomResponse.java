@@ -36,6 +36,7 @@ public class ChatRoomResponse {
     private Long marketId;
     private String title;
     private String thumbnailUrl;
+    private Integer minBuyers;
     private Integer maxBuyers;
     private Integer currentBuyers;
     private Integer currentParticipants;

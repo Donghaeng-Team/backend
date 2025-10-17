@@ -12,12 +12,15 @@ import java.util.List;
 /**
  * 채팅방에 대한 정보를 담는 엔티티
  *
- * v1.01
+ * 1.01
  * 시스템 메시지를 위한 테이블 변경사항 반영
  *
+ * 1.02
+ * minBuyers 필드 추가
+ *
  * @author jhj010311@gmail.com
- * @version 1.01
- * @since 2025-10-15
+ * @version 1.02
+ * @since 2025-10-17
  */
 
 @Entity
@@ -48,6 +51,9 @@ public class ChatRoom {
     // endTime - 구인글에서 공시된 마감시각
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
+
+    @Column(name = "min_buyers", nullable = false)
+    private Integer minBuyers;
 
     @Column(name = "max_buyers", nullable = false)
     private Integer maxBuyers;

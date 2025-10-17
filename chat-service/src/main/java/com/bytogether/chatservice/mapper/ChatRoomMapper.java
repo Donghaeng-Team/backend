@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
  *
  * 1.01
  * 단일 채팅방용 변환 메서드 추가
+ * ChatRoom 필드 변경 반영
  *
  * @author jhj010311@gmail.com
  * @version 1.01
@@ -77,6 +78,7 @@ public class ChatRoomMapper {
                 .id(chatRoom.getId())
                 .title(chatRoom.getTitle())
                 .thumbnailUrl(chatRoom.getThumbnailUrl())
+                .minBuyers(chatRoom.getMinBuyers())
                 .maxBuyers(chatRoom.getMaxBuyers())
                 .currentBuyers(currentBuyers)
                 .status(chatRoom.getStatus())
@@ -95,6 +97,7 @@ public class ChatRoomMapper {
                 .id(room.getId())
                 .title(room.getTitle())
                 .thumbnailUrl(room.getThumbnailUrl())
+                .minBuyers(room.getMinBuyers())
                 .maxBuyers(room.getMaxBuyers())
                 .currentBuyers(currentBuyers)
                 .currentParticipants(currentParticipants)
