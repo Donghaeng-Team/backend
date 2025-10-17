@@ -56,37 +56,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             @Param("cursorId") Long cursorId,
             Pageable pageable);
 
-    /**
-     * 특정 시간 범위 내 메시지 조회 (참가자 이력 기반 열람 권한 체크용)
-     */
-    @Query("SELECT m FROM ChatMessage m " +
-            "WHERE m.chatRoom.id = :chatRoomId " +
-            "AND m.isDeleted = false " +
-            "AND m.sentAt >= :viewableFrom " +
-            "AND (:viewableUntil IS NULL OR m.sentAt <= :viewableUntil) " +
-            "ORDER BY m.sentAt DESC, m.id DESC")
-    List<ChatMessage> findViewableMessages(
-            @Param("chatRoomId") Long chatRoomId,
-            @Param("viewableFrom") LocalDateTime viewableFrom,
-            @Param("viewableUntil") LocalDateTime viewableUntil,
-            Pageable pageable);
 
-    /**
-     * 특정 시간 범위 + 커서 기반 메시지 조회
-     */
-    @Query("SELECT m FROM ChatMessage m " +
-            "WHERE m.chatRoom.id = :chatRoomId " +
-            "AND m.id < :cursorId " +
-            "AND m.isDeleted = false " +
-            "AND m.sentAt >= :viewableFrom " +
-            "AND (:viewableUntil IS NULL OR m.sentAt <= :viewableUntil) " +
-            "ORDER BY m.sentAt DESC, m.id DESC")
-    List<ChatMessage> findViewableMessagesBeforeCursor(
-            @Param("chatRoomId") Long chatRoomId,
-            @Param("cursorId") Long cursorId,
-            @Param("viewableFrom") LocalDateTime viewableFrom,
-            @Param("viewableUntil") LocalDateTime viewableUntil,
-            Pageable pageable);
 
 
     List<ChatMessage> findByChatRoomIdAndIsDeletedFalseOrderBySentAtDesc(Long chatRoomId);
@@ -102,17 +72,50 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     long countByChatRoomIdAndIsDeletedFalse(Long chatRoomId);
 
 
-    // 새로운 - 복수 구간 (Custom Repository 필요)
-    List<ChatMessage> findMessagesInPeriods(
-            Long chatRoomId,
-            List<ViewablePeriod> periods,
-            Pageable pageable
-    );
-
-    List<ChatMessage> findMessagesInPeriodsBeforeCursor(
-            Long chatRoomId,
-            Long cursorId,
-            List<ViewablePeriod> periods,
-            Pageable pageable
-    );
+    //폐기됨
+//    /**
+//     * 특정 시간 범위 내 메시지 조회 (참가자 이력 기반 열람 권한 체크용)
+//     */
+//    @Query("SELECT m FROM ChatMessage m " +
+//            "WHERE m.chatRoom.id = :chatRoomId " +
+//            "AND m.isDeleted = false " +
+//            "AND m.sentAt >= :viewableFrom " +
+//            "AND (:viewableUntil IS NULL OR m.sentAt <= :viewableUntil) " +
+//            "ORDER BY m.sentAt DESC, m.id DESC")
+//    List<ChatMessage> findViewableMessages(
+//            @Param("chatRoomId") Long chatRoomId,
+//            @Param("viewableFrom") LocalDateTime viewableFrom,
+//            @Param("viewableUntil") LocalDateTime viewableUntil,
+//            Pageable pageable);
+//
+//    /**
+//     * 특정 시간 범위 + 커서 기반 메시지 조회
+//     */
+//    @Query("SELECT m FROM ChatMessage m " +
+//            "WHERE m.chatRoom.id = :chatRoomId " +
+//            "AND m.id < :cursorId " +
+//            "AND m.isDeleted = false " +
+//            "AND m.sentAt >= :viewableFrom " +
+//            "AND (:viewableUntil IS NULL OR m.sentAt <= :viewableUntil) " +
+//            "ORDER BY m.sentAt DESC, m.id DESC")
+//    List<ChatMessage> findViewableMessagesBeforeCursor(
+//            @Param("chatRoomId") Long chatRoomId,
+//            @Param("cursorId") Long cursorId,
+//            @Param("viewableFrom") LocalDateTime viewableFrom,
+//            @Param("viewableUntil") LocalDateTime viewableUntil,
+//            Pageable pageable);
+//
+//    // 새로운 - 복수 구간 (Custom Repository 필요)
+//    List<ChatMessage> findMessagesInPeriods(
+//            Long chatRoomId,
+//            List<ViewablePeriod> periods,
+//            Pageable pageable
+//    );
+//
+//    List<ChatMessage> findMessagesInPeriodsBeforeCursor(
+//            Long chatRoomId,
+//            Long cursorId,
+//            List<ViewablePeriod> periods,
+//            Pageable pageable
+//    );
 }

@@ -112,82 +112,82 @@ public class ChatMessageService {
     }
     //endregion
 
-    //region ============= 전체 History 기반 (새로운 방식) =============
-
-    /**
-     * 모든 참가 이력을 고려한 메시지 조회 (여러 구간 통합)
-     */
-    public ChatMessagePageResponse getAllViewableMessages(Long chatRoomId, Long userId, int size) {
-        // 해당 사용자의 모든 참가 이력 조회
-        List<ChatRoomParticipantHistory> allHistories = historyRepository
-                .findAllByUserIdAndChatRoomIdOrderByJoinedAtDesc(userId, chatRoomId);
-
-        if (allHistories.isEmpty()) {
-            return emptyResponse();
-        }
-
-        // 열람 가능한 시간 구간들을 추출
-        List<ViewablePeriod> viewablePeriods = extractViewablePeriods(allHistories);
-
-        // 복잡한 쿼리를 위해 Specification 또는 QueryDSL 사용
-        Pageable pageable = PageRequest.of(0, size + 1);
-        List<ChatMessage> messages = messageRepository.findMessagesInPeriods(
-                chatRoomId,
-                viewablePeriods,
-                pageable
-        );
-
-        return buildChatMessagePageResponse(messages, size);
-    }
-
-    /**
-     * 커서 기반 - 전체 History
-     */
-    public ChatMessagePageResponse getAllViewableMessagesBeforeCursor(
-            Long chatRoomId, Long userId, Long cursorId, int size) {
-
-        List<ChatRoomParticipantHistory> allHistories = historyRepository
-                .findAllByUserIdAndChatRoomIdOrderByJoinedAtDesc(userId, chatRoomId);
-
-        if (allHistories.isEmpty()) {
-            return emptyResponse();
-        }
-
-        List<ViewablePeriod> viewablePeriods = extractViewablePeriods(allHistories);
-
-        Pageable pageable = PageRequest.of(0, size + 1);
-        List<ChatMessage> messages = messageRepository.findMessagesInPeriodsBeforeCursor(
-                chatRoomId,
-                cursorId,
-                viewablePeriods,
-                pageable
-        );
-
-        return buildChatMessagePageResponse(messages, size);
-    }
-
-    // ============= Helper Methods =============
-
-    /**
-     * History 리스트에서 열람 가능 구간들 추출
-     */
-    private List<ViewablePeriod> extractViewablePeriods(List<ChatRoomParticipantHistory> histories) {
-        return histories.stream()
-                .filter(h -> h.getViewableFrom() != null)
-                .map(h -> new ViewablePeriod(
-                        h.getViewableFrom(),
-                        h.getViewableUntil() != null ? h.getViewableUntil() : LocalDateTime.now()
-                ))
-                .collect(Collectors.toList());
-    }
-
-    private ChatMessagePageResponse emptyResponse() {
-        return ChatMessagePageResponse.builder()
-                .messages(Collections.emptyList())
-                .hasMore(false)
-                .nextCursor(null)
-                .build();
-    }
+    //region ============= 전체 History 기반 (폐기) =============
+//
+//    /**
+//     * 모든 참가 이력을 고려한 메시지 조회 (여러 구간 통합)
+//     */
+//    public ChatMessagePageResponse getAllViewableMessages(Long chatRoomId, Long userId, int size) {
+//        // 해당 사용자의 모든 참가 이력 조회
+//        List<ChatRoomParticipantHistory> allHistories = historyRepository
+//                .findAllByUserIdAndChatRoomIdOrderByJoinedAtDesc(userId, chatRoomId);
+//
+//        if (allHistories.isEmpty()) {
+//            return emptyResponse();
+//        }
+//
+//        // 열람 가능한 시간 구간들을 추출
+//        List<ViewablePeriod> viewablePeriods = extractViewablePeriods(allHistories);
+//
+//        // 복잡한 쿼리를 위해 Specification 또는 QueryDSL 사용
+//        Pageable pageable = PageRequest.of(0, size + 1);
+//        List<ChatMessage> messages = messageRepository.findMessagesInPeriods(
+//                chatRoomId,
+//                viewablePeriods,
+//                pageable
+//        );
+//
+//        return buildChatMessagePageResponse(messages, size);
+//    }
+//
+//    /**
+//     * 커서 기반 - 전체 History
+//     */
+//    public ChatMessagePageResponse getAllViewableMessagesBeforeCursor(
+//            Long chatRoomId, Long userId, Long cursorId, int size) {
+//
+//        List<ChatRoomParticipantHistory> allHistories = historyRepository
+//                .findAllByUserIdAndChatRoomIdOrderByJoinedAtDesc(userId, chatRoomId);
+//
+//        if (allHistories.isEmpty()) {
+//            return emptyResponse();
+//        }
+//
+//        List<ViewablePeriod> viewablePeriods = extractViewablePeriods(allHistories);
+//
+//        Pageable pageable = PageRequest.of(0, size + 1);
+//        List<ChatMessage> messages = messageRepository.findMessagesInPeriodsBeforeCursor(
+//                chatRoomId,
+//                cursorId,
+//                viewablePeriods,
+//                pageable
+//        );
+//
+//        return buildChatMessagePageResponse(messages, size);
+//    }
+//
+//    // ============= Helper Methods =============
+//
+//    /**
+//     * History 리스트에서 열람 가능 구간들 추출
+//     */
+//    private List<ViewablePeriod> extractViewablePeriods(List<ChatRoomParticipantHistory> histories) {
+//        return histories.stream()
+//                .filter(h -> h.getViewableFrom() != null)
+//                .map(h -> new ViewablePeriod(
+//                        h.getViewableFrom(),
+//                        h.getViewableUntil() != null ? h.getViewableUntil() : LocalDateTime.now()
+//                ))
+//                .collect(Collectors.toList());
+//    }
+//
+//    private ChatMessagePageResponse emptyResponse() {
+//        return ChatMessagePageResponse.builder()
+//                .messages(Collections.emptyList())
+//                .hasMore(false)
+//                .nextCursor(null)
+//                .build();
+//    }
     //endregion
 
     /**

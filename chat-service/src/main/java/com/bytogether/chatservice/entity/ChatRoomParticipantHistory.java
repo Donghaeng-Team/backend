@@ -52,32 +52,7 @@ public class ChatRoomParticipantHistory {
     @Column(name = "exit_type", length = 30)
     private ExitType exitType;
 
-    // 메시지 열람 범위
-    @Column(name = "viewable_from")
-    private LocalDateTime viewableFrom;
-
-    @Column(name = "viewable_until")
-    private LocalDateTime viewableUntil;
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
-
-    // 편의 메서드
-    public boolean canViewMessage(LocalDateTime messageTime) {
-        if (viewableFrom == null) {
-            return false;
-        }
-
-        boolean afterStart = !messageTime.isBefore(viewableFrom);
-        boolean beforeEnd = viewableUntil == null || !messageTime.isAfter(viewableUntil);
-
-        return afterStart && beforeEnd;
-    }
-
-    public void recordExit(ExitType type) {
-        this.leftAt = LocalDateTime.now();
-        this.exitType = type;
-        this.viewableUntil = LocalDateTime.now();
-    }
 }
