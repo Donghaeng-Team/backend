@@ -9,6 +9,6 @@ import java.util.List;
 
 @FeignClient(name = "user-service")
 public interface UserServiceClient {
-    @GetMapping("/internal/v1/user/userinfo")
+    @GetMapping("/internal/v1/user/usersinfo")
     List<UserInternalResponse> getUserInfo(@RequestBody UsersInfoRequest userId);
 }
