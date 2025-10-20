@@ -15,38 +15,38 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
 @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 public class RedisConfig {
 
-    // Redis (Docker사용)
-    @Bean
-    public RedisTemplate<String, Object> redisTemplate(
-            RedisConnectionFactory redisConnectionFactory){
-        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(redisConnectionFactory);
-        return redisTemplate;
-    }
-//
-//    //Elastic Cache적용
-//    @Value("${spring.data.redis.host}")
-//    private String host;
-//
-//    @Value("${spring.data.redis.port}")
-//    private int port;
-//
-//    @Bean
-//    public RedisConnectionFactory redisConnectionFactory() {
-//        RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration();
-//        configuration.setHostName(host);
-//        configuration.setPort(port);
-//        return new LettuceConnectionFactory(configuration);
-//    }
-//
+//    // Redis (Docker사용)
 //    @Bean
 //    public RedisTemplate<String, Object> redisTemplate(
 //            RedisConnectionFactory redisConnectionFactory){
 //        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
 //        redisTemplate.setConnectionFactory(redisConnectionFactory);
-//        redisTemplate.setKeySerializer(new StringRedisSerializer());
-//        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-//        redisTemplate.setHashValueSerializer(new StringRedisSerializer());
 //        return redisTemplate;
 //    }
+//
+    //Elastic Cache적용
+    @Value("${spring.data.redis.host}")
+    private String host;
+
+    @Value("${spring.data.redis.port}")
+    private int port;
+
+    @Bean
+    public RedisConnectionFactory redisConnectionFactory() {
+        RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration();
+        configuration.setHostName(host);
+        configuration.setPort(port);
+        return new LettuceConnectionFactory(configuration);
+    }
+
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(
+            RedisConnectionFactory redisConnectionFactory){
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashValueSerializer(new StringRedisSerializer());
+        return redisTemplate;
+    }
 }
