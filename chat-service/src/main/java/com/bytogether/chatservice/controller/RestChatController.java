@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
  *
  * 1.06
  * Slf4j 패턴 추가
+ * 리퀘스트 매핑 기본경로 수정 (private 추가)
  *
  * @author jhj010311@gmail.com
  * @version 1.06
@@ -39,7 +40,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/chat")
+@RequestMapping("/api/v1/chat/private")
 @RequiredArgsConstructor
 public class RestChatController {
 
