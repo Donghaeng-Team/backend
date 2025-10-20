@@ -2,6 +2,7 @@ package com.bytogether.userservice.controller;
 
 import com.bytogether.userservice.dto.request.*;
 import com.bytogether.userservice.dto.response.*;
+import com.bytogether.userservice.model.User;
 import com.bytogether.userservice.service.UserService;
 import com.bytogether.userservice.service.UserVerifyService;
 import com.bytogether.userservice.util.CookieUtil;
@@ -9,6 +10,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -26,7 +28,7 @@ public class UserController {
 
      // 사용자 등록
     @PostMapping("/public/register")
-    public ResponseEntity<ApiResponse<?>> register(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody RegisterRequest registerRequest) {
         log.info("User Register Requested");
         userService.register(registerRequest);
         return ResponseEntity.ok(ApiResponse.success(null));
@@ -35,7 +37,7 @@ public class UserController {
 
     //로그인
     @PostMapping("/public/login")
-    public ResponseEntity<ApiResponse<?>> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse httpResponse) {
+    public ResponseEntity<ApiResponse<UserInfoResponse>> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse httpResponse) {
         LoginResponse response = userService.login(loginRequest) ;
         httpResponse.setHeader("Authorization", "Bearer "+ response.getAccessToken());
         Cookie newCookie = cookieUtil.createCookie("refresh_token", response.getRefreshToken(),7L);
@@ -63,7 +65,7 @@ public class UserController {
 
     //로그인된 사용자 정보 요청
     @GetMapping("/private/me")
-    public ResponseEntity<ApiResponse<?>> userInfo(@RequestHeader("X-User-Id") Long userId, HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<UserInfoResponse>> userInfo(@RequestHeader("X-User-Id") Long userId, HttpServletResponse response) {
         log.info("현재 로그인된 사용자의 UserID:" + userId);
         Long currentUserId = userId;
         UserInfoResponse userInfoResponse = userService.findUserByUserId(currentUserId);
@@ -73,25 +75,23 @@ public class UserController {
 
     //이메일로 사용자 가입여부 확인
     @GetMapping("/public/email")
-    public ResponseEntity<ApiResponse<?>> checkRegisteredMail(@Valid @ModelAttribute EmailCheckRequest emailCheckRequest) {
+    public ResponseEntity<ApiResponse<EmailCheckResponse>> checkRegisteredMail(@Valid @ModelAttribute EmailCheckRequest emailCheckRequest) {
         EmailCheckResponse response = userService.checkRegisteredMail(emailCheckRequest.getEmail());
-        //Local 가입자인지 확인 추가 필요
         log.info("email 존재여부 : "+ response);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     //중복되는 닉네임인지 확인 필요
     @GetMapping("/public/nickname")
-    public ResponseEntity<?> checkRegisteredNickname(@Valid @ModelAttribute NicknameCheckRequest nicknameCheckRequest) {
+    public ResponseEntity<ApiResponse<NickNameCheckResponse>> checkRegisteredNickname(@Valid @ModelAttribute NicknameCheckRequest nicknameCheckRequest) {
         NickNameCheckResponse response = userService.checkRegisteredNickname(nicknameCheckRequest.getNickname());
-        //Local 가입자인지 확인 추가 필요
         log.info("nickname 존재여부 : "+ response);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     //사용자 ID를 이용한 정보조회
     @GetMapping("/private/userInfo")
-    public ResponseEntity<ApiResponse<?>> userInfo(@Valid @ModelAttribute UserInfoRequest userInfoRequest) {
+    public ResponseEntity<ApiResponse<UserInfoResponse>> userInfo(@Valid @ModelAttribute UserInfoRequest userInfoRequest) {
         Long targetUserId = userInfoRequest.getUserId();
         if(targetUserId == null){
             throw new IllegalStateException("사용자 정보 조회를 위한 Id는 필수입니다.");
@@ -110,7 +110,7 @@ public class UserController {
     }
 
     @PutMapping("/private/me/nickname")
-    public ResponseEntity<ApiResponse<?>> changeNickname(@RequestHeader("X-User-Id") Long userId,
+    public ResponseEntity<ApiResponse<ChangeNicknameResponse>> changeNickname(@RequestHeader("X-User-Id") Long userId,
                                                          @Valid @ModelAttribute ChangeNicknameRequest changeNicknameRequest) {
         ChangeNicknameResponse response = userService.changeNickname(userId, changeNicknameRequest );
         return ResponseEntity.ok(ApiResponse.success(response));
@@ -125,7 +125,7 @@ public class UserController {
 
     //사용자 이메일 재인증 요청
     @PostMapping("/public/reverify")
-    public ResponseEntity<?> reverify(@RequestParam EmailRequestDto emailRequestDto) {
+    public ResponseEntity<Void> reverify(@RequestBody EmailRequestDto emailRequestDto) {
         userService.reverifyEmail(emailRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
@@ -141,6 +141,14 @@ public class UserController {
     @PostMapping("/public/password/confirm-reset")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest resetPasswordRequest) {
         userVerifyService.resetPassword(resetPasswordRequest);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    //로그인된 사용자 정보 요청
+    @DeleteMapping("/private/me")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@RequestHeader("X-User-Id") Long userId, HttpServletResponse response) {
+        log.info("현재 로그인된 사용자의 UserID:" + userId);
+        userService.deleteUser(userId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }
