@@ -16,7 +16,7 @@ import java.util.Optional;
  * @since 2025-09-31
  */
 
-@FeignClient(name = "division-service")
+@FeignClient(name = "division-service",url = "${openfeign.division-service.url}")
 public interface DivisionServiceClient {
     // 좌표 기반 행정구역 조회
     @GetMapping("/api/v1/division/public/by-coord")
