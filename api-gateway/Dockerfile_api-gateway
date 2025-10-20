@@ -1,0 +1,40 @@
+# ---------- Build Stage ----------
+FROM gradle:8.5-jdk17 AS build
+
+# gradle 유저로 빌드 (gradle 이미지는 기본적으로 root지만, gradle 유저 포함)
+USER gradle
+WORKDIR /app
+
+# 소유권을 gradle 유저로 지정하여 권한 문제 방지
+COPY --chown=gradle:gradle build.gradle settings.gradle ./
+COPY --chown=gradle:gradle src ./src
+
+# Build the application (테스트 제외)
+RUN gradle build -x test --no-daemon
+
+
+# ---------- Runtime Stage ----------
+FROM eclipse-temurin:17-jre-jammy
+
+WORKDIR /app
+
+# curl 설치 (root 권한 상태에서)
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# non-root 유저 생성
+RUN groupadd -r apigateway && useradd -r -g apigateway apigateway
+
+# jar 복사 후 소유권 변경
+COPY --from=build /app/build/libs/*.jar app.jar
+RUN chown apigateway:apigateway /app/app.jar
+
+# non-root 유저로 실행
+USER apigateway
+
+# Health check (일반 유저가 실행 가능)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
