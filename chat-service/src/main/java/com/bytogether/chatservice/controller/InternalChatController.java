@@ -30,7 +30,7 @@ public class InternalChatController {
     private final ChatRoomService chatRoomService;
 
     // 채팅방 생성 요청 api
-    @PostMapping("/internal/chat-rooms")
+    @PostMapping("/create")
     public ResponseEntity<ApiResponse<ChatRoomResponse>> createChatRoom(@RequestBody ChatRoomCreateRequest request) {
         log.info("채팅방 생성 요청 - request: {}", request);
 
