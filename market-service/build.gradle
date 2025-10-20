@@ -54,8 +54,6 @@ dependencies {
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"
     annotationProcessor "jakarta.persistence:jakarta.persistence-api"
 
-    // actuator
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     // swagger
     // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
@@ -65,20 +63,25 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
 
     implementation 'org.springframework.cloud:spring-cloud-starter-config'
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+//    eureka client -> k8s service discovery 사용으로 주석 처리
+//    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
 
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 
     compileOnly 'org.projectlombok:lombok'
 
-    //local - dev
-    implementation 'io.opentelemetry:opentelemetry-exporter-zipkin'
-
-    // for k8s
-    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
-    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+    // Prometheus & Micrometer
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
-    implementation 'io.github.openfeign:feign-micrometer'
+
+    // Loki (로그)
+    implementation 'com.github.loki4j:loki-logback-appender:1.5.2'
+
+    // Tempo (분산 추적)
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

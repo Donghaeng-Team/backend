@@ -2,9 +2,9 @@ spring:
   application:
     name: market-service
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
+    active: ${SPRING_PROFILES_ACTIVE:prod}
   config:
-    import: ${SPRING_CONFIG_IMPORT:configserver:http://localhost:8888}
+    import: ${SPRING_CONFIG_IMPORT:configserver:http://config-service}
   datasource:
     url: jdbc:postgresql://localhost:5432/market_db
     username: postgres

@@ -41,11 +41,18 @@ public class JwtAuthenticationFilter implements Filter {
 
         String path = sanitizedRequest.getRequestURI();
         String method = sanitizedRequest.getMethod();
-        System.out.println("JWT Filter - Path: " + path + ", Method: " + method);
+
+        // actuator 엔드포인트는 로그 출력 안함
+        boolean isHealthCheck = path.startsWith("/actuator");
+        if (!isHealthCheck) {
+            System.out.println("JWT Filter - Path: " + path + ", Method: " + method);
+        }
 
         // 1. 공개 경로는 인증 없이 통과
         if (isPublicPath(path, method)) {
-            System.out.println("JWT Filter: Public path, allowing request");
+            if (!isHealthCheck) {
+                System.out.println("JWT Filter: Public path, allowing request");
+            }
             chain.doFilter(sanitizedRequest, response);
             return;
         }

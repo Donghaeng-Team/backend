@@ -2,9 +2,9 @@ spring:
   application:
     name: user-service
   profiles:
-    active: dev
+    active: prod
   config:
-    import: "configserver:http://localhost:8888"
+    import: "configserver:http://config-service"
   data:
     redis:
       host: localhost

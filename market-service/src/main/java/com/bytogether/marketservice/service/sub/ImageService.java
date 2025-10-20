@@ -26,10 +26,10 @@ import java.util.concurrent.CompletableFuture;
 public class ImageService {
     // 최종 static/market/new/images/ 1 / 1 _ 57c5c426-702e-4528-a98f-070ccac85484 _ 오리지널파일네임 .png
     // dir + marketId + / + order + _ + UUID + _ + originalFileName + 확장자
-    @Value("${cloud.aws.s3.bucket.image-dir:static/market/new/images/}")
+    @Value("${spring.cloud.aws.s3.bucket.image-dir:static/market/new/images/}")
     private String IMAGE_DIR;
 
-    @Value("${cloud.aws.s3.bucket.thumbnail-dir:static/market/new/thumbnails/}")
+    @Value("${spring.cloud.aws.s3.bucket.thumbnail-dir:static/market/new/thumbnails/}")
     private String THUMBNAIL_DIR;
 
     private static final List<String> ALLOWED_MIME_TYPES = List.of("image/jpeg", "image/jpg", "image/png", "image/webp");

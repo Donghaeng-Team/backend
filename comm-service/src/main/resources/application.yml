@@ -1,10 +1,10 @@
 spring:
   config:
-    import: "configserver:http://localhost:8888"
+    import: "configserver:http://config-service"
   application:
     name: comm-service
   profiles:
-    active: ${profile:docker}
+    active: ${profile:prod}
 
 
 s3:

@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 
-@FeignClient(name = "user-service")
+@FeignClient(name = "user-service", url = "${openfeign.user-service.url}")
 public interface UserServiceClient {
     @GetMapping("/internal/v1/user/usersinfo")
     List<UserInternalResponse> getUserInfo(@RequestBody UsersInfoRequest userId);
