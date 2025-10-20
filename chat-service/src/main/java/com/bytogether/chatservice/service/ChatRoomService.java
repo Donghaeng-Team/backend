@@ -1,5 +1,6 @@
 package com.bytogether.chatservice.service;
 
+import com.bytogether.chatservice.dto.request.ChatRoomCreateRequest;
 import com.bytogether.chatservice.dto.response.*;
 import com.bytogether.chatservice.entity.*;
 import com.bytogether.chatservice.mapper.ChatRoomMapper;
@@ -338,5 +339,17 @@ public class ChatRoomService {
         chatRoomRepository.save(room);
 
         return "completedAt: " + room.getCompletedAt();
+    }
+
+
+    // 채팅방 생성
+    @Transactional
+    public ChatRoomResponse createRoom(ChatRoomCreateRequest request) {
+        ChatRoom room = request.toChatRoom();
+
+        ChatRoom saved = chatRoomRepository.save(room);
+
+
+        return chatRoomMapper.convertToResponse(saved, 1, 1);
     }
 }
