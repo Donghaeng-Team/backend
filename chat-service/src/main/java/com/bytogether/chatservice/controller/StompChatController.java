@@ -1,5 +1,6 @@
 package com.bytogether.chatservice.controller;
 
+import com.bytogether.chatservice.dto.request.ChatMessageSendRequest;
 import com.bytogether.chatservice.dto.response.KickNotificationResponse;
 import com.bytogether.chatservice.entity.ChatMessage;
 import com.bytogether.chatservice.entity.ChatRoomParticipant;
@@ -18,10 +19,12 @@ import org.springframework.stereotype.Controller;
  * 수도코드 기초 완성
  * 샘플을 겸하는 sendMessage 메서드 작성
  *
+ * 1.03
+ * 불필요한 topic 관련 코드 제거
  *
  * @author jhj010311@gmail.com
- * @version 1.02
- * @since 2025-10-15
+ * @version 1.03
+ * @since 2025-10-20
  */
 
 @Controller
@@ -49,36 +52,6 @@ public class StompChatController {
 
     // TODO: 추후 Payload는 dto로 변경
 
-
-    //region topics
-    @MessageMapping("/rooms.notifications")
-    public void notificationSubscribe(@DestinationVariable String roomId, @Payload ChatMessage chatMessage) {
-        // TODO: 채팅방 목록에서 새 채팅 알림을 구독
-        // dto 클래스 변경?
-    }
-
-    @MessageMapping("/rooms.{roomId}.messages")
-    public void messageSubscribe(@DestinationVariable String roomId, @Payload ChatMessage chatMessage) {
-        // TODO: 채팅방에서 새 채팅을 구독
-    }
-
-    @MessageMapping("/rooms.{roomId}.participants")
-    public void participantSubscribe(@DestinationVariable String roomId, @Payload ChatRoomParticipant participant) {
-        // TODO: 채팅방에서 참가자 변동을 구독
-    }
-
-    @MessageMapping("/rooms.{roomId}.system")
-    public void systemSubscribe(@DestinationVariable String roomId, @Payload ChatMessage systemMessage) {
-        // TODO: 채팅방에서 시스템 메시지를 구독
-    }
-
-    @MessageMapping("/user.{userId}.queue.kicked")
-    public void kickSubscribe(@DestinationVariable String userId, @Payload KickNotificationResponse kickNotification) {
-        // TODO: 강제퇴장 시스템메시지를 구독
-    }
-    //endregion
-
-    //region apps
     @MessageMapping("/chat.{roomId}.join")
     public void joinRoom(@DestinationVariable Long roomId, @Payload ChatMessage message) {
         // TODO: 채팅방 최초입장 처리 -> 시스템 메시지 발송
@@ -86,7 +59,7 @@ public class StompChatController {
 
     @MessageMapping("/chat.{roomId}.sendMessage")
     public void sendMessage(@DestinationVariable Long roomId,
-                            @Payload ChatMessage message) {
+                            @Payload ChatMessageSendRequest message) {
         // 1. 현재 Pod의 클라이언트들에게 전송
         messagingTemplate.convertAndSend(
                 "/topic/rooms." + roomId + ".messages",
@@ -106,5 +79,4 @@ public class StompChatController {
     public void kick(@DestinationVariable Long roomId, @DestinationVariable Long userId, @Payload ChatMessage message) {
         // TODO: 방장이 특정 유저를 강제퇴장시킨 경우, 시스템메시지 발송
     }
-    //endregion
 }
