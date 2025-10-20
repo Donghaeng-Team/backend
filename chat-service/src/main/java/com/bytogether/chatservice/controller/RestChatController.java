@@ -16,22 +16,25 @@ import org.springframework.web.bind.annotation.*;
  * 채팅방 목록을 조회하고 채팅방 메시지를 확인
  * 그 외 공동구매 관련 액션을 처리하는 컨트롤러
  *
- * v1.02
+ * 1.02
  * 계획 확인용 수도코드 작성
  *
- * v1.03
+ * 1.03
  * 리턴값을 ResponseEntity로 수정
  *
- * v1.04
+ * 1.04
  * api 및 pathVariable 수정
  * id -> roomId
  *
- * v1.05
+ * 1.05
  * chatRoomList 메서드 매개변수 간소화
  *
+ * 1.06
+ * Slf4j 패턴 추가
+ *
  * @author jhj010311@gmail.com
- * @version 1.05
- * @since 2025-10-16
+ * @version 1.06
+ * @since 2025-10-20
  */
 
 @Slf4j
