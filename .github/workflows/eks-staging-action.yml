@@ -13,6 +13,7 @@ env:
   AWS_REGION: ap-northeast-2
   AWS_ACCOUNT_ID: 857360183365
   TAG: ${{ github.sha }}   # 커밋 해시 기반 버전
+  SHORT_SHA: ${{ github.sha }}
   EXCLUDE_DIRS: "common .github"
 
 
@@ -21,6 +22,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      #7자리로 변경
+      - name: Set short SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
       #코드 체크 아웃
       - name: Checkout code
         uses: actions/checkout@v4
@@ -121,14 +125,14 @@ jobs:
             # 캐시 활용
             docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether-eks/$SERVICE:latest || true
 
-            docker build -t $SERVICE:$TAG -f $DOCKER_FILE . \
+            docker build -t $SERVICE:$SHORT_SHA -f $DOCKER_FILE . \
               --cache-from $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether-eks/$SERVICE:latest
 
             #배포 태그 , 추적 태그 적용
-            docker tag $SERVICE:$TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether-eks/$SERVICE:$TAG
-            docker tag $SERVICE:$TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether-eks/$SERVICE:latest
+            docker tag $SERVICE:$SHORT_SHA $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether-eks/$SERVICE:$SHORT_SHA
+            docker tag $SERVICE:$SHORT_SHA $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether-eks/$SERVICE:latest
 
-            docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether-eks/$SERVICE:$TAG
+            docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether-eks/$SERVICE:$SHORT_SHA
             docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether-eks/$SERVICE:latest
             cd ..
           done
