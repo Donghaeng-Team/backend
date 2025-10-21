@@ -108,4 +108,20 @@ public class ChatRoomMapper {
                 .completedAt(room.getCompletedAt())
                 .build();
     }
+
+    public ChatRoomResponse convertToResponse(ChatRoom room) {
+
+        return ChatRoomResponse.builder()
+                .id(room.getId())
+                .title(room.getTitle())
+                .thumbnailUrl(room.getThumbnailUrl())
+                .minBuyers(room.getMinBuyers())
+                .maxBuyers(room.getMaxBuyers())
+                .status(room.getStatus())
+                .endTime(room.getEndTime())
+                .lastMessageAt(room.getLastMessageAt())
+                .recruitmentClosedAt(room.getRecruitmentClosedAt())
+                .completedAt(room.getCompletedAt())
+                .build();
+    }
 }

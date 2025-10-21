@@ -24,4 +24,6 @@ import java.util.List;
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
     Long getCreatorUserIdById(Long id);
+
+    String findTitleById(Long roomId);
 }
