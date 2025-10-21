@@ -50,5 +50,10 @@ public class CartController {
         return ResponseEntity.ok(ApiResponse.success(myCarts));
     }
 
+    @GetMapping("/test")
+    public String testCart() {
+        return "251021 kis";
+    }
+
 
 }
