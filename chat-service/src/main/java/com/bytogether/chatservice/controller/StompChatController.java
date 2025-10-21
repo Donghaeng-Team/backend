@@ -44,6 +44,9 @@ public class StompChatController {
     // /topic.rooms.{roomId}.messages       // 일반 + 시스템 메시지 통합
     // /user/{userId}/queue/notifications   // 강퇴 등 개인 알림
 
+    // TODO: 채팅방 상태변경 알림 추가
+    // /topic/rooms.{roomId}.status     // ← 채팅방 상태 변경 (모집마감, 종료 등)
+
     // 요청 (App)
     // /app/chat.{roomId}.sendMessage       // 메시지 전송
     // /app/chat.{roomId}.kick.{targetUserId} // 강퇴
