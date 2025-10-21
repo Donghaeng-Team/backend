@@ -132,4 +132,6 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
         ORDER BY p.joinedAt ASC
         """)
     List<ChatRoomParticipant> findByChatRoomIdAndStatus(@Param("roomId") Long roomId, @Param("status") ParticipantStatus status);
+
+    void updateListOrderTimeForAllActiveParticipants(Long roomId, LocalDateTime messageTime);
 }

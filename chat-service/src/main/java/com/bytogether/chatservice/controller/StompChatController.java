@@ -4,13 +4,17 @@ import com.bytogether.chatservice.dto.request.ChatMessageSendRequest;
 import com.bytogether.chatservice.dto.response.KickNotificationResponse;
 import com.bytogether.chatservice.entity.ChatMessage;
 import com.bytogether.chatservice.entity.ChatRoomParticipant;
+import com.bytogether.chatservice.service.ChatMessageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+
+import java.security.Principal;
 
 /**
  * 채팅에 관련된 실시간 구독 메커니즘을 담당하는 컨트롤러
@@ -27,56 +31,41 @@ import org.springframework.stereotype.Controller;
  * @since 2025-10-20
  */
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 public class StompChatController {
 
-    private final SimpMessagingTemplate messagingTemplate;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final ChatMessageService chatMessageService;
 
-    // TODO: STOMP 클라이언트에 관한 설정을 관리
-    // TODO: 채팅방 개설 요청을 rabbitMQ가 아닌 내부api로 받게 될 수도 있음
+    // STOMP 클라이언트에 관한 설정을 관리
 
-    // topic : 구독신청
-    // 새 채팅 알림 - /rooms.notifications
-    // 채팅방 메시지 구독 - /rooms.{roomId}.messages
-    // 채팅방 참여자 구독 - /rooms.{roomId}.participants
-    // 채팅방 시스템 메시지 구독 - /rooms.{roomId}.system
-    // 강제퇴출 구독 - /user.{userId}.queue.kicked
+    // 구독 (Topic)
+    // /topic.rooms.{roomId}.messages       // 일반 + 시스템 메시지 통합
+    // /user/{userId}/queue/notifications   // 강퇴 등 개인 알림
 
-    // app : 즉각요청
-    // 채팅방 최초참가 - /chat.{roomId}.join
-    // 메시지 전송 - /chat.{roomId}.sendMessage
-    // 채팅방 퇴장(일시적 닫기 및 영구퇴장) - /chat.{roomId}.leave
-    // (방장)채팅 참여자 강퇴 - /chat.{roomId}.kick.{userId}
+    // 요청 (App)
+    // /app/chat.{roomId}.sendMessage       // 메시지 전송
+    // /app/chat.{roomId}.kick.{targetUserId} // 강퇴
 
-    // TODO: 추후 Payload는 dto로 변경
-
-    @MessageMapping("/chat.{roomId}.join")
-    public void joinRoom(@DestinationVariable Long roomId, @Payload ChatMessage message) {
-        // TODO: 채팅방 최초입장 처리 -> 시스템 메시지 발송
-    }
-
-    @MessageMapping("/chat.{roomId}.sendMessage")
+    @MessageMapping("chat.{roomId}.sendMessage")
     public void sendMessage(@DestinationVariable Long roomId,
-                            @Payload ChatMessageSendRequest message) {
-        // 1. 현재 Pod의 클라이언트들에게 전송
-        messagingTemplate.convertAndSend(
-                "/topic/rooms." + roomId + ".messages",
-                message
-        );
+                            @Payload ChatMessageSendRequest message,
+                            Principal principal) {
+        Long senderUserId = Long.parseLong(principal.getName());
 
-        // 2. Redis Pub/Sub으로 다른 Pod들에게도 전파
-        redisTemplate.convertAndSend("chat:room:" + roomId, message);
+        log.info("유저 채팅 전송 - userId: {}, roomId: {}, message: {}", senderUserId, roomId, message.getMessageContent());
+
+        chatMessageService.sendMessage(roomId, senderUserId, message);
+
     }
 
-    @MessageMapping("/chat.{roomId}.leave")
-    public void leaveRoom(@DestinationVariable Long roomId, @Payload ChatMessage message) {
-        // TODO: 채팅방 퇴장처리, 창 닫기를 통한 일시 접속해제와 영구퇴장 어느쪽도 공통으로 필요한 세션 만료 처리
-    }
+    @MessageMapping("chat.{roomId}.leave")
+    public void leaveRoom(@DestinationVariable Long roomId, Principal principal) {
 
-    @MessageMapping("/chat.{roomId}.kick.{userId}")
-    public void kick(@DestinationVariable Long roomId, @DestinationVariable Long userId, @Payload ChatMessage message) {
-        // TODO: 방장이 특정 유저를 강제퇴장시킨 경우, 시스템메시지 발송
+        Long userId = Long.parseLong(principal.getName());
+        log.info("유저 채팅방 연결해제 - userId: {}, roomId: {}", userId, roomId);
+
+        chatMessageService.handleLeaveRoom(roomId, userId);
     }
 }

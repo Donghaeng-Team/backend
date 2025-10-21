@@ -1,22 +1,24 @@
 package com.bytogether.chatservice.service;
 
 
-import com.bytogether.chatservice.dto.common.ViewablePeriod;
+import com.bytogether.chatservice.config.RedisPublish;
+import com.bytogether.chatservice.dto.request.ChatMessageSendRequest;
 import com.bytogether.chatservice.dto.response.ChatMessagePageResponse;
 import com.bytogether.chatservice.dto.response.ChatMessageResponse;
-import com.bytogether.chatservice.entity.ChatMessage;
-import com.bytogether.chatservice.entity.ChatRoomParticipant;
-import com.bytogether.chatservice.entity.ChatRoomParticipantHistory;
-import com.bytogether.chatservice.entity.ParticipantStatus;
+import com.bytogether.chatservice.entity.*;
 import com.bytogether.chatservice.mapper.ChatMessageMapper;
 import com.bytogether.chatservice.repository.ChatMessageRepository;
 import com.bytogether.chatservice.repository.ChatRoomParticipantHistoryRepository;
 import com.bytogether.chatservice.repository.ChatRoomParticipantRepository;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import com.bytogether.chatservice.repository.ChatRoomRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.ws.rs.ForbiddenException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -32,10 +35,13 @@ public class ChatMessageService {
 
     private static final int DEFAULT_PAGE_SIZE = 50;
 
+    private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository messageRepository;
     private final ChatRoomParticipantRepository participantRepository;
     private final ChatRoomParticipantHistoryRepository historyRepository;
     private final ChatMessageMapper messageMapper;
+    private final EntityManager em;
+    private final ChatMessageMapper chatMessageMapper;
     // private final UserService userService; // 닉네임 조회용 (MSA 환경에서는 FeignClient 등)
 
     //region ============= 현재 세션 기반 메시지 획득 (기존 방식) =============
@@ -184,6 +190,137 @@ public class ChatMessageService {
 //                .build();
 //    }
     //endregion
+
+
+
+    // stomp controller용
+
+    private final SimpMessagingTemplate messagingTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    /**
+     * 일반 메시지 전송
+     * @RedisPublish - AOP가 자동으로 Redis 발행
+     */
+    @Transactional
+    @RedisPublish  // ← AOP가 반환값을 Redis로 자동 발행
+    public ChatMessageResponse sendMessage(Long roomId, Long senderUserId, ChatMessageSendRequest request) {
+        // 1. 권한 검증
+        validateActiveParticipant(roomId, senderUserId);
+
+        // 2. 엔티티 생성
+        ChatRoom chatRoom = em.getReference(ChatRoom.class, roomId);
+
+        ChatMessage chatMessage = ChatMessage.builder()
+                .chatRoom(chatRoom)
+                .senderUserId(senderUserId)
+                .messageType(MessageType.TEXT)
+                .messageContent(request.getMessageContent())
+                .build();
+
+        // 3. DB 저장
+        ChatMessage saved = messageRepository.save(chatMessage);
+
+        // 4. DTO 변환
+        ChatMessageResponse response = chatMessageMapper.toResponse(saved);
+
+        // 5. 현재 Pod의 클라이언트들에게 전송
+        broadcastToCurrentPod(roomId, response);
+
+        // 6. list_order_time 업데이트
+        updateListOrderTime(roomId, saved.getSentAt());
+
+        // 7. 반환 - AOP가 자동으로 Redis 발행
+        return response;
+    }
+
+    /**
+     * 채팅방 퇴장 처리 (일시 접속 해제)
+     */
+    @Transactional
+    public void handleLeaveRoom(Long roomId, Long userId) {
+        log.info("유저의 채팅방 연결 해제 - userId {} roomId {}", userId, roomId);
+    }
+
+    /**
+     * 시스템 메시지 전송
+     * @RedisPublish - AOP가 자동으로 Redis 발행
+     */
+    @Transactional
+    @RedisPublish
+    public ChatMessageResponse sendSystemMessage(Long roomId, String message) {
+        ChatRoom chatRoom = em.getReference(ChatRoom.class, roomId);
+
+        ChatMessage systemMessage = ChatMessage.systemMessage(chatRoom, message);
+
+        ChatMessage saved = messageRepository.save(systemMessage);
+        ChatMessageResponse response = chatMessageMapper.toResponse(saved);
+
+        broadcastToCurrentPod(roomId, response);
+        updateListOrderTime(roomId, saved.getSentAt());
+
+        return response;  // AOP가 Redis로 자동 발행
+    }
+
+    /**
+     * 강퇴당한 사용자에게 개인 알림
+     */
+    public void notifyKickedUser(Long userId, Long roomId, String reason) {
+        String message = chatRoomRepository.findTitleById(roomId) + " 채팅방에서 강퇴되었습니다.";
+        if (reason != null && !reason.isBlank()) {
+            message += " 사유: " + reason;
+        }
+
+        // 현재 Pod
+        messagingTemplate.convertAndSendToUser(
+                userId.toString(),
+                "/queue/notifications",
+                message
+        );
+
+        // 다른 Pod들 (Redis Pub/Sub)
+        redisTemplate.convertAndSend("user:" + userId + ":kicked", message);
+    }
+
+    public void notifyUser(Long userId, Long roomId, String reason) {
+        String message = chatRoomRepository.findTitleById(roomId) + " 채팅방에서 알림 : \n" + reason;
+
+        // 현재 Pod
+        messagingTemplate.convertAndSendToUser(
+                userId.toString(),
+                "/queue/notifications",
+                message
+        );
+
+        // 다른 Pod들 (Redis Pub/Sub)
+        redisTemplate.convertAndSend("user:" + userId + ":kicked", message);
+    }
+
+    /**
+     * 현재 Pod의 클라이언트들에게만 전송
+     */
+    private void broadcastToCurrentPod(Long roomId, ChatMessageResponse response) {
+        messagingTemplate.convertAndSend(
+                "/topic.rooms." + roomId + ".messages",
+                response
+        );
+    }
+
+    private void updateListOrderTime(Long roomId, LocalDateTime messageTime) {
+        participantRepository.updateListOrderTimeForAllActiveParticipants(roomId, messageTime);
+    }
+
+    private void validateActiveParticipant(Long roomId, Long userId) {
+        if (!participantRepository.existsByChatRoomIdAndUserIdAndStatus(
+                roomId, userId, ParticipantStatus.ACTIVE)) {
+            throw new ForbiddenException("채팅방에 참여 중이지 않습니다");
+        }
+    }
+
+    private String getUserNickname(Long userId) {
+        return "User#" + userId;
+    }
+
 
     /**
      * ChatMessagePageResponse 생성
