@@ -23,7 +23,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // ws://localhost:8080/ws-chat 으로 연결
-        registry.addEndpoint("/ws-chat")
+        registry.addEndpoint("/ws/v1/chat")
                 .setAllowedOriginPatterns("*")
                 .setHandshakeHandler(new GatewayClaimHandshakeHandler())
                 .withSockJS();
@@ -33,10 +33,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         // 구독 prefix
         // STOMP가 이 접두사가 붙은 주소로 구독을 신청하고, 채팅 서비스가 이 주소로 발송
-        registry.enableSimpleBroker("/topic");
+        registry.enableSimpleBroker("/topic", "/queue");
 
         // 메시지 발행 prefix
         // STOMP가 즉시 무언가를 해달라고 채팅 서비스에 요구할 수 있는 주소 접두사
         registry.setApplicationDestinationPrefixes("/app");
+
+        registry.setUserDestinationPrefix("/user");
     }
 }
