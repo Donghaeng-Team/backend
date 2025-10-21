@@ -15,7 +15,8 @@ env:
   TAG: ${{ github.sha }}   # 커밋 해시 기반 버전
   SHORT_SHA: ${{ github.sha }}
   EXCLUDE_DIRS: "common .github"
-
+  ARGOCD_REPO: "https://github.com/Donghaeng-Team/argoCD-manifest.git"
+  ARGOCD_BRANCH: "main"
 
 jobs:
   build-and-push:
@@ -136,6 +137,57 @@ jobs:
             docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether-eks/$SERVICE:latest
             cd ..
           done
+      # ArgoCD Manifest 업데이트
+      - name: Update ArgoCD Manifest
+        if: steps.detect.outputs.targets != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARGOCD_MANIFEST_TOKEN }}
+        run: |
+          echo "📝 Updating ArgoCD manifest repository..."
+          
+          # Git 설정
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # ArgoCD manifest 저장소 클론
+          git clone https://x-access-token:${GITHUB_TOKEN}@github.com/Donghaeng-Team/argoCD-manifest.git argocd-manifest
+          cd argocd-manifest
+          git checkout ${{ env.ARGOCD_BRANCH }}
+          
+          # 변경된 각 서비스에 대해 manifest 업데이트
+          UPDATED_SERVICES=""
+          for SERVICE in ${{ steps.detect.outputs.targets }}; do
+            echo "🔄 Updating manifest for $SERVICE..."
+            
+            # 파일명 패턴: argo-{서비스명}.yaml
+            YAML_FILE="stage/argo-${SERVICE}.yaml"
+            
+            if [ ! -f "$YAML_FILE" ]; then
+              echo "⚠️ Manifest file not found: $YAML_FILE, skipping..."
+              continue
+            fi
+            
+            echo "📄 Found manifest: $YAML_FILE"
+            
+            # backend.image.tag의 value 값을 새로운 SHORT_SHA로 업데이트
+            # 패턴: "value: 'e638cf2'" 형태를 찾아서 교체
+            sed -i "/name: 'backend\.image\.tag'/{ n; s/value: '[^']*'/value: '${{ env.SHORT_SHA }}'/; }" "$YAML_FILE"
+            
+            UPDATED_SERVICES="$UPDATED_SERVICES $SERVICE"
+          done
+          
+          # 변경사항이 있으면 커밋 & 푸시
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "🚀 Update image tags for:$UPDATED_SERVICES to ${{ env.SHORT_SHA }}"
+            git push origin ${{ env.ARGOCD_BRANCH }}
+            echo "✅ Successfully updated ArgoCD manifests!"
+          else
+            echo "ℹ️ No changes to commit"
+          fi
+          
+          cd ..
+          rm -rf argocd-manifest
 
       # 안바뀌었으면 통과
       - name: No changed services
