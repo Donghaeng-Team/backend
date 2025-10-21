@@ -25,6 +25,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // ws://localhost:8080/ws-chat 으로 연결
         registry.addEndpoint("/ws-chat")
                 .setAllowedOriginPatterns("*")
+                .setHandshakeHandler(new GatewayClaimHandshakeHandler())
                 .withSockJS();
     }
 
