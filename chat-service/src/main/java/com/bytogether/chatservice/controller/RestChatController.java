@@ -4,6 +4,7 @@ import com.bytogether.chatservice.dto.common.ApiResponse;
 import com.bytogether.chatservice.dto.request.ChatMessagePageRequest;
 import com.bytogether.chatservice.dto.request.ChatRoomPageRequest;
 import com.bytogether.chatservice.dto.response.*;
+import com.bytogether.chatservice.repository.ChatRoomParticipantRepository;
 import com.bytogether.chatservice.service.ChatMessageService;
 import com.bytogether.chatservice.service.ChatRoomService;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,7 @@ public class RestChatController {
 
     private final ChatRoomService chatRoomService;
     private final ChatMessageService chatMessageService;
+    private final ChatRoomParticipantRepository chatRoomParticipantRepository;
 
     /*
         채팅방 기본 CRUD
@@ -56,6 +58,7 @@ public class RestChatController {
         └─ GET    /api/chat/{roomId}/messages      메시지 조회
 
         참가자 관리
+        ├─ GET    /api/chat/{roomId}/join               채팅 참가
         ├─ GET    /api/chat/{roomId}/participants       참가자 목록
         ├─ POST   /api/chat/{roomId}/exit               퇴장
         └─ POST   /api/chat/{roomId}/kick/{userId}      강퇴
@@ -124,6 +127,22 @@ public class RestChatController {
         return ResponseEntity.ok(ApiResponse.success(chatMessagePageResponse));
     }
 
+    @PostMapping("/{roomId}/join")
+    public ResponseEntity<ApiResponse<ChatRoomResponse>> joinChatRoom(@PathVariable("roomId") Long roomId,
+                                                                      @RequestHeader("X-User-Id") Long userId) {
+        log.info("채팅 참가 요청 - roomId: {}, userId: {}", roomId, userId);
+
+        if(chatRoomService.isParticipating(roomId, userId)){
+            return ResponseEntity.badRequest().body(ApiResponse.fail("이미 참여중인 채팅방입니다"));
+        } else if(chatRoomService.isPermanentlyBanned(roomId, userId)){
+            return ResponseEntity.badRequest().body(ApiResponse.fail("영구적으로 차단당한 채팅방입니다"));
+        }
+
+        chatRoomService.joinChatRoom(roomId, userId);
+
+        return ResponseEntity.ok(ApiResponse.success(chatRoomService.getChatRoomDetails(roomId)));
+    }
+
     @GetMapping("/{roomId}/participants")
     public ResponseEntity<ApiResponse<ParticipantListResponse>> getParticipants(@PathVariable("roomId") Long roomId) {
         // 참가자 목록 정보 쿼리
@@ -150,9 +169,6 @@ public class RestChatController {
         // 3. 채팅방 탈퇴
         String response = chatRoomService.leaveChatRoom(roomId, userId);
 
-        // TODO: STOMP를 통한 시스템 메시지 발송 필요
-        // stompService.sendSystemMessage(roomId, userId + "님이 퇴장했습니다");
-
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -161,6 +177,8 @@ public class RestChatController {
                                                                @RequestParam Long targetUserId,
                                                                @RequestHeader("X-User-Id") Long requesterId) {
         log.info("참가자 강퇴 요청 - roomId: {}, targetUserId: {}, requesterId: {}", roomId, targetUserId, requesterId);
+
+        // TODO: 필요한 경우 영구강퇴 조건분기
 
         // 1. 방장 권한 인증
         if(!chatRoomService.isCreator(roomId, requesterId)) {
@@ -182,10 +200,6 @@ public class RestChatController {
 
         // 4. 강퇴 처리
         String result = chatRoomService.kickParticipant(roomId, targetUserId);
-
-        // TODO: STOMP를 통한 강퇴 알림
-        // stompService.notifyKicked(roomId, targetUserId);
-        // stompService.sendSystemMessage(roomId, targetUserId + "님이 강퇴되었습니다");
 
         return ResponseEntity.ok(ApiResponse.success(result));
     }
@@ -210,9 +224,6 @@ public class RestChatController {
         // 3. 공동구매 참가 처리
         BuyerConfirmResponse response = chatRoomService.confirmBuyer(roomId, userId);
 
-        // TODO: STOMP를 통한 알림
-        // stompService.sendSystemMessage(roomId, userId + "님이 공동구매에 참가했습니다");
-
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -235,9 +246,6 @@ public class RestChatController {
 
         // 3. 공동구매 참가 취소
         BuyerConfirmResponse response = chatRoomService.cancelBuyer(roomId, userId);
-
-        // TODO: STOMP를 통한 알림
-        // stompService.sendSystemMessage(roomId, userId + "님이 공동구매 참가를 취소했습니다");
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -263,9 +271,6 @@ public class RestChatController {
         // 3. 기한 연장 처리
         ExtendDeadlineResponse response = chatRoomService.extendDeadline(roomId, hours);
 
-        // TODO: STOMP를 통한 시스템 메시지
-        // stompService.sendSystemMessage(roomId, "모집 기한이 " + hours + "시간 연장되었습니다");
-
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -282,10 +287,6 @@ public class RestChatController {
 
         // 2. 모집 마감 처리
         RecruitmentCloseResponse response = chatRoomService.closeRecruitment(roomId);
-
-        // TODO: STOMP를 통한 시스템 메시지
-        // stompService.sendSystemMessage(roomId, "공동구매 모집이 마감되었습니다");
-        // 구매자가 아닌 참가자들에게 퇴장 알림 필요
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
