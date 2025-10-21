@@ -41,4 +41,9 @@ public class CommentController {
                               @RequestParam Long authorId) {
         commentService.deleteComment(commentId, authorId);
     }
+
+    @GetMapping("/test")
+    public String testCart() {
+        return "251021 kis";
+    }
 }

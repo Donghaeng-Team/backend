@@ -151,5 +151,10 @@ public class UserController {
         userService.deleteUser(userId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    @GetMapping("/test")
+    public String testCart() {
+        return "251021 kis";
+    }
 }
 
