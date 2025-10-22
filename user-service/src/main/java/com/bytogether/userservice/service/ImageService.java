@@ -29,7 +29,7 @@ public class ImageService {
             List.of("jpg", "jpeg", "png", "gif", "webp");
 
     @Value("${spring.cloud.aws.s3.bucket}")
-    private String bucketname;
+    private String bucketName;
 
     public ImageUploadResponse uploadImage(Long userId, MultipartFile file) {
         try {
@@ -53,15 +53,19 @@ public class ImageService {
                 deleteOldAvatar(user.getId(), user.getAvatar());
             }
 
-            //3. S3에 저장
-            String filename = String.format(
-                    "static/user/image/%d/%s_%s",
-                    userId, UUID.randomUUID(), file.getOriginalFilename()
+            //3. Key와 Thumbnail Key 생성
+            String originalKey = String.format(
+                    "static/user/images/%d/%s_%s",
+                    userId, UUID.randomUUID(), originalFilename
             );
-            String thumbnailName = filename.replace ("image", "thumbnail");
+            int dotIndex = originalKey.lastIndexOf(".");
+            String thumbnailKey = (originalKey.substring(0, dotIndex)+".jpg")
+                    .replace("/images/", "/thumbnails/");
+
+
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                    .bucket(bucketname)
-                    .key(filename)
+                    .bucket(bucketName)
+                    .key(originalKey)
                     .contentType(file.getContentType())
                     .contentDisposition("inline")
                     .build();
@@ -74,16 +78,20 @@ public class ImageService {
                     requestBody
             );
 
-            log.info("S3 업로드 성공 - 버킷: {}, 키: {}", bucketname, filename);
-            log.info("S3 thumbnail - 버킷: {}, 키: {}", bucketname, thumbnailName);
+            log.info("S3 업로드 성공 - 버킷: {}, 키: {}", bucketName, originalKey);
+            log.info("S3 thumbnail - 버킷: {}, 키: {}", bucketName, thumbnailKey);
 
-            String imageUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", bucketname, "ap-northeast-2", filename);
-            String thumbnailUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", bucketname, "ap-northeast-2", thumbnailName);
+            String imageUrl = String.format(
+                    "https://%s.s3.%s.amazonaws.com/%s",
+                    bucketName, "ap-northeast-2", originalKey);
+            String thumbnailUrl = String.format(
+                    "https://%s.s3.%s.amazonaws.com/%s",
+                    bucketName, "ap-northeast-2", thumbnailKey);
 
             //4. 이미지 URL 저장 후 반환
-            user.setAvatar(imageUrl);
+            user.setAvatar(thumbnailUrl);
             userRepository.save(user);
-            log.info("이미지 Url 저장: {}", imageUrl);
+            log.info("이미지 Url 저장: {}", thumbnailUrl);
 
             return ImageUploadResponse.builder()
                     .imageUrl(imageUrl)
@@ -116,7 +124,7 @@ public class ImageService {
             String s3Key = oldAvatarPath.substring(1);
             log.info("Key 추출: {}", s3Key);
             s3Client.deleteObject(builder ->
-                    builder.bucket(bucketname).key(s3Key));
+                    builder.bucket(bucketName).key(s3Key));
         }catch(Exception e){
             log.error("삭제 실패: {}", e.getMessage());
         }
