@@ -51,11 +51,11 @@ public class PrivateRestChatController {
 
     /*
         채팅방 기본 CRUD
-        ├─ GET    /api/v1/chat/private                    목록 조회
-        └─ GET    /api/v1/chat/private/{roomId}               개별 채팅창 페이지 접속
+        ├─ GET    /api/v1/chat/private                             목록 조회
+        └─ GET    /api/v1/chat/private/{roomId}                    개별 채팅창 페이지 접속
 
         메시지
-        └─ GET    /api/v1/chat/private/{roomId}/messages      메시지 조회
+        └─ GET    /api/v1/chat/private/{roomId}/messages           메시지 조회
 
         참가자 관리
         ├─ GET    /api/v1/chat/private/{roomId}/join               채팅 참가
@@ -142,7 +142,7 @@ public class PrivateRestChatController {
         return ResponseEntity.ok(ApiResponse.success(chatRoomService.getChatRoomDetails(roomId)));
     }
 
-    
+
 
     @PostMapping("/{roomId}/exit")
     public ResponseEntity<ApiResponse<String>> leaveChatRoom(@PathVariable("roomId") Long roomId,

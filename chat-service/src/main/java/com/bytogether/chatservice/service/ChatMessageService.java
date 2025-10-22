@@ -1,6 +1,9 @@
 package com.bytogether.chatservice.service;
 
 
+import com.bytogether.chatservice.client.UserServiceClient;
+import com.bytogether.chatservice.client.dto.UserInfoRequest;
+import com.bytogether.chatservice.client.dto.UserInternalResponse;
 import com.bytogether.chatservice.config.RedisPublish;
 import com.bytogether.chatservice.dto.request.ChatMessageSendRequest;
 import com.bytogether.chatservice.dto.response.ChatMessagePageResponse;
@@ -197,6 +200,7 @@ public class ChatMessageService {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final UserServiceClient userServiceClient;
 
     /**
      * 일반 메시지 전송
@@ -211,9 +215,14 @@ public class ChatMessageService {
         // 2. 엔티티 생성
         ChatRoom chatRoom = em.getReference(ChatRoom.class, roomId);
 
+        UserInfoRequest userInfoRequest = UserInfoRequest.buildRequest(senderUserId);
+        UserInternalResponse senderInfo = userServiceClient.getUserInfo(userInfoRequest);
+
         ChatMessage chatMessage = ChatMessage.builder()
                 .chatRoom(chatRoom)
                 .senderUserId(senderUserId)
+                .senderNickname(senderInfo.getNickName())
+                .senderProfileUrl(senderInfo.getImageUrl())
                 .messageType(MessageType.TEXT)
                 .messageContent(request.getMessageContent())
                 .build();

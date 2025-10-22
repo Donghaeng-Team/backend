@@ -1,5 +1,9 @@
 package com.bytogether.chatservice.service;
 
+import com.bytogether.chatservice.client.UserServiceClient;
+import com.bytogether.chatservice.client.dto.UserInfoRequest;
+import com.bytogether.chatservice.client.dto.UserInternalResponse;
+import com.bytogether.chatservice.client.dto.UsersInfoRequest;
 import com.bytogether.chatservice.dto.request.ChatRoomCreateRequest;
 import com.bytogether.chatservice.dto.response.*;
 import com.bytogether.chatservice.entity.*;
@@ -36,6 +40,7 @@ public class ChatRoomService {
     private final ChatRoomParticipantRepository participantRepository;
     private final ChatRoomParticipantHistoryRepository historyRepository;
     private final ChatRoomMapper chatRoomMapper;
+    private final UserServiceClient userServiceClient;
 
 
     @Transactional
@@ -147,12 +152,13 @@ public class ChatRoomService {
         return chatRoomMapper.convertToResponse(room, currentBuyers, currentParticipants);
     }
 
-    public ParticipantListResponse getParticipants(Long roomId) {
+    public ParticipantListResponse getParticipants(Long marketId) {
         // 1. 채팅방 정보 조회 (방장 ID 확인용)
-        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다. ID: " + roomId));
+        ChatRoom chatRoom = chatRoomRepository.findByMarketId(marketId)
+                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다. ID: " + marketId));
 
         Long creatorUserId = chatRoom.getCreatorUserId();
+        Long roomId = chatRoom.getId();
 
         // 2. 활성 참가자만 조회
         List<ChatRoomParticipant> participants = participantRepository
@@ -168,9 +174,10 @@ public class ChatRoomService {
         List<Long> userIds = participants.stream()
                 .map(ChatRoomParticipant::getUserId)
                 .toList();
+        UsersInfoRequest usersInfoRequest = UsersInfoRequest.buildRequest(userIds);
 
-//        // 5. User 서비스에서 사용자 정보 조회 (MSA)
-//        Map<Long, UserInfo> userInfoMap = userServiceClient.getUsersByIds(userIds);
+        // 5. User 서비스에서 사용자 정보 조회 (MSA)
+        List<UserInternalResponse> userInfoMap = userServiceClient.getUsersInfo(usersInfoRequest);
 
         // 6. ParticipantResponse 리스트 생성
         List<ParticipantResponse> participantResponses = participants.stream()
