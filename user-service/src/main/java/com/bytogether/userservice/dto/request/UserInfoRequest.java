@@ -10,7 +10,5 @@ import lombok.Setter;
 @Setter
 @Builder
 public class UserInfoRequest {
-    @NotNull
-    @NotBlank(message = "이메일은 필수 값입니다.")
     private Long userId;
 }

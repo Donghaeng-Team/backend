@@ -28,7 +28,7 @@ public class InternalController {
 
     //내부 유저 정보
     @PostMapping("/userinfo")
-    public UserInfoResponse getUsersInfo(@RequestBody UserInfoRequest userInfoRequest) {
+    public UserInfoResponse getUserInfo(@RequestBody UserInfoRequest userInfoRequest) {
         return userService.findUserByUserId(userInfoRequest.getUserId());
     }
 }
