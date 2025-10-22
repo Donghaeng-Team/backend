@@ -124,6 +124,13 @@ public class ChatRoomService {
         return participantRepository.existsByChatRoomIdAndUserIdAndStatus(roomId, userId, ParticipantStatus.ACTIVE);
     }
 
+    public boolean isParticipatingByMarketId(Long marketId, Long userId) {
+        // 채팅방에 참가한 상태인 유저가 맞는지 공동구매 게시글 id를 통해 확인
+        ChatRoom chatRoom = chatRoomRepository.findByMarketId(marketId).orElseThrow();
+
+        return isParticipating(chatRoom.getId(), userId);
+    }
+
     public boolean isBuyer(Long roomId, Long userId) {
         // 공동구매에 참가한 상태인 유저가 맞는지 확인
 
@@ -140,6 +147,13 @@ public class ChatRoomService {
         // 영구밴당한 유저인지 확인
 
         return participantRepository.existsByChatRoomIdAndUserIdAndIsPermanentlyBannedTrue(roomId, userId);
+    }
+
+    public boolean isPermanentlyBannedByMarketId(Long marketId, Long userId) {
+        // 영구밴당한 유저인지 공동구매 게시글 id로 확인
+        ChatRoom chatRoom = chatRoomRepository.findByMarketId(marketId).orElseThrow();
+
+        return isPermanentlyBanned(chatRoom.getId(), userId);
     }
 
     public ChatRoomResponse getChatRoomDetails(Long roomId) {

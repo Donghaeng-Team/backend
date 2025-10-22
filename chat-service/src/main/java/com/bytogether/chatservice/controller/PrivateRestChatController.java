@@ -126,20 +126,20 @@ public class PrivateRestChatController {
         return ResponseEntity.ok(ApiResponse.success(chatMessagePageResponse));
     }
 
-    @PostMapping("/{roomId}/join")
-    public ResponseEntity<ApiResponse<ChatRoomResponse>> joinChatRoom(@PathVariable("roomId") Long roomId,
+    @PostMapping("/{marketId}/join")
+    public ResponseEntity<ApiResponse<ChatRoomResponse>> joinChatRoom(@PathVariable("marketId") Long marketId,
                                                                       @RequestHeader("X-User-Id") Long userId) {
-        log.info("채팅 참가 요청 - roomId: {}, userId: {}", roomId, userId);
+        log.info("채팅 참가 요청 - marketId: {}, userId: {}", marketId, userId);
 
-        if(chatRoomService.isParticipating(roomId, userId)){
+        if(chatRoomService.isParticipatingByMarketId(marketId, userId)){
             return ResponseEntity.badRequest().body(ApiResponse.fail("이미 참여중인 채팅방입니다"));
-        } else if(chatRoomService.isPermanentlyBanned(roomId, userId)){
+        } else if(chatRoomService.isPermanentlyBannedByMarketId(marketId, userId)){
             return ResponseEntity.badRequest().body(ApiResponse.fail("영구적으로 차단당한 채팅방입니다"));
         }
 
-        chatRoomService.joinChatRoom(roomId, userId);
+        chatRoomService.joinChatRoom(marketId, userId);
 
-        return ResponseEntity.ok(ApiResponse.success(chatRoomService.getChatRoomDetails(roomId)));
+        return ResponseEntity.ok(ApiResponse.success(chatRoomService.getChatRoomDetails(marketId)));
     }
 
 
