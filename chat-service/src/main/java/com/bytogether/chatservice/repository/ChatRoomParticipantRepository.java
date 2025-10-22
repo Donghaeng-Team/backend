@@ -5,6 +5,7 @@ import com.bytogether.chatservice.entity.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -133,5 +134,14 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
         """)
     List<ChatRoomParticipant> findByChatRoomIdAndStatus(@Param("roomId") Long roomId, @Param("status") ParticipantStatus status);
 
-    void updateListOrderTimeForAllActiveParticipants(Long roomId, LocalDateTime messageTime);
+    /**
+     * 채팅방의 모든 활성 참가자의 list_order_time 업데이트
+     */
+    @Modifying
+    @Query("UPDATE ChatRoomParticipant p " +
+            "SET p.listOrderTime = :messageTime " +
+            "WHERE p.chatRoom.id = :chatRoomId " +
+            "AND p.status = 'ACTIVE'")
+    void updateListOrderTimeForAllActiveParticipants(@Param("chatRoomId") Long chatRoomId,
+                                                     @Param("messageTime") LocalDateTime messageTime);
 }
