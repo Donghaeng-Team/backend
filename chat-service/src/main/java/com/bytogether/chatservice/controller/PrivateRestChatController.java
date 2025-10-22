@@ -43,7 +43,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/chat/private")
 @RequiredArgsConstructor
-public class RestChatController {
+public class PrivateRestChatController {
 
     private final ChatRoomService chatRoomService;
     private final ChatMessageService chatMessageService;
@@ -51,24 +51,23 @@ public class RestChatController {
 
     /*
         채팅방 기본 CRUD
-        ├─ GET    /api/chat                    목록 조회
-        └─ GET    /api/chat/{roomId}               개별 채팅창 페이지 접속
+        ├─ GET    /api/v1/chat/private                    목록 조회
+        └─ GET    /api/v1/chat/private/{roomId}               개별 채팅창 페이지 접속
 
         메시지
-        └─ GET    /api/chat/{roomId}/messages      메시지 조회
+        └─ GET    /api/v1/chat/private/{roomId}/messages      메시지 조회
 
         참가자 관리
-        ├─ GET    /api/chat/{roomId}/join               채팅 참가
-        ├─ GET    /api/chat/{roomId}/participants       참가자 목록
-        ├─ POST   /api/chat/{roomId}/exit               퇴장
-        └─ POST   /api/chat/{roomId}/kick/{userId}      강퇴
+        ├─ GET    /api/v1/chat/private/{roomId}/join               채팅 참가
+        ├─ POST   /api/v1/chat/private/{roomId}/exit               퇴장
+        └─ POST   /api/v1/chat/private/{roomId}/kick/{userId}      강퇴
 
         공동구매 액션
-        ├─ POST   /api/chat/{roomId}/participate        구매 의사 확정
-        ├─ DELETE /api/chat/{roomId}/participate        구매 의사 취소
-        ├─ PATCH  /api/chat/{roomId}/extend             기한 연장
-        ├─ PATCH  /api/chat/{roomId}/close              모집 마감
-        └─ POST   /api/chat/{roomId}/complete           구매 확정 등으로 인한 채팅방 종료
+        ├─ POST   /api/v1/chat/private/{roomId}/participate        구매 의사 확정
+        ├─ DELETE /api/v1/chat/private/{roomId}/participate        구매 의사 취소
+        ├─ PATCH  /api/v1/chat/private/{roomId}/extend             기한 연장
+        ├─ PATCH  /api/v1/chat/private/{roomId}/close              모집 마감
+        └─ POST   /api/v1/chat/private/{roomId}/complete           구매 확정 등으로 인한 채팅방 종료
     * */
 
     // TODO: 프론트 페이지와 직결되는 각종 REST API를 작성하기
@@ -143,13 +142,7 @@ public class RestChatController {
         return ResponseEntity.ok(ApiResponse.success(chatRoomService.getChatRoomDetails(roomId)));
     }
 
-    @GetMapping("/{roomId}/participants")
-    public ResponseEntity<ApiResponse<ParticipantListResponse>> getParticipants(@PathVariable("roomId") Long roomId) {
-        // 참가자 목록 정보 쿼리
-        log.info("채팅방 참가자 목록 요청 - roomId: {}", roomId);
-
-        return ResponseEntity.ok(ApiResponse.success(chatRoomService.getParticipants(roomId)));
-    }
+    
 
     @PostMapping("/{roomId}/exit")
     public ResponseEntity<ApiResponse<String>> leaveChatRoom(@PathVariable("roomId") Long roomId,
