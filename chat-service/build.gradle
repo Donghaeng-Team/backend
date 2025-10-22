@@ -43,9 +43,22 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
 
-	// config client, eureka client
+	// config client
 	implementation 'org.springframework.cloud:spring-cloud-starter-config'
-	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+//  eureka client -> k8s service로 대체
+//	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+    // Prometheus & Micrometer
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    // Loki (로그)
+    implementation 'com.github.loki4j:loki-logback-appender:1.5.2'
+
+    // Tempo (분산 추적)
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 
 	// message broker
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
