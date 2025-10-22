@@ -33,8 +33,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	runtimeOnly 'org.postgresql:postgresql'
 
-	// actuator
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
 	// swagger
 	// https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
@@ -62,14 +60,21 @@ dependencies {
 
 	// message broker
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+
+    // RabbitMQ 필요시
+//	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 
 	// WebSocket
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
+    // 빌드 오류
     implementation 'jakarta.ws.rs:jakarta.ws.rs-api:3.1.0'
+
+	// Feign
+	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
