@@ -33,8 +33,10 @@ public class SecurityConfig {
                         .anyRequest().permitAll()
                 )
                 .oauth2Login(auth -> auth
+                        .authorizationEndpoint(authorization -> authorization
+                                .baseUri("/api/v1/user/public/oauth2/authorization"))
                         .redirectionEndpoint(endpoint -> endpoint
-                                .baseUri("/login/oauth2/code/{registrationId}"))
+                                .baseUri("/api/v1/user/public/login/oauth2/code/{registrationId}"))
                         .successHandler(successHandler)
                         .failureHandler(failureHandler));
         return http.build();
