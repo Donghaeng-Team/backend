@@ -60,7 +60,7 @@ public class ChatRoomParticipant {
     private LocalDateTime leftAt;
 
     // 채팅방 정렬용 컬럼
-    @Column(name = "list_order_time")
+    @Column(name = "list_order_time", nullable = false)
     private LocalDateTime listOrderTime;
 
     // 공동구매 참여 여부
