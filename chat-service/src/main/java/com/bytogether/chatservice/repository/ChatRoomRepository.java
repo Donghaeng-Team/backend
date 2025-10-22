@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 채팅방 엔티티에 대한 데이터베이스 접근을 담당하는 레포지토리
@@ -26,4 +27,6 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     Long getCreatorUserIdById(Long id);
 
     String findTitleById(Long roomId);
+
+    Optional<ChatRoom> findByMarketId(Long marketId);
 }
