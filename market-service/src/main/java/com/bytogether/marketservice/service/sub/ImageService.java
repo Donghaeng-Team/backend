@@ -73,10 +73,12 @@ public class ImageService {
     }
 
 
-    public void handleImageWhenMarketCreate(List<MultipartFile> images, Long marketId) {
+    public String handleImageWhenMarketCreate(List<MultipartFile> images, Long marketId) {
         if (images == null || images.isEmpty()) {
-            return; // 이미지가 없으면 처리하지 않음
+            return null; // 이미지가 없으면 처리하지 않음
         }
+
+        String thumbnailUrl = null;
 
         // 이미지 엔티티 저장을 위한 리스트
         List<Image> newImages = new ArrayList<>();
@@ -109,6 +111,8 @@ public class ImageService {
                 String thumbnailPath = THUMBNAIL_DIR + marketId + "/" + thumbnailUniqueFilename;
                 Image newThumbnailImage = Image.createImage(marketId, 0, originalFilename, thumbnailUniqueFilename, thumbnailPath, image.getContentType());
                 newImages.add(newThumbnailImage);
+
+                thumbnailUrl = newThumbnailImage.getFilePath();
             }
 
         }
@@ -116,6 +120,7 @@ public class ImageService {
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
+        return thumbnailUrl;
     }
 
     // 마켓 수정 시 이미지 처리
