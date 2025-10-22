@@ -9,6 +9,7 @@ import com.bytogether.userservice.model.VerifyType;
 import com.bytogether.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,11 @@ public class UserVerifyService {
     private final RedisTemplate<String, String> redisTemplate;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final LambdaService lambdaService;
+
+    @Value("${spring.cloud.aws.s3.bucket}")
+    private String bucketName;
+
 
     private static final String EMAIL_VERIFY_PREFIX = "email_verify:";
     private static final String PASSWORD_VERIFY_PREFIX = "password_reset:";
@@ -59,6 +65,21 @@ public class UserVerifyService {
         userRepository.save(user);
         delete(token,type);
         log.info("이메일 인증 완료");
+
+        String defaultAvatarUrl = String.format(
+                "https://%s.s3.ap-northeast-2.amazonaws.com/static/defaults/avatar-default.png",
+                bucketName
+        ); //기본 이미지 설정할것, 내부 테스트시에 람다 콜백설정 off
+        user.setAvatar(defaultAvatarUrl);
+        userRepository.save(user);
+        try {
+            String avatarUrl = getAvatarFromAI(user.getId(), user.getNickname());
+            user.setAvatar(avatarUrl);
+            log.info("아바타 생성완료");
+            userRepository.save(user);
+        }catch(Exception e) {
+            log.error("AI 아바타 생성 실패, 기본 이미지 사용 - userId: {}", user.getId(), e);// ← 여기서 기본 이미지
+        }
     }
 
     //Password 재발급
@@ -124,6 +145,27 @@ public class UserVerifyService {
             throw new IllegalStateException("이미 인증되었습니다");
         }
         return user;
+    }
+
+    //사용자의 Avatar생성하여 avatarUrl반환
+    private String getAvatarFromAI(Long userId, String nickname) {
+        try {
+            String avatarUrl = String.format(
+                    "https://%s.s3.ap-northeast-2.amazonaws.com/static/user/thumbnails/%d/defaultImage.jpeg",
+                    bucketName,
+                    userId
+            );
+            String s3Key = String.format(
+                    "static/user/thumbnails/%d/defaultImage.jpeg",
+                    userId
+            );
+            lambdaService.invokeCreateAvatarFunction(userId,nickname, s3Key);
+            log.info("AI 아바타 생성요청 : userId: {}, S3 Key: {}, nickname: {}", userId, s3Key, nickname);
+            return avatarUrl;
+        } catch (Exception e) {
+            log.error("Lambda호출실패");
+            throw new RuntimeException(e);
+        }
     }
 }
 
