@@ -20,7 +20,7 @@ import java.util.List;
  *
  */
 
-@FeignClient(name = "user-service")
+@FeignClient(name = "user-service",url = "${openfeign.user-service.url}")
 public interface UserServiceClient {
 
     @PostMapping("/usersinfo")

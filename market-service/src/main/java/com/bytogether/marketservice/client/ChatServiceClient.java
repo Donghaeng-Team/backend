@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  *
  */
 
-@FeignClient(name = "chat-service")
+@FeignClient(name = "chat-service",url = "${openfeign.chat-service.url}")
 public interface ChatServiceClient {
 
     @PostMapping("/internal/v1/chat/create")
