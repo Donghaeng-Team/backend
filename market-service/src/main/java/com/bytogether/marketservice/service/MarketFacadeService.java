@@ -1,5 +1,6 @@
 package com.bytogether.marketservice.service;
 
+import com.bytogether.marketservice.client.dto.request.ChatRoomCreateRequest;
 import com.bytogether.marketservice.client.dto.response.DivisionResponseDto;
 import com.bytogether.marketservice.client.dto.response.UserInternalResponse;
 import com.bytogether.marketservice.constant.MarketStatus;
@@ -40,6 +41,7 @@ public class MarketFacadeService {
 
     private final DivisionService divisionService;
     private final UserService userService;
+    private final ChatService chatService;
 
 
     // 마켓글 작성 - private
@@ -62,11 +64,20 @@ public class MarketFacadeService {
 
         // 이미지 파일 처리
         List<MultipartFile> images = createMarketRequest.getImages();
-        imageService.handleImageWhenMarketCreate(images, savedMarket.getId());
+        String thumbnailUrl = imageService.handleImageWhenMarketCreate(images, savedMarket.getId());
 
+        // 채팅방 생성
+        ChatRoomCreateRequest chatRoomCreateRequest = getChatRoomCreateRequest(newMarket, thumbnailUrl);
+
+        System.out.println("==========================");
+        System.out.println("chatRoomCreateRequest = " + chatRoomCreateRequest);
+
+        // 비동기 고려
+        chatService.createChatRoom(chatRoomCreateRequest);
 
         return CreateMarketResponse.fromEntity(savedMarket);
     }
+
 
     // 마켓글 삭제 (취소) - private
     public void deleteMarketPost(Long requestUserID, Long marketId) {
@@ -251,5 +262,18 @@ public class MarketFacadeService {
 
 
         return marketListResponse;
+    }
+
+
+    private static ChatRoomCreateRequest getChatRoomCreateRequest(Market newMarket, String thumbnailUrl) {
+        ChatRoomCreateRequest chatRoomCreateRequest = new ChatRoomCreateRequest();
+        chatRoomCreateRequest.setMarketId(newMarket.getId());
+        chatRoomCreateRequest.setCreatorUserId(newMarket.getAuthorId());
+        chatRoomCreateRequest.setEndTime(newMarket.getEndTime());
+        chatRoomCreateRequest.setMinBuyers(newMarket.getRecruitMin());
+        chatRoomCreateRequest.setMaxBuyers(newMarket.getRecruitMax());
+        chatRoomCreateRequest.setThumbnailUrl(thumbnailUrl);
+        chatRoomCreateRequest.setTitle(newMarket.getTitle());
+        return chatRoomCreateRequest;
     }
 }
