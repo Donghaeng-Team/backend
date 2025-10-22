@@ -45,6 +45,7 @@ public class ChatRoomService {
         ChatRoomParticipant newParticipant = ChatRoomParticipant.builder()
                 .chatRoom(chatRoom)
                 .userId(userId)
+                .listOrderTime(LocalDateTime.now())
                 .build();
         participantRepository.save(newParticipant);
 
