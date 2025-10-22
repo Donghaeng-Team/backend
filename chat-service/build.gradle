@@ -33,8 +33,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	runtimeOnly 'org.postgresql:postgresql'
 
-	// actuator
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
 	// swagger
 	// https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
@@ -62,7 +60,9 @@ dependencies {
 
 	// message broker
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+
+    // RabbitMQ 필요시
+//	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 
 	// WebSocket
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
