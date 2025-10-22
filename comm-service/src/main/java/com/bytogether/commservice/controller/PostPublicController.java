@@ -38,7 +38,7 @@ public class PostPublicController {
      * 게시글 하나 접근 (상세 조회)
      * GET /api/v1/posts/public/{postId}
      */
-    @GetMapping("/{postId}")
+    @GetMapping("/post/{postId}")
     public ResponseEntity<ApiResponse<PostDetailResponse>> getPostById(
             @PathVariable Long postId) {
         log.info("게시글 상세 조회 요청 - postId: {}", postId);
@@ -50,7 +50,7 @@ public class PostPublicController {
      * 특정 사용자가 작성한 게시글 목록 조회
      * GET /api/v1/posts/public/{userId}
      */
-    @GetMapping("/{userId}")
+    @GetMapping("/user/{userId}")
     public ResponseEntity<ApiResponse<List<PostListResponse>>> getPostsByUserId(
             @PathVariable Long userId) {
         log.info("사용자 작성 게시글 조회 요청 - userId: {}", userId);

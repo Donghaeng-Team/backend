@@ -6,5 +6,6 @@ public class Constants {
             "/oauth2/**",
             "/login/oauth2/**",
             "/actuator/**",
+            "/upload/**",
     };
 }
