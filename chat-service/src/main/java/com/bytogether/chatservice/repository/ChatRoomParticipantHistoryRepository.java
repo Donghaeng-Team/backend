@@ -29,15 +29,5 @@ public interface ChatRoomParticipantHistoryRepository extends JpaRepository<Chat
     Optional<ChatRoomParticipantHistory> findTopByUserIdAndChatRoomIdAndLeftAtIsNull(
             Long userId, Long chatRoomId);
 
-    @Query("SELECT h FROM ChatRoomParticipantHistory h " +
-            "WHERE h.chatRoom.id = :chatRoomId AND h.userId = :userId " +
-            "AND h.viewableFrom IS NOT NULL " +
-            "AND (h.viewableFrom <= :messageTime) " +
-            "AND (h.viewableUntil IS NULL OR h.viewableUntil >= :messageTime)")
-    Optional<ChatRoomParticipantHistory> findViewableHistoryForMessage(
-            @Param("chatRoomId") Long chatRoomId,
-            @Param("userId") Long userId,
-            @Param("messageTime") LocalDateTime messageTime);
-
     List<ChatRoomParticipantHistory> findAllByUserIdAndChatRoomIdOrderByJoinedAtDesc(Long userId, Long chatRoomId);
 }

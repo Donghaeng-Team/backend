@@ -37,6 +37,12 @@ public class ChatMessage {
     @Column(name = "sender_user_id", nullable = true)
     private Long senderUserId;
 
+    @Column(name = "sender_nickname", nullable = true)
+    private String senderNickname;
+
+    @Column(name = "sender_profile_url", nullable = false)
+    private String senderProfileUrl;
+
     @Column(name = "message_content", nullable = false, columnDefinition = "TEXT")
     private String messageContent;
 
@@ -68,6 +74,8 @@ public class ChatMessage {
         return ChatMessage.builder()
                 .chatRoom(room)
                 .senderUserId(null)  // NULL로 설정
+                .senderNickname("system")
+                .senderProfileUrl(null)
                 .messageType(MessageType.SYSTEM)
                 .messageContent(content)
                 .build();
