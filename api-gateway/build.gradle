@@ -67,4 +67,6 @@ dependencyManagement {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
 //kis- 251023
+
