@@ -1,18 +1,27 @@
 package com.bytogether.commservice.service;
 
+import com.bytogether.commservice.client.UserServiceClient;
+import com.bytogether.commservice.client.dto.UserDto;
+import com.bytogether.commservice.client.dto.UserInternalResponse;
+import com.bytogether.commservice.client.dto.UsersInfoRequest;
 import com.bytogether.commservice.dto.CommentCreateRequest;
 import com.bytogether.commservice.dto.CommentResponse;
 import com.bytogether.commservice.entity.Comment;
 import com.bytogether.commservice.entity.Post;
+import com.bytogether.commservice.entity.PostStat;
 import com.bytogether.commservice.repository.CommentRepository;
 import com.bytogether.commservice.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Pageable;
 
 @Service
@@ -21,6 +30,7 @@ import org.springframework.data.domain.Pageable;
 public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
+    private final UserServiceClient userServiceClient;
 
     // 고정 페이징: 10개씩, 최신순
     private static final int DEFAULT_PAGE_SIZE = 30;
@@ -28,11 +38,25 @@ public class CommentService {
 
 
     // 댓글 목록 조회
-    public List<CommentResponse> getCommentsByPost(Long postId) {
+    public Page<CommentResponse> getCommentsByPost(Long postId) {
         Pageable pageable = PageRequest.of(0, DEFAULT_PAGE_SIZE, DEFAULT_SORT);
-        return commentRepository.findByPost_PostIdOrderByCreatedAtAsc(postId,  pageable)
-                .stream()
-                .map(this::toResponse).toList();
+
+        Page<Comment> comments = commentRepository.findByPost_PostIdOrderByCreatedAtAsc(postId,  pageable);
+        
+        // 유저 아이디 추출
+        List<Long> userIds = comments.getContent().stream()
+                .map(Comment::getAuthorId)
+                .distinct()
+                .toList();
+
+        List<UserInternalResponse> userResponse = userServiceClient.getUserInfo(new UsersInfoRequest(userIds));
+        List<UserDto> userList = userResponse.stream().map(UserDto::from).toList();
+
+        Map<Long, UserDto> userMap = userList.stream()
+                .collect(Collectors.toMap(UserDto::getId, u -> u));
+
+        return comments.map(comment ->
+                toResponse(comment, userMap.get(comment.getAuthorId())));
     }
 
     // 댓글 작성
@@ -47,7 +71,7 @@ public class CommentService {
                 .build();
 
         Comment saved = commentRepository.save(comment);
-        return toResponse(saved);
+        return toResponse(saved,null);
     }
 
     // 댓글 수정
@@ -60,7 +84,7 @@ public class CommentService {
         }
 
         comment.setContent(content);
-        return toResponse(commentRepository.save(comment));
+        return toResponse(commentRepository.save(comment),null);
     }
 
     // 댓글 삭제 (Soft delete 처리됨)
@@ -76,13 +100,14 @@ public class CommentService {
     }
 
     // 내부 변환 메서드
-    private CommentResponse toResponse(Comment c) {
+    private CommentResponse toResponse(Comment c,UserDto userDto) {
         return CommentResponse.builder()
                 .commentId(c.getCommentId())
                 .userId(c.getAuthorId())
                 .content(c.getContent())
                 .createdAt(c.getCreatedAt())
                 .updatedAt(c.getUpdatedAt())
+                .user(userDto)
                 .build();
     }
 }
