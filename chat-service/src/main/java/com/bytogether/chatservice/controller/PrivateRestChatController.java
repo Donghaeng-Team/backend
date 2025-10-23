@@ -97,9 +97,6 @@ public class PrivateRestChatController {
     public ResponseEntity<ApiResponse<ParticipatingStaticsResponse>> chatRoomStats(@RequestHeader("X-User-Id") Long userId) {
         // TODO: 자신이 개설한 채팅방(활성상태만), 자신이 구매에 참가한 채팅방(활성상태만), 완료된 채팅방(개설/참가 무관) 갯수 정보 제공
 
-        chatRoomService.countMyChatrooms(userId);
-
-
         return ResponseEntity.ok(ApiResponse.success(chatRoomService.countMyChatrooms(userId)));
     }
 
