@@ -431,6 +431,7 @@ public class ChatRoomService {
 
         joinChatRoom(saved.getId(), request.getCreatorUserId());
 
+        confirmBuyer(saved.getId(), request.getCreatorUserId());
 
         return chatRoomMapper.convertToResponse(saved, 1, 1);
     }
