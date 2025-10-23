@@ -1,7 +1,8 @@
 name: Build Changed Services After Merge and Push to ECR
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches: [ "eks-staging" ]
   workflow_dispatch:
 
@@ -20,6 +21,7 @@ env:
 
 jobs:
   build-and-push:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
@@ -72,9 +74,9 @@ jobs:
 
           # 머지 커밋의 두 번째 부모(머지된 브랜치)와 비교
           BASE=$(git rev-parse HEAD^1)
-          MERGED=$(git rev-parse HEAD^2)
+          ##MERGED=$(git rev-parse HEAD^2)
 
-          git diff --name-only $BASE $MERGED > changed_files.txt
+          git diff --name-only $BASE HEAD > changed_files.txt
 
           echo "변경된 파일 목록:"
           cat changed_files.txt || true
