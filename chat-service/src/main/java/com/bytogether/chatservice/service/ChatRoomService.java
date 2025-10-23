@@ -1,7 +1,6 @@
 package com.bytogether.chatservice.service;
 
 import com.bytogether.chatservice.client.UserServiceClient;
-import com.bytogether.chatservice.client.dto.UserInfoRequest;
 import com.bytogether.chatservice.client.dto.UserInternalResponse;
 import com.bytogether.chatservice.client.dto.UsersInfoRequest;
 import com.bytogether.chatservice.dto.request.ChatRoomCreateRequest;
@@ -226,6 +225,10 @@ public class ChatRoomService {
                 .currentBuyers(currentBuyers)
                 .participants(participantResponses)
                 .build();
+    }
+
+    public ParticipatingStaticsResponse countMyChatrooms(Long userId) {
+        return chatRoomRepository.getParticipatingStats(userId);
     }
 
     @Transactional

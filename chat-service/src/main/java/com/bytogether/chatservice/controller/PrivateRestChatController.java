@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * 채팅방 목록을 조회하고 채팅방 메시지를 확인
  * 그 외 공동구매 관련 액션을 처리하는 컨트롤러
@@ -52,6 +54,7 @@ public class PrivateRestChatController {
     /*
         채팅방 기본 CRUD
         ├─ GET    /api/v1/chat/private                             목록 조회
+        ├─ GET    /api/v1/chat/private/me                          자신의 참가내역 조회(마이페이지 카운트 표시용)
         └─ GET    /api/v1/chat/private/{roomId}                    개별 채팅창 페이지 접속
 
         메시지
@@ -69,9 +72,6 @@ public class PrivateRestChatController {
         ├─ PATCH  /api/v1/chat/private/{roomId}/close              모집 마감
         └─ POST   /api/v1/chat/private/{roomId}/complete           구매 확정 등으로 인한 채팅방 종료
     * */
-
-    // TODO: 프론트 페이지와 직결되는 각종 REST API를 작성하기
-    // note: 리턴값은 dto.common.ApiResponse로 통일
 
     @GetMapping
     public ResponseEntity<ApiResponse<ChatRoomPageResponse>> chatRoomList(ChatRoomPageRequest request,
@@ -91,6 +91,16 @@ public class PrivateRestChatController {
 
 
         return ResponseEntity.ok(ApiResponse.success(chatRoomList));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<ParticipatingStaticsResponse>> chatRoomStats(@RequestHeader("X-User-Id") Long userId) {
+        // TODO: 자신이 개설한 채팅방(활성상태만), 자신이 구매에 참가한 채팅방(활성상태만), 완료된 채팅방(개설/참가 무관) 갯수 정보 제공
+
+        chatRoomService.countMyChatrooms(userId);
+
+
+        return ResponseEntity.ok(ApiResponse.success(chatRoomService.countMyChatrooms(userId)));
     }
 
     @GetMapping("/{roomId}")
