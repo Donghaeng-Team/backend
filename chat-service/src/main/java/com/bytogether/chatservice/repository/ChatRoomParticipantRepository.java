@@ -1,5 +1,6 @@
 package com.bytogether.chatservice.repository;
 
+import com.bytogether.chatservice.dto.common.MessagePermission;
 import com.bytogether.chatservice.dto.response.ChatRoomResponse;
 import com.bytogether.chatservice.entity.*;
 import org.springframework.data.domain.Page;
@@ -144,4 +145,23 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
             "AND p.status = 'ACTIVE'")
     void updateListOrderTimeForAllActiveParticipants(@Param("chatRoomId") Long chatRoomId,
                                                      @Param("messageTime") LocalDateTime messageTime);
+
+
+    /**
+     * 채팅 가능한 상태인지 판단용 자료 획득
+     */
+    @Query("""
+    SELECT new com.bytogether.chatservice.dto.common.MessagePermission(
+        cr.status,
+        p.status,
+        p.isBuyer
+    )
+    FROM ChatRoom cr
+    JOIN ChatRoomParticipant p ON cr.id = p.chatRoom.id
+    WHERE cr.id = :roomId AND p.userId = :userId
+    """)
+    Optional<MessagePermission> getMessagePermission(
+            @Param("roomId") Long roomId,
+            @Param("userId") Long userId
+    );
 }
