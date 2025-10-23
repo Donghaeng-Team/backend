@@ -2,6 +2,8 @@ package com.bytogether.marketservice.service;
 
 import com.bytogether.marketservice.client.dto.request.ChatRoomCreateRequest;
 import com.bytogether.marketservice.client.dto.response.DivisionResponseDto;
+import com.bytogether.marketservice.client.dto.response.ParticipantListResponse;
+import com.bytogether.marketservice.client.dto.response.ParticipantListResponseWrap;
 import com.bytogether.marketservice.client.dto.response.UserInternalResponse;
 import com.bytogether.marketservice.constant.MarketStatus;
 import com.bytogether.marketservice.dto.request.*;
@@ -113,14 +115,17 @@ public class MarketFacadeService {
             users.add(userById);
         }
 
+        List<ParticipantListResponseWrap> participantsWrap = chatService.getParticipantsWrap(myMarkets.getContent().stream().map(Market::getId).toList());
+
         // 응답 생성하기
-        MarketListResponse marketListResponse = MarketListResponse.fromEntities(myMarkets, users);
+        MarketListResponse marketListResponse = MarketListResponse.fromEntities(myMarkets, users, participantsWrap);
 
 
         // 응답 반환
         return marketListResponse;
     }
 
+    // 마켓글 수정 - private
     public PutMarketResponse updateMarketPost(Long requestUserID, Long marketId, @Valid PutMarketRequest putMarketRequest) {
         // 마켓글 가져오기
         Market market = marketService.findByMarketId(marketId);
@@ -154,6 +159,7 @@ public class MarketFacadeService {
         return PutMarketResponse.fromEntity(saveMarket);
     }
 
+    // 마켓글 연장 - private
     public ExtendMarketResponse extendMarketPost(Long requestUserID, Long marketId, ExtendMarketRequest extendMarketRequest) {
         // 마켓글 가져오기
         Market market = marketService.findByMarketId(marketId);
@@ -198,7 +204,14 @@ public class MarketFacadeService {
         marketDetailResponse.setAuthorProfileImageUrl(userById.getImageUrl());
 
 
-        // 현재 모집 참여 인원 수 조회 (chat Service API 호출) - TODO: 추후 구현 - 2025-10-10
+        // 현재 모집 참여 인원 수 조회 (chat Service API 호출) - TODO: 추후 구현 - 2025-10-10 // 251023 14:00 작성
+        ParticipantListResponse participants = chatService.getParticipants(marketId);
+
+        System.out.println("participants = " + participants);
+
+        // 251023 14:00 작성 - 작동하는지 확인해야함
+        marketDetailResponse.setRecruitNow(participants.getCurrentBuyers());
+
 
         return marketDetailResponse;
     }
@@ -219,7 +232,7 @@ public class MarketFacadeService {
         //   - 페이징: pageNum (기본값 0), pageSize (기본값 20)
 
         // 5. 작성자 닉네임, 프로필 이미지 URL 조회 (User Service API 호출)
-        // 6. 현재 모집 참여 인원 수 조회 (chat Service API 호출) - TODO: 추후 구현 - 2025-10-10
+        // 6. 현재 모집 참여 인원 수 조회 (chat Service API 호출)
 
         // 7. 응답 생성하기
 
@@ -255,10 +268,12 @@ public class MarketFacadeService {
                 .toList();
         List<UserInternalResponse> users = userService.getUsersByIds(authorIds);
 
-        // 6. 현재 모집 참여 인원 수 조회 (chat Service API 호출) - TODO: 추후 구현 - 2025-10-10
+        // 6. 현재 모집 참여 인원 수 조회 (chat Service API 호출) - TODO: 251023 14:00 임시 작성
+        List<ParticipantListResponseWrap> participantsWrap = chatService.getParticipantsWrap(markets.getContent().stream().map(Market::getId).toList());
+
 
         // 7. 응답 생성하기
-        MarketListResponse marketListResponse = MarketListResponse.fromEntities(markets, users);
+        MarketListResponse marketListResponse = MarketListResponse.fromEntities(markets, users, participantsWrap);
 
 
         return marketListResponse;
