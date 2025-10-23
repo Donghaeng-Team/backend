@@ -1,0 +1,195 @@
+name: Build Changed Services After Merge and Push to ECR
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-northeast-2
+  AWS_ACCOUNT_ID: 857360183365
+  TAG: ${{ github.sha }}   # 커밋 해시 기반 버전
+  SHORT_SHA: ${{ github.sha }}
+  EXCLUDE_DIRS: "common .github"
+  ARGOCD_REPO: "https://github.com/Donghaeng-Team/argoCD-manifest.git"
+  ARGOCD_BRANCH: "main"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      #7자리로 변경
+      - name: Set short SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+      #코드 체크 아웃
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # 전체 히스토리 필요 (merge base 비교용)
+
+      # Gradle 캐싱
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      #JDK 설정
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: 17
+          cache: gradle
+
+      # OIDC 설정
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::857360183365:role/bytogether-gitaction-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      #ECR 로그인
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      #변경 사항 감지
+      - name: Detect changed services
+        id: detect
+        run: |
+          echo "🔍 Detecting changed services in merge commit..."
+          git fetch --all
+
+          # 머지 커밋의 두 번째 부모(머지된 브랜치)와 비교
+          BASE=$(git rev-parse HEAD^1)
+          MERGED=$(git rev-parse HEAD^2)
+
+          git diff --name-only $BASE $MERGED > changed_files.txt
+
+          echo "변경된 파일 목록:"
+          cat changed_files.txt || true
+
+          CHANGED_DIRS=$(grep '/' changed_files.txt | cut -d'/' -f1 | sort -u | uniq)
+          TARGETS=""
+          for DIR in $CHANGED_DIRS; do
+            if [[ -d $DIR && ! " $EXCLUDE_DIRS " =~ " $DIR " ]]; then
+              TARGETS="$TARGETS $DIR"
+            fi
+          done
+          echo "targets=$(echo $TARGETS | xargs)" >> $GITHUB_OUTPUT
+          echo "머지로 변경된 서비스: $TARGETS"
+
+      # 빌드 & 푸쉬
+      - name: Build and Push changed services
+        if: steps.detect.outputs.targets != ''
+        run: |
+          for SERVICE in ${{ steps.detect.outputs.targets }}; do
+            echo "🏗️ Building and pushing $SERVICE ..."
+
+            if [ ! -f "$SERVICE/build.gradle" ]; then
+              echo "⚠️ Skipping $SERVICE (no build.gradle found)"
+              continue
+            fi
+
+            cd $SERVICE
+            chmod +x ./gradlew
+            ./gradlew clean build -x test
+
+            # ⚙️ Dockerfile 경로 지정 로직 추가
+            if [ -f "Dockerfile_$SERVICE" ]; then
+              DOCKER_FILE="Dockerfile_$SERVICE"
+            elif [ -f "Dockerfile" ]; then
+              DOCKER_FILE="Dockerfile"
+            else
+              echo "❌ No Dockerfile found for $SERVICE, skipping."
+              cd ..
+              continue
+            fi
+
+            echo "🧱 Using Dockerfile: $DOCKER_FILE"
+
+            # ECR repo 자동 생성
+             aws ecr describe-repositories --repository-names bytogether-eks-prod/$SERVICE --region $AWS_REGION > /dev/null 2>&1 || \
+             aws ecr create-repository --repository-name bytogether-eks-prod/$SERVICE --region $AWS_REGION
+
+
+            # 캐시 활용
+            docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether-eks-prod/$SERVICE:latest || true
+
+            docker build -t $SERVICE:$SHORT_SHA -f $DOCKER_FILE . \
+              --cache-from $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether-eks-prod/$SERVICE:latest
+
+            #배포 태그 , 추적 태그 적용
+            docker tag $SERVICE:$SHORT_SHA $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether-eks-prod/$SERVICE:$SHORT_SHA
+            docker tag $SERVICE:$SHORT_SHA $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether-eks-prod/$SERVICE:latest
+
+            docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether-eks-prod/$SERVICE:$SHORT_SHA
+            docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/bytogether-eks-prod/$SERVICE:latest
+            cd ..
+          done
+      # ArgoCD Manifest 업데이트
+      - name: Update ArgoCD Manifest
+        if: steps.detect.outputs.targets != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARGOCD_MANIFEST_TOKEN }}
+        run: |
+          echo "📝 Updating ArgoCD manifest repository..."
+          
+          # Git 설정
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # ArgoCD manifest 저장소 클론
+          git clone https://x-access-token:${GITHUB_TOKEN}@github.com/Donghaeng-Team/argoCD-manifest.git argocd-manifest
+          cd argocd-manifest
+          git checkout ${{ env.ARGOCD_BRANCH }}
+          
+          # 변경된 각 서비스에 대해 manifest 업데이트
+          UPDATED_SERVICES=""
+          for SERVICE in ${{ steps.detect.outputs.targets }}; do
+            echo "🔄 Updating manifest for $SERVICE..."
+            
+            # 파일명 패턴: argo-{서비스명}.yaml
+            YAML_FILE="prod/argo-${SERVICE}.yaml"
+            
+            if [ ! -f "$YAML_FILE" ]; then
+              echo "⚠️ Manifest file not found: $YAML_FILE, skipping..."
+              continue
+            fi
+            
+            echo "📄 Found manifest: $YAML_FILE"
+            
+            # backend.image.tag의 value 값을 새로운 SHORT_SHA로 업데이트
+            # 패턴: "value: 'e638cf2'" 형태를 찾아서 교체
+            sed -i "/name: 'backend\.image\.tag'/{ n; s/value: '[^']*'/value: '${{ env.SHORT_SHA }}'/; }" "$YAML_FILE"
+            
+            UPDATED_SERVICES="$UPDATED_SERVICES $SERVICE"
+          done
+          
+          # 변경사항이 있으면 커밋 & 푸시
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "🚀 Update image tags for:$UPDATED_SERVICES to ${{ env.SHORT_SHA }}"
+            git push origin ${{ env.ARGOCD_BRANCH }}
+            echo "✅ Successfully updated ArgoCD manifests!"
+          else
+            echo "ℹ️ No changes to commit"
+          fi
+          
+          cd ..
+          rm -rf argocd-manifest
+
+      # 안바뀌었으면 통과
+      - name: No changed services
+        if: steps.detect.outputs.targets == ''
+        run: echo "✅ No changed services in this merge."
