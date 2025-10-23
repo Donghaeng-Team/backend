@@ -28,10 +28,11 @@ public class CartController {
 //    1.찜하기 추가 addCart - private (완료)
 //    2.찜하기 삭제 deleteCart - private (완료)
 //    3.내가 찜한 목록 보기 getMyCarts - private (완료)
+//    4.내가 찜한 목록 카운트 getMyCartCount - private (완료)
 
     // 1. 찜하기 추가 addCart - private
     @PostMapping("/{marketId}")
-    public ResponseEntity<ApiResponse<?>> addCart(@RequestHeader(value = "X-User-Id", required = true) Long requestUserID, @PathVariable Long marketId) {
+    public ResponseEntity<ApiResponse<CartResponse>> addCart(@RequestHeader(value = "X-User-Id", required = true) Long requestUserID, @PathVariable Long marketId) {
         CartResponse cartResponse = cartFacadeService.addCart(requestUserID, marketId);
         return ResponseEntity.ok(ApiResponse.success(cartResponse));
     }
@@ -49,6 +50,15 @@ public class CartController {
         MarketListResponse myCarts = cartFacadeService.getMyCarts(requestUserID, cartListRequest);
         return ResponseEntity.ok(ApiResponse.success(myCarts));
     }
+
+    // 4. 내가 찜한 목록 카운트 getMyCartCount - private
+    @GetMapping("/my/count")
+    public ResponseEntity<ApiResponse<Long>> getMyCartCount(@RequestHeader(value = "X-User-Id", required = true) Long requestUserID) {
+        Long count = cartFacadeService.getMyCartCount(requestUserID);
+        return ResponseEntity.ok(ApiResponse.success(count));
+    }
+
+
 
 
 }
