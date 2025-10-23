@@ -1,6 +1,7 @@
 package com.bytogether.marketservice.service;
 
 
+import com.bytogether.marketservice.client.dto.response.ParticipantListResponseWrap;
 import com.bytogether.marketservice.client.dto.response.UserInternalResponse;
 import com.bytogether.marketservice.dto.request.CartListRequest;
 import com.bytogether.marketservice.dto.response.CartResponse;
@@ -8,6 +9,7 @@ import com.bytogether.marketservice.dto.response.MarketListResponse;
 import com.bytogether.marketservice.entity.Cart;
 import com.bytogether.marketservice.entity.Market;
 import com.bytogether.marketservice.service.sub.CartService;
+import com.bytogether.marketservice.service.sub.ChatService;
 import com.bytogether.marketservice.service.sub.MarketService;
 import com.bytogether.marketservice.service.sub.UserService;
 import jakarta.transaction.Transactional;
@@ -36,6 +38,7 @@ public class CartFacadeService {
     private final MarketService marketService;
 
     private final UserService userService;
+    private final ChatService chatService;
 
     // 찜하기 추가
     public CartResponse addCart(Long requestUserID, Long marketId) {
@@ -66,7 +69,9 @@ public class CartFacadeService {
         List<Long> authorIds = markets.stream().map(Market::getAuthorId).distinct().toList();
         List<UserInternalResponse> authors = userService.getUsersByIds(authorIds);
 
-        MarketListResponse marketListResponse = MarketListResponse.fromEntities(new PageImpl<>(markets, myCarts.getPageable(), myCarts.getTotalElements()), authors);
+        List<ParticipantListResponseWrap> participantsWrap = chatService.getParticipantsWrap(markets.stream().map(Market::getId).toList());
+
+        MarketListResponse marketListResponse = MarketListResponse.fromEntities(new PageImpl<>(markets, myCarts.getPageable(), myCarts.getTotalElements()), authors, participantsWrap);
 
         return marketListResponse;
     }
