@@ -207,10 +207,11 @@ public class MarketFacadeService {
         // 현재 모집 참여 인원 수 조회 (chat Service API 호출) - TODO: 추후 구현 - 2025-10-10 // 251023 14:00 작성
         ParticipantListResponse participants = chatService.getParticipants(marketId);
 
-        System.out.println("participants = " + participants);
 
         // 251023 14:00 작성 - 작동하는지 확인해야함
         marketDetailResponse.setRecruitNow(participants.getCurrentBuyers());
+        marketDetailResponse.setParticipants(participants.getParticipants());
+        marketDetailResponse.setChatRoomId(participants.getRoomId());
 
 
         return marketDetailResponse;

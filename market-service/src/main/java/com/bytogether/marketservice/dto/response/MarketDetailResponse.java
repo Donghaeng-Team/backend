@@ -1,5 +1,6 @@
 package com.bytogether.marketservice.dto.response;
 
+import com.bytogether.marketservice.client.dto.response.ParticipantResponse;
 import com.bytogether.marketservice.constant.MarketStatus;
 import com.bytogether.marketservice.entity.Market;
 import lombok.*;
@@ -38,6 +39,9 @@ public class MarketDetailResponse {
 
     private String authorNickname; // api 요청으로 가져오기
     private String authorProfileImageUrl; // api 요청으로 가져오기
+
+    private List<ParticipantResponse> participants; // api 요청으로 가져오기
+    private Long chatRoomId; // api 요청으로 가져오기
 
     private String locationText; // from Entity
     private String divisionId; // from Entity
