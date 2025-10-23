@@ -225,6 +225,7 @@ public class ChatRoomService {
                 }).collect(Collectors.toList());
 
         return ParticipantListResponse.builder()
+                .roomId(roomId)
                 .currentParticipants(currentParticipants)
                 .currentBuyers(currentBuyers)
                 .participants(participantResponses)
