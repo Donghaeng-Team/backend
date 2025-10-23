@@ -12,5 +12,5 @@ public enum MarketStatus {
     RECRUITING, // 모집 중
     ENDED, // 모집 완료
     CANCELLED, // 모집 취소
-    REMOVED // 마켓 삭제
+    REMOVED // 마켓 삭제 사실상 사용 안하는중 251023 15:41
 }

@@ -1,5 +1,6 @@
 package com.bytogether.chatservice.service;
 
+import com.bytogether.chatservice.client.MarketServiceClient;
 import com.bytogether.chatservice.client.UserServiceClient;
 import com.bytogether.chatservice.client.dto.UserInternalResponse;
 import com.bytogether.chatservice.client.dto.UsersInfoRequest;
@@ -40,6 +41,7 @@ public class ChatRoomService {
     private final ChatRoomParticipantHistoryRepository historyRepository;
     private final ChatRoomMapper chatRoomMapper;
     private final UserServiceClient userServiceClient;
+    private final MarketServiceClient marketServiceClient;
 
 
     @Transactional
@@ -65,7 +67,8 @@ public class ChatRoomService {
         // 활성 + 퇴장한 채팅방 모두 조회
         List<ParticipantStatus> statuses = List.of(
                 ParticipantStatus.ACTIVE,
-                ParticipantStatus.LEFT_NOT_BUYER,
+                ParticipantStatus.LEFT_RECRUITMENT_CLOSED,
+                ParticipantStatus.LEFT_RECRUITMENT_CANCELED,
                 ParticipantStatus.LEFT_COMPLETED
         );
 
@@ -97,7 +100,8 @@ public class ChatRoomService {
 
         List<ParticipantStatus> statuses = List.of(
                 ParticipantStatus.ACTIVE,
-                ParticipantStatus.LEFT_NOT_BUYER,
+                ParticipantStatus.LEFT_RECRUITMENT_CLOSED,
+                ParticipantStatus.LEFT_RECRUITMENT_CANCELED,
                 ParticipantStatus.LEFT_COMPLETED
         );
 
@@ -221,6 +225,7 @@ public class ChatRoomService {
                 }).collect(Collectors.toList());
 
         return ParticipantListResponse.builder()
+                .roomId(roomId)
                 .currentParticipants(currentParticipants)
                 .currentBuyers(currentBuyers)
                 .participants(participantResponses)
@@ -369,19 +374,22 @@ public class ChatRoomService {
     }
 
     @Transactional
-    public RecruitmentCloseResponse closeRecruitment(Long roomId) {
+    public RecruitmentCloseResponse closeRecruitment(Long roomId, Long userId) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다"));
 
+        // 채팅방 상태 변경
         room.setStatus(ChatRoomStatus.RECRUITMENT_CLOSED);
         room.setRecruitmentClosedAt(LocalDateTime.now());
+
+        ChatRoom saved = chatRoomRepository.save(room);
 
         // 구매자가 아닌 참가자들 강제 퇴장
         List<ChatRoomParticipant> nonBuyers = participantRepository
                 .findByChatRoomIdAndStatusAndIsBuyerFalse(roomId, ParticipantStatus.ACTIVE);
 
         for(ChatRoomParticipant participant : nonBuyers) {
-            participant.setStatus(ParticipantStatus.LEFT_NOT_BUYER);
+            participant.setStatus(ParticipantStatus.LEFT_RECRUITMENT_CLOSED);
             participant.setLeftAt(LocalDateTime.now());
 
             chatMessageService.notifyUser(participant.getUserId(), roomId, "공동구매 모집이 마감되어 자동으로 퇴장되었습니다");
@@ -396,11 +404,53 @@ public class ChatRoomService {
 
         chatMessageService.sendSystemMessage(roomId, system);
 
+
+        // market-service에 상태변경 요청
+        marketServiceClient.completeMarketPost(room.getMarketId(), userId);
+
         return RecruitmentCloseResponse.builder()
                 .roomId(roomId)
-                .closedAt(LocalDateTime.now())
+                .closedAt(saved.getRecruitmentClosedAt())
                 .finalBuyerCount(finalBuyers)
                 .kickedCount(nonBuyers.size())
+                .build();
+    }
+
+    @Transactional
+    public RecruitmentCancelResponse cancelRecruitment(Long roomId, Long userId) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다"));
+
+        // 채팅방 상태 변경
+        room.setStatus(ChatRoomStatus.CANCELLED);
+
+        ChatRoom saved = chatRoomRepository.save(room);
+
+        // 참가자들 강제 퇴장
+        List<ChatRoomParticipant> participants = participantRepository
+                .findByChatRoomIdAndStatusAndIsBuyerFalse(roomId, ParticipantStatus.ACTIVE);
+
+        for(ChatRoomParticipant participant : participants) {
+            participant.setStatus(ParticipantStatus.LEFT_RECRUITMENT_CANCELED);
+            participant.setLeftAt(LocalDateTime.now());
+
+            chatMessageService.notifyUser(participant.getUserId(), roomId, "공동구매 모집이 취소되어 자동으로 퇴장되었습니다");
+        }
+
+        participantRepository.saveAll(participants);
+
+        String system = "공동구매 모집이 취소되었습니다";
+
+        chatMessageService.sendSystemMessage(roomId, system);
+
+
+        // market-service에 상태변경 요청
+        marketServiceClient.cancelMarketPost(room.getMarketId(), userId);
+
+
+        return RecruitmentCancelResponse.builder()
+                .roomId(roomId)
+                .canceledAt(saved.getUpdatedAt())
                 .build();
     }
 
@@ -431,6 +481,7 @@ public class ChatRoomService {
 
         joinChatRoom(saved.getId(), request.getCreatorUserId());
 
+        confirmBuyer(saved.getId(), request.getCreatorUserId());
 
         return chatRoomMapper.convertToResponse(saved, 1, 1);
     }
