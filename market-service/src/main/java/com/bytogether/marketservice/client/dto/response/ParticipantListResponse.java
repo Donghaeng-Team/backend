@@ -12,6 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @ToString
 public class ParticipantListResponse {
+    private Long roomId;               // 채팅방 ID
     private Integer currentParticipants;        // 총 참가자 수
     private Integer currentBuyers;              // 구매자 수
     private List<ParticipantResponse> participants;

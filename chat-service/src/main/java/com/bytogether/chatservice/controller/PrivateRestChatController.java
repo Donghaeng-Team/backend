@@ -70,6 +70,7 @@ public class PrivateRestChatController {
         ├─ DELETE /api/v1/chat/private/{roomId}/participate        구매 의사 취소
         ├─ PATCH  /api/v1/chat/private/{roomId}/extend             기한 연장
         ├─ PATCH  /api/v1/chat/private/{roomId}/close              모집 마감
+        ├─ PATCH  /api/v1/chat/private/{roomId}/cancel             모집 취소
         └─ POST   /api/v1/chat/private/{roomId}/complete           구매 확정 등으로 인한 채팅방 종료
     * */
 
@@ -96,9 +97,6 @@ public class PrivateRestChatController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<ParticipatingStaticsResponse>> chatRoomStats(@RequestHeader("X-User-Id") Long userId) {
         // TODO: 자신이 개설한 채팅방(활성상태만), 자신이 구매에 참가한 채팅방(활성상태만), 완료된 채팅방(개설/참가 무관) 갯수 정보 제공
-
-        chatRoomService.countMyChatrooms(userId);
-
 
         return ResponseEntity.ok(ApiResponse.success(chatRoomService.countMyChatrooms(userId)));
     }
@@ -283,13 +281,30 @@ public class PrivateRestChatController {
         log.info("공동구매 모집마감 요청 - roomId: {}, userId: {}", roomId, userId);
 
         // 1. 방장 검증
-        if(!chatRoomService.isCreator(roomId, userId)) {
+        if (!chatRoomService.isCreator(roomId, userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.fail("방장만 모집을 마감할 수 있습니다"));
         }
 
         // 2. 모집 마감 처리
-        RecruitmentCloseResponse response = chatRoomService.closeRecruitment(roomId);
+        RecruitmentCloseResponse response = chatRoomService.closeRecruitment(roomId, userId);
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PatchMapping("/{roomId}/cancel")
+    public ResponseEntity<ApiResponse<RecruitmentCancelResponse>> cancleRecruitment(@PathVariable("roomId") Long roomId,
+                                                                                  @RequestHeader("X-User-Id") Long userId) {
+        log.info("공동구매 모집취소 요청 - roomId: {}, userId: {}", roomId, userId);
+
+        // 1. 방장 검증
+        if(!chatRoomService.isCreator(roomId, userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.fail("방장만 모집을 마감할 수 있습니다"));
+        }
+
+        // 2. 모집 취소 처리
+        RecruitmentCancelResponse response = chatRoomService.cancelRecruitment(roomId, userId);
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }

@@ -5,9 +5,9 @@ import com.bytogether.commservice.dto.CommentCreateRequest;
 import com.bytogether.commservice.dto.CommentResponse;
 import com.bytogether.commservice.service.CommentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,7 +17,7 @@ public class CommentController {
 
     // 댓글 목록 조회
     @GetMapping("/public/{postId}")
-    public ApiResponse<List<CommentResponse>> getComments(@PathVariable Long postId) {
+    public ApiResponse<Page<CommentResponse>> getComments(@PathVariable Long postId) {
         return ApiResponse.success(commentService.getCommentsByPost(postId));
     }
 

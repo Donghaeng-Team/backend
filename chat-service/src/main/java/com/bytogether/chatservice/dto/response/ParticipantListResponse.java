@@ -23,6 +23,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class ParticipantListResponse {
+    private Long roomId;
     private Integer currentParticipants;        // 총 참가자 수
     private Integer currentBuyers;              // 구매자 수
     private List<ParticipantResponse> participants;

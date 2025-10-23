@@ -207,10 +207,11 @@ public class MarketFacadeService {
         // 현재 모집 참여 인원 수 조회 (chat Service API 호출) - TODO: 추후 구현 - 2025-10-10 // 251023 14:00 작성
         ParticipantListResponse participants = chatService.getParticipants(marketId);
 
-        System.out.println("participants = " + participants);
 
         // 251023 14:00 작성 - 작동하는지 확인해야함
         marketDetailResponse.setRecruitNow(participants.getCurrentBuyers());
+        marketDetailResponse.setParticipants(participants.getParticipants());
+        marketDetailResponse.setChatRoomId(participants.getRoomId());
 
 
         return marketDetailResponse;
@@ -277,6 +278,40 @@ public class MarketFacadeService {
 
 
         return marketListResponse;
+    }
+
+    // 마켓글 취소 - internal
+    public void cancelMarketPost(Long requestUserID, Long marketId) {
+        // 마켓글 가져오기
+        Market market = marketService.findByMarketId(marketId);
+
+        // 권한 확인
+        if (!market.getAuthorId().equals(requestUserID)) {
+            throw new MarketException("권한이 없습니다.", HttpStatus.FORBIDDEN);
+        }
+        // 마켓글 상태 확인 ( 모집 완료는 삭제 불가 )
+        if (market.getStatus() == MarketStatus.ENDED) {
+            throw new MarketException("모집 완료된 마켓글은 취소할 수 없습니다.", HttpStatus.BAD_REQUEST);
+        }
+        // 마켓글 상태 변경 (취소)
+        marketService.changeStatus(market, MarketStatus.CANCELLED);
+    }
+
+    // 마켓글 완료 - internal
+    public void completeMarketPost(Long requestUserID, Long marketId) {
+        // 마켓글 가져오기
+        Market market = marketService.findByMarketId(marketId);
+
+        // 권한 확인
+        if (!market.getAuthorId().equals(requestUserID)) {
+            throw new MarketException("권한이 없습니다.", HttpStatus.FORBIDDEN);
+        }
+        // 마켓글 상태 확인 ( 모집중 상태만 완료 가능 )
+        if (market.getStatus() != MarketStatus.RECRUITING) {
+            throw new MarketException("모집중 상태의 마켓글만 완료할 수 있습니다.", HttpStatus.BAD_REQUEST);
+        }
+        // 마켓글 상태 변경 (완료)
+        marketService.changeStatus(market, MarketStatus.ENDED);
     }
 
 
