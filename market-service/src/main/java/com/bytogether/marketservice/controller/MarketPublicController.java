@@ -37,6 +37,7 @@ public class MarketPublicController {
     public ResponseEntity<ApiResponse<MarketListResponse>> getMarketPosts(@Valid MarketListRequest marketListRequest) {
         MarketListResponse response = marketFacadeService.getMarketPosts(null, marketListRequest);
 
+
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
     }
 
