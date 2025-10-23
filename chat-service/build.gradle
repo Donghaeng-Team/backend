@@ -49,7 +49,7 @@ dependencies {
 
 	// message broker
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+	// implementation 'org.springframework.boot:spring-boot-starter-amqp'
 
 	// WebSocket
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
@@ -58,6 +58,9 @@ dependencies {
 
 	// Feign
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+	// 빌드 오류
+	implementation 'jakarta.ws.rs:jakarta.ws.rs-api:3.1.0'
 
 
 	compileOnly 'org.projectlombok:lombok'

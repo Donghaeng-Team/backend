@@ -308,10 +308,6 @@ public class PrivateRestChatController {
         // 2. 채팅방 종료 처리
         String result = chatRoomService.completePurchase(roomId);
 
-        // TODO: STOMP를 통한 종료 알림
-        // stompService.sendSystemMessage(roomId, "공동구매가 종료되었습니다");
-        // 모든 참가자에게 채팅방 종료 알림
-
         // TODO: 스케줄러 등록
         // 모집 마감으로부터 일정 시간 후 자동 종료를 위한 스케줄러 작업 필요
 
