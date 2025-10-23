@@ -23,9 +23,9 @@ import java.util.List;
 @FeignClient(name = "user-service",url = "${openfeign.user-service.url}")
 public interface UserServiceClient {
 
-    @PostMapping("/usersinfo")
+    @PostMapping("/internal/v1/user/usersinfo")
     List<UserInternalResponse> getUsersInfo(@RequestBody UsersInfoRequest usersInfoRequest);
 
-    @PostMapping("/userinfo")
+    @PostMapping("/internal/v1/user/userinfo")
     UserInternalResponse getUserInfo(@RequestBody UserInfoRequest userInfoRequest);
 }

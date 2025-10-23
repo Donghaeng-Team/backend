@@ -1,6 +1,7 @@
 package com.bytogether.marketservice.dto.response;
 
 
+import com.bytogether.marketservice.client.dto.response.ParticipantListResponseWrap;
 import com.bytogether.marketservice.client.dto.response.UserInternalResponse;
 import com.bytogether.marketservice.entity.Market;
 import lombok.*;
@@ -27,7 +28,7 @@ import java.util.List;
 public class MarketListResponse extends DefaultPageResponse {
     private List<MarketSimpleResponse> markets;
 
-    public static MarketListResponse fromEntities(Page<Market> markets, List<UserInternalResponse> users) {
+    public static MarketListResponse fromEntities(Page<Market> markets, List<UserInternalResponse> users, List<ParticipantListResponseWrap> participantListResponseWrapList) {
         List<MarketSimpleResponse> marketResponses = markets.stream()
                 .map(market -> {
                     UserInternalResponse user = users.stream()
@@ -37,6 +38,16 @@ public class MarketListResponse extends DefaultPageResponse {
                     return MarketSimpleResponse.fromEntity(market, 0, user.getNickName(), user.getImageUrl());
                 })
                 .toList();
+
+        marketResponses.forEach(marketResponse -> {
+            ParticipantListResponseWrap participantListResponseWrap = participantListResponseWrapList.stream()
+                    .filter(p -> p.getRequestMarketId().equals(marketResponse.getMarketId()))
+                    .findFirst()
+                    .orElse(null);
+            if (participantListResponseWrap != null) {
+                marketResponse.setRecruitNow(participantListResponseWrap.getParticipantListResponse().getCurrentBuyers());
+            }
+        });
 
         MarketListResponse marketListResponse = new MarketListResponse(marketResponses);
         marketListResponse.setTotalElements(markets.getTotalElements());
