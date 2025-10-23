@@ -1,9 +1,9 @@
 name: Build Changed Services After Merge and Push to ECR
 
 on:
-  pull_request:
-    types: [closed]
-    branches: [ "eks-staging" ]
+  push:
+    branches:
+      - eks-staging
   workflow_dispatch:
 
 permissions:
@@ -21,7 +21,6 @@ env:
 
 jobs:
   build-and-push:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
