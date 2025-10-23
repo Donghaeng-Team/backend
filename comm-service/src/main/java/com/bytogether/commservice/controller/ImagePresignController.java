@@ -39,7 +39,7 @@ public class ImagePresignController {
         List<UploadUrlsResponse.UploadUrl> urls = request.getFiles().stream()
                 .map(file -> {
                     String s3Key = String.format(
-                            "comm-service/posts/%d/%d_%s_%s",
+                            "static/posts/images/%d/%d_%s_%s",
                             postId,
                             file.getIndex() + 1, // 사진 순서는 자연수로 적용
                             UUID.randomUUID(),
