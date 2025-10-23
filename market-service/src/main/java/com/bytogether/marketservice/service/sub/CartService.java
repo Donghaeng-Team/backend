@@ -69,4 +69,8 @@ public class CartService {
         return cartRepository.findByMarketIdAndStatus(marketId, CartStatus.ADDED).size();
     }
 
+    // 내 찜하기 카운트 조회
+    public Long getMyCartCount(Long requestUserID) {
+        return cartRepository.countByUserIdAndStatus(requestUserID, CartStatus.ADDED);
+    }
 }

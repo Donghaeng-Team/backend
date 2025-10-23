@@ -75,4 +75,8 @@ public class CartFacadeService {
 
         return marketListResponse;
     }
+
+    public Long getMyCartCount(Long requestUserID) {
+        return cartService.getMyCartCount(requestUserID);
+    }
 }
