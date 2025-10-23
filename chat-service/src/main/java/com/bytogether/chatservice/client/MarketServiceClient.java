@@ -19,7 +19,7 @@ import java.util.List;
  *
  */
 
-@FeignClient(name = "market-service")
+@FeignClient(name = "market-service", url = "${openfeign.market-service.url}")
 public interface MarketServiceClient {
 
     @GetMapping("/internal/v1/market/status/cancel/{marketId}")
