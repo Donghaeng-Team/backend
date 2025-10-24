@@ -2,12 +2,10 @@ package com.bytogether.marketservice.service.sub;
 
 import com.bytogether.marketservice.constant.CartStatus;
 import com.bytogether.marketservice.entity.Cart;
-import com.bytogether.marketservice.exception.MarketException;
 import com.bytogether.marketservice.repository.CartRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -50,7 +48,7 @@ public class CartService {
         if (byUserIdAndMarketIdAndStatus.isEmpty()) {
             // 찜하기가 존재하지 않음
             return; // 존재하지 않으면 아무 작업도 수행하지 않음
-        }else {
+        } else {
             // 찜하기가 존재함
             Cart existingCart = byUserIdAndMarketIdAndStatus.get();
             existingCart.setStatus(CartStatus.REMOVED);

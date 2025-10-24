@@ -59,11 +59,4 @@ public class CartController {
     }
 
 
-
-    @GetMapping("/test")
-    public String testCart() {
-        return "251021 kis";
-    }
-
-
 }
