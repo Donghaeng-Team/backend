@@ -8,8 +8,10 @@ import com.bytogether.commservice.dto.CommentCreateRequest;
 import com.bytogether.commservice.dto.CommentResponse;
 import com.bytogether.commservice.entity.Comment;
 import com.bytogether.commservice.entity.Post;
+import com.bytogether.commservice.entity.PostStat;
 import com.bytogether.commservice.repository.CommentRepository;
 import com.bytogether.commservice.repository.PostRepository;
+import com.bytogether.commservice.repository.PostStatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +32,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserServiceClient userServiceClient;
+    private final PostStatRepository postStatRepository;
 
     // 고정 페이징: 10개씩, 최신순
     private static final int DEFAULT_PAGE_SIZE = 30;
@@ -70,6 +73,11 @@ public class CommentService {
                 .build();
 
         Comment saved = commentRepository.save(comment);
+
+        //댓글 카운트 증가 로직
+        PostStat postStat = postStatRepository.findById(postId).orElseThrow(() ->  new RuntimeException("게시글 stat을 찾을 수 없습니다."));
+        postStat.setCommentCount(postStat.getCommentCount() + 1);
+        postStatRepository.save(postStat);
         return toResponse(saved,null);
     }
 

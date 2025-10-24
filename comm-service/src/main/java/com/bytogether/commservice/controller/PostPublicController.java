@@ -57,4 +57,16 @@ public class PostPublicController {
         return ResponseEntity.ok(ApiResponse.success(postService.getPostsByUser(userId)));
     }
 
+    /**
+     * com-08
+     * 조회수 증가 로직 추가
+     * POST /api/v1/posts/public/{postId}
+     */
+    @PostMapping("/{postId}")
+    public ResponseEntity<ApiResponse<String>> addViewCount(@PathVariable Long postId) {
+        log.info("조회수 증가 - postId: {}", postId);
+        postService.increaseViewCount(postId);
+        return ResponseEntity.ok(ApiResponse.success("성공"));
+    }
+    
 }
