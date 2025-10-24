@@ -19,13 +19,11 @@ public class ChatMessageMapper {
      * Entity -> DTO 변환 (단일)
      */
     public ChatMessageResponse toResponse(ChatMessage message) {
-        // TODO: UserService를 통해 닉네임 조회
-        String nickname = "User#" + message.getSenderUserId(); // 임시
 
         return ChatMessageResponse.builder()
                 .id(message.getId())
                 .senderId(message.getSenderUserId())
-                .senderNickname(nickname)
+                .senderNickname(message.getSenderNickname())
                 .messageContent(message.getMessageContent())
                 .messageType(message.getMessageType())
                 .sentAt(message.getSentAt())

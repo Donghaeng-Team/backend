@@ -311,7 +311,7 @@ public class ChatMessageService {
      */
     private void broadcastToCurrentPod(Long roomId, ChatMessageResponse response) {
         messagingTemplate.convertAndSend(
-                "/topic.rooms." + roomId + ".messages",
+                "/topic/rooms." + roomId + ".messages",
                 response
         );
     }

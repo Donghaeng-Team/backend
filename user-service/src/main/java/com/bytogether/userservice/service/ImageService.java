@@ -1,18 +1,23 @@
 package com.bytogether.userservice.service;
 
+import com.bytogether.userservice.dto.request.AvatarCallbackRequest;
 import com.bytogether.userservice.dto.response.ImageUploadResponse;
+import com.bytogether.userservice.model.InitialProvider;
 import com.bytogether.userservice.model.User;
 import com.bytogether.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-import java.net.URI;
+//import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,6 +35,9 @@ public class ImageService {
 
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
+
+    @Value("${spring.cloud.aws.lambda.api-key}")
+    private String lambdaApiKey;
 
     public ImageUploadResponse uploadImage(Long userId, MultipartFile file) {
         try {
@@ -50,7 +58,7 @@ public class ImageService {
             );
 
             if(user.getAvatar() != null && !user.getAvatar().isBlank()) {
-                deleteOldAvatar(user.getId(), user.getAvatar());
+                deleteOldAvatar(user.getAvatar());
             }
 
             //3. Key와 Thumbnail Key 생성
@@ -81,26 +89,52 @@ public class ImageService {
             log.info("S3 업로드 성공 - 버킷: {}, 키: {}", bucketName, originalKey);
             log.info("S3 thumbnail - 버킷: {}, 키: {}", bucketName, thumbnailKey);
 
-            String imageUrl = String.format(
-                    "https://%s.s3.%s.amazonaws.com/%s",
-                    bucketName, "ap-northeast-2", originalKey);
-            String thumbnailUrl = String.format(
-                    "https://%s.s3.%s.amazonaws.com/%s",
-                    bucketName, "ap-northeast-2", thumbnailKey);
+            //Front Bucketname 변경으로 경로 조정하여 key사용
+//            String imageUrl = String.format(
+//                    "https://%s.s3.%s.amazonaws.com/%s",
+//                    bucketName, "ap-northeast-2", originalKey);
+//            String thumbnailUrl = String.format(
+//                    "https://%s.s3.%s.amazonaws.com/%s",
+//                    bucketName, "ap-northeast-2", thumbnailKey);
 
             //4. 이미지 URL 저장 후 반환
-            user.setAvatar(thumbnailUrl);
+
+            //front 절대 경로처리
+            String thumbnailKeySave = "/"+thumbnailKey;
+            user.setAvatar(thumbnailKeySave);
             userRepository.save(user);
-            log.info("이미지 Url 저장: {}", thumbnailUrl);
+            log.info("이미지 Url 저장: {}", thumbnailKey);
 
             return ImageUploadResponse.builder()
-                    .imageUrl(imageUrl)
-                    .thumbnailUrl(thumbnailUrl)
+                    .imageUrl(originalKey)
+                    .thumbnailUrlSave(thumbnailKeySave)
                     .build();
 
         } catch (Exception e) {
             log.error("파일 업로드 실패: {}", e.getMessage());
             throw new RuntimeException(e);
+        }
+    }
+
+    public void callback(Long userId, AvatarCallbackRequest request,String apiKey ){
+        if(!lambdaApiKey.equals(apiKey)){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid Token");
+        }
+        //User가 없는 경우에 대한 예외처리 ??
+        User user = userService.getOptionalUserById(userId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if( user == null || !user.getVerify() || !(user.getProvider() == InitialProvider.LOCAL)){
+            log.warn("이메일 가입 사용자가 아니거나 이메일 인증이 완료되지 않았습니다.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized User");
+        }
+
+        if(request.isSuccess ()){
+            log.info("생성성공");
+            user.setAvatar(request.getAvatarUrl());
+            userRepository.save(user);
+        }else {
+            log.error("생성실패");
         }
     }
 
@@ -113,20 +147,33 @@ public class ImageService {
         }
     }
 
-    private void deleteOldAvatar(Long userId, String oldAvatar){
+    // 아바타 필드 삭제
+    private void deleteOldAvatar(String oldAvatar){
         try{
-            URI uri = new URI(oldAvatar);
-            String oldAvatarPath = uri.getPath();
-            if( oldAvatarPath.length() <= 1){
+            //avatar 필드에 버킷정보가 제외되어 불필요한 부분 주석
+//            URI uri = new URI(oldAvatar);
+//            String oldAvatarPath = uri.getPath();
+//            if( oldAvatarPath.length() <= 1){
+//                log.warn("경로가 유효하지 않습니다");
+//                return;
+//            }
+//            String s3Key = oldAvatarPath.substring(1);
+
+            if(oldAvatar == null || oldAvatar.length() <= 1){
                 log.warn("경로가 유효하지 않습니다");
                 return;
             }
-            String s3Key = oldAvatarPath.substring(1);
+
+            String s3Key = oldAvatar.startsWith("/")
+                    ? oldAvatar.substring(1)
+                    : oldAvatar;
+
             log.info("Key 추출: {}", s3Key);
             s3Client.deleteObject(builder ->
                     builder.bucket(bucketName).key(s3Key));
         }catch(Exception e){
-            log.error("삭제 실패: {}", e.getMessage());
+            log.error("삭제 실패: {} : {}", oldAvatar, e.getMessage());
         }
     }
+
 }

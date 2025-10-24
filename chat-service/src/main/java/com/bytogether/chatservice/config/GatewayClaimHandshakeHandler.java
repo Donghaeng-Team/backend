@@ -1,6 +1,8 @@
 package com.bytogether.chatservice.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
@@ -16,6 +18,7 @@ import java.util.Map;
  * @since 2025-10-21
  */
 
+@Slf4j
 public class GatewayClaimHandshakeHandler extends DefaultHandshakeHandler {
 
     @Override
@@ -23,15 +26,30 @@ public class GatewayClaimHandshakeHandler extends DefaultHandshakeHandler {
                                       WebSocketHandler wsHandler,
                                       Map<String, Object> attributes) {
 
+        // 디버깅: 모든 헤더 출력
+        log.debug("=== WebSocket Handshake Headers ===");
+        request.getHeaders().forEach((key, value) ->
+            log.debug("Header: {} = {}", key, value)
+        );
+
+        // ServletServerHttpRequest인 경우 원본 요청 정보도 출력
+        if (request instanceof ServletServerHttpRequest) {
+            ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
+            log.debug("Request URI: {}", servletRequest.getServletRequest().getRequestURI());
+            log.debug("Request Method: {}", servletRequest.getServletRequest().getMethod());
+        }
+
         List<String> userIds = request.getHeaders().get("X-User-Id");
 
         if (userIds != null && !userIds.isEmpty()) {
             String userId = userIds.get(0);
+            log.debug("Found X-User-Id: {}", userId);
 
             // Principal 인터페이스를 구현하는 간단한 익명객체
             return () -> userId;
         }
 
+        log.warn("X-User-Id header not found in WebSocket handshake");
         return null; // 인증 실패 시 Principal 없음
     }
 }
