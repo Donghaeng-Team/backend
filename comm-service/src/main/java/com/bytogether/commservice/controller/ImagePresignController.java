@@ -14,6 +14,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/posts/private")
 public class ImagePresignController {
 
     private final S3Service s3Service;
