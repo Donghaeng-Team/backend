@@ -96,7 +96,8 @@ public class PostService {
                         .build());
 
         UserDto userInfo = UserDto.from(userServiceClient.getUserInfo(new UsersInfoRequest(List.of(stat.getUserId()))).get(0));
-
+        stat.setViewCount(stat.getViewCount()+1);
+        postStatRepository.save(stat);
         return PostDetailResponse.from(post, stat,userInfo);
     }
 
@@ -289,13 +290,7 @@ public class PostService {
         postStatRepository.save(stat);
     }
 
-    @Transactional
-    public void increaseViewCount(Long postId) {
-        PostStat stat = postStatRepository.findById(postId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
-        stat.setViewCount(stat.getViewCount()+1);
-        postStatRepository.save(stat);
-    }
+
 
     //이미지 업로드 시 사용되는 로직
     public boolean isOwnerOfPost(Long postId, Long userId) {
