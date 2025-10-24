@@ -24,10 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -96,7 +93,8 @@ public class PostService {
                         .build());
 
         UserDto userInfo = UserDto.from(userServiceClient.getUserInfo(new UsersInfoRequest(List.of(stat.getUserId()))).get(0));
-
+        stat.setViewCount(stat.getViewCount()+1);
+        postStatRepository.save(stat);
         return PostDetailResponse.from(post, stat,userInfo);
     }
 
@@ -259,7 +257,7 @@ public class PostService {
     }
 
     /**
-     * com-07 : 게시글 좋아요 증가
+     * com-07 : 게시글 좋아요 증가/감소 (토글)
      */
     @Transactional
     public void increaseLikeCount(Long userId, Long postId) {
@@ -271,23 +269,29 @@ public class PostService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "유효하지 않은 게시글에는 좋아요를 누를 수 없습니다.");
         }
 
-        // ✅ 중복 좋아요 방지
-        if (postLikeRepository.existsByPostIdAndUserId(postId, userId)) {
-            throw new BusinessException(HttpStatus.CONFLICT, "이미 좋아요를 누른 게시글입니다.");
+        // ✅ 이미 좋아요 눌렀는지 확인
+        Optional<PostLike> existingLike = postLikeRepository.findByPostIdAndUserId(postId, userId);
+
+
+        if (existingLike.isPresent()) {
+            // 이미 좋아요 상태라면 → 좋아요 취소
+            postLikeRepository.delete(existingLike.get());
+            stat.setLikeCount(Math.max(0, stat.getLikeCount() - 1)); // 음수 방지
+        } else {
+            // 좋아요가 없는 상태라면 → 좋아요 추가
+            postLikeRepository.save(
+                    PostLike.builder()
+                            .postId(postId)
+                            .userId(userId)
+                            .createdAt(LocalDateTime.now())
+                            .build()
+            );
+            stat.setLikeCount(stat.getLikeCount() + 1);
         }
 
-        postLikeRepository.save(
-                PostLike.builder()
-                        .postId(postId)
-                        .userId(userId)
-                        .createdAt(LocalDateTime.now())
-                        .build()
-        );
-
-
-        stat.setLikeCount(stat.getLikeCount() + 1);
         postStatRepository.save(stat);
     }
+
 
 
     //이미지 업로드 시 사용되는 로직

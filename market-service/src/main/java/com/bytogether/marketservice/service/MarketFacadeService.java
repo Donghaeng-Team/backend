@@ -45,6 +45,17 @@ public class MarketFacadeService {
     private final UserService userService;
     private final ChatService chatService;
 
+    private static ChatRoomCreateRequest getChatRoomCreateRequest(Market newMarket, String thumbnailUrl) {
+        ChatRoomCreateRequest chatRoomCreateRequest = new ChatRoomCreateRequest();
+        chatRoomCreateRequest.setMarketId(newMarket.getId());
+        chatRoomCreateRequest.setCreatorUserId(newMarket.getAuthorId());
+        chatRoomCreateRequest.setEndTime(newMarket.getEndTime());
+        chatRoomCreateRequest.setMinBuyers(newMarket.getRecruitMin());
+        chatRoomCreateRequest.setMaxBuyers(newMarket.getRecruitMax());
+        chatRoomCreateRequest.setThumbnailUrl(thumbnailUrl);
+        chatRoomCreateRequest.setTitle(newMarket.getTitle());
+        return chatRoomCreateRequest;
+    }
 
     // 마켓글 작성 - private
     public CreateMarketResponse createMarketPost(Long requestUserID, CreateMarketRequest createMarketRequest) {
@@ -79,7 +90,6 @@ public class MarketFacadeService {
 
         return CreateMarketResponse.fromEntity(savedMarket);
     }
-
 
     // 마켓글 삭제 (취소) - private
     public void deleteMarketPost(Long requestUserID, Long marketId) {
@@ -312,18 +322,5 @@ public class MarketFacadeService {
         }
         // 마켓글 상태 변경 (완료)
         marketService.changeStatus(market, MarketStatus.ENDED);
-    }
-
-
-    private static ChatRoomCreateRequest getChatRoomCreateRequest(Market newMarket, String thumbnailUrl) {
-        ChatRoomCreateRequest chatRoomCreateRequest = new ChatRoomCreateRequest();
-        chatRoomCreateRequest.setMarketId(newMarket.getId());
-        chatRoomCreateRequest.setCreatorUserId(newMarket.getAuthorId());
-        chatRoomCreateRequest.setEndTime(newMarket.getEndTime());
-        chatRoomCreateRequest.setMinBuyers(newMarket.getRecruitMin());
-        chatRoomCreateRequest.setMaxBuyers(newMarket.getRecruitMax());
-        chatRoomCreateRequest.setThumbnailUrl(thumbnailUrl);
-        chatRoomCreateRequest.setTitle(newMarket.getTitle());
-        return chatRoomCreateRequest;
     }
 }

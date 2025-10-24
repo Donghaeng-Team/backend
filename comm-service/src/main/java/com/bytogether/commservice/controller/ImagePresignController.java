@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@RequestMapping("/api/v1/posts/private")
 @RequiredArgsConstructor
 public class ImagePresignController {
 
@@ -46,7 +47,7 @@ public class ImagePresignController {
                             file.getFileName()
                     );
                     String presignedUrl = s3Service.generatePresignedUrl(s3Key, file.getContentType());
-                    return new UploadUrlsResponse.UploadUrl(presignedUrl, s3Key);
+                    return new UploadUrlsResponse.UploadUrl(presignedUrl, "/" + s3Key);
                 })
                 .toList();
 

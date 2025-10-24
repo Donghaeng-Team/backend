@@ -18,7 +18,10 @@ import org.springframework.web.bind.annotation.RequestBody;
  *
  */
 
-@FeignClient(name = "chat-service")
+@FeignClient(name = "chat-service",
+        fallback = ChatServiceClientFallback.class,
+        configuration = ServiceFeignConfig.class
+)
 public interface ChatServiceClient {
 
     @PostMapping("/internal/v1/chat/create")

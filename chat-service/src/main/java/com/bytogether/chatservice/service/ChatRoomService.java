@@ -2,6 +2,7 @@ package com.bytogether.chatservice.service;
 
 import com.bytogether.chatservice.client.MarketServiceClient;
 import com.bytogether.chatservice.client.UserServiceClient;
+import com.bytogether.chatservice.client.dto.UserInfoRequest;
 import com.bytogether.chatservice.client.dto.UserInternalResponse;
 import com.bytogether.chatservice.client.dto.UsersInfoRequest;
 import com.bytogether.chatservice.dto.request.ChatRoomCreateRequest;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -48,6 +50,8 @@ public class ChatRoomService {
     public void joinChatRoom(Long roomId, Long userId) {
         ChatRoom chatRoom = chatRoomRepository.findById(roomId).orElseThrow();
 
+        UserInternalResponse userInfo = userServiceClient.getUserInfo(UserInfoRequest.builder().userId(userId).build());
+
         ChatRoomParticipant newParticipant = ChatRoomParticipant.builder()
                 .chatRoom(chatRoom)
                 .userId(userId)
@@ -55,7 +59,7 @@ public class ChatRoomService {
                 .build();
         participantRepository.save(newParticipant);
 
-        String message = userId.toString() + "님이 참가하셨습니다";
+        String message = userInfo.getNickName() + "님이 참가하셨습니다";
 
         chatMessageService.sendSystemMessage(roomId, message);
     }
@@ -234,6 +238,30 @@ public class ChatRoomService {
 
     public ParticipatingStaticsResponse countMyChatrooms(Long userId) {
         return chatRoomRepository.getParticipatingStats(userId);
+    }
+
+    public UserMarketIdsResponse getUserMarketIds(Long userId) {
+        List<Object[]> results = chatRoomRepository.findUserMarketIds(userId);
+
+        List<Long> ongoing = new ArrayList<>();
+        List<Long> completed = new ArrayList<>();
+
+        for (Object[] row : results) {
+            Long marketId = (Long) row[0];
+            ChatRoomStatus status = (ChatRoomStatus) row[1];
+
+            switch (status) {
+                case RECRUITING, RECRUITMENT_CLOSED -> ongoing.add(marketId);
+                case COMPLETED -> completed.add(marketId);
+            }
+        }
+
+        return UserMarketIdsResponse.builder()
+                .ongoing(ongoing)
+                .completed(completed)
+                .ongoingCount(ongoing.size())
+                .completedCount(completed.size())
+                .build();
     }
 
     @Transactional

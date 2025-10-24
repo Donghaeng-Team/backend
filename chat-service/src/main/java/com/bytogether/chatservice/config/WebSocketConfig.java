@@ -23,7 +23,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // ws://localhost:8080/ws-chat 으로 연결
-        registry.addEndpoint("/ws/v1/chat")
+        registry.addEndpoint("/ws/v1/chat/private")
                 .setAllowedOriginPatterns("*")
                 .setHandshakeHandler(new GatewayClaimHandshakeHandler())
                 .withSockJS();
