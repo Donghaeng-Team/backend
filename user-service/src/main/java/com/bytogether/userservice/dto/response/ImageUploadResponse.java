@@ -7,5 +7,5 @@ import lombok.Getter;
 @Builder
 public class ImageUploadResponse {
     private String imageUrl;
-    private String thumbnailUrl;
+    private String thumbnailUrlSave;
 }
