@@ -55,20 +55,43 @@ public class StompChatController {
     public void sendMessage(@DestinationVariable Long roomId,
                             @Payload ChatMessageSendRequest message,
                             Principal principal) {
+
+        log.debug("========================================");
+        log.debug("📨 STOMP 메시지 수신: chat.{}.sendMessage", roomId);
+        log.debug("========================================");
+
+        if (principal == null) {
+            log.error("❌ Principal is NULL - 인증 실패!");
+            throw new IllegalStateException("User not authenticated");
+        }
+
+        log.debug("✅ Principal: {}", principal.getName());
         Long senderUserId = Long.parseLong(principal.getName());
 
-        log.info("유저 채팅 전송 - userId: {}, roomId: {}, message: {}", senderUserId, roomId, message.getMessageContent());
+        log.info("📤 유저 채팅 전송 - userId: {}, roomId: {}, message: {}", senderUserId, roomId, message.getMessageContent());
 
         chatMessageService.sendMessage(roomId, senderUserId, message);
-
+        log.debug("✅ 메시지 전송 완료");
     }
 
     @MessageMapping("chat.{roomId}.leave")
     public void leaveRoom(@DestinationVariable Long roomId, Principal principal) {
 
+        log.debug("========================================");
+        log.debug("🚪 STOMP 메시지 수신: chat.{}.leave", roomId);
+        log.debug("========================================");
+
+        if (principal == null) {
+            log.error("❌ Principal is NULL - 인증 실패!");
+            throw new IllegalStateException("User not authenticated");
+        }
+
+        log.debug("✅ Principal: {}", principal.getName());
         Long userId = Long.parseLong(principal.getName());
-        log.info("유저 채팅방 연결해제 - userId: {}, roomId: {}", userId, roomId);
+
+        log.info("🚪 유저 채팅방 연결해제 - userId: {}, roomId: {}", userId, roomId);
 
         chatMessageService.handleLeaveRoom(roomId, userId);
+        log.debug("✅ 방 나가기 완료");
     }
 }

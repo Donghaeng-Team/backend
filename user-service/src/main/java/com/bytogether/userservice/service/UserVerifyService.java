@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -66,16 +67,26 @@ public class UserVerifyService {
         delete(token,type);
         log.info("이메일 인증 완료");
 
-        String defaultAvatarUrl = String.format(
-                "https://%s.s3.ap-northeast-2.amazonaws.com/static/defaults/avatar-default.png",
-                bucketName
-        ); //기본 이미지 설정할것, 내부 테스트시에 람다 콜백설정 off
-        user.setAvatar(defaultAvatarUrl);
+//        //front에서 bucket설정정보 삽입으로 경로만 db저장 로직 변경
+//        String defaultAvatarUrl = String.format(
+//                "https://%s.s3.ap-northeast-2.amazonaws.com/static/user/default/avatar-default.png",
+//                bucketName
+//        );
+
+        //default image설정
+        user.setAvatar("/static/user/default/avatar-default.png");
         userRepository.save(user);
         try {
             String avatarUrl = getAvatarFromAI(user.getId(), user.getNickname());
-            user.setAvatar(avatarUrl);
-            log.info("아바타 생성완료");
+            URI uri = new URI(avatarUrl);
+            String newAvatarPath = uri.getPath();
+            if( newAvatarPath.length() <= 1){
+                log.warn("경로가 유효하지 않습니다");
+                return;
+            }
+            String pathInfo = newAvatarPath;
+            user.setAvatar(pathInfo);
+            log.info("아바타 정보 추출완료");
             userRepository.save(user);
         }catch(Exception e) {
             log.error("AI 아바타 생성 실패, 기본 이미지 사용 - userId: {}", user.getId(), e);// ← 여기서 기본 이미지
@@ -163,7 +174,7 @@ public class UserVerifyService {
             log.info("AI 아바타 생성요청 : userId: {}, S3 Key: {}, nickname: {}", userId, s3Key, nickname);
             return avatarUrl;
         } catch (Exception e) {
-            log.error("Lambda호출실패");
+            log.error("Lambda 호출실패");
             throw new RuntimeException(e);
         }
     }

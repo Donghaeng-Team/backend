@@ -47,7 +47,7 @@ public class ImagePresignController {
                             file.getFileName()
                     );
                     String presignedUrl = s3Service.generatePresignedUrl(s3Key, file.getContentType());
-                    return new UploadUrlsResponse.UploadUrl(presignedUrl, s3Key);
+                    return new UploadUrlsResponse.UploadUrl(presignedUrl, "/" + s3Key);
                 })
                 .toList();
 
