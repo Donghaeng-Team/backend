@@ -54,7 +54,7 @@ public class Oauth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         Cookie newCookie = cookieUtil.createCookie("refresh_token", tokenResponse.getRefreshToken(),7L);
         response.addCookie(newCookie);
 
-        String redirectUrl = UriComponentsBuilder.fromUriString("http://localhost:3000/auth/callback")
+        String redirectUrl = UriComponentsBuilder.fromUriString("https://bytogether.net/auth/callback")
                 .queryParam("provider", registrationId)
                 .queryParam("access_token", tokenResponse.getAccessToken())
                 .build()
