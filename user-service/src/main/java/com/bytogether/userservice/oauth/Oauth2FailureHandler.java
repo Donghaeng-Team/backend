@@ -19,10 +19,10 @@ public class Oauth2FailureHandler extends SimpleUrlAuthenticationFailureHandler 
                                         HttpServletResponse response,
                                          AuthenticationException exception) throws IOException {
 
-        log.error("KaKao Login Failure, Error: {}", exception.getMessage());
+        log.error("Oauth Login Failure, Error: {}", exception.getMessage());
 
 
-        String redirectUrl = UriComponentsBuilder.fromUriString("http://localhost/3000/login")
+        String redirectUrl = UriComponentsBuilder.fromUriString("https://bytogether.net/login")
                 .queryParam("error", "oauth2 failed")
                 .build().toUriString();
 
