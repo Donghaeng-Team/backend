@@ -5,6 +5,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -114,12 +115,37 @@ public class JwtAuthenticationFilter implements Filter {
 
     //Request의 헤더에서 Token추출
     private String getTokenFromRequest(HttpServletRequest request) {
+
+        // 1. Authorization 헤더 확인 (우선순위 1)
+
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
+
+        // 2. 채팅 서비스 경로인 경우에만 Cookie 확인
+        String path = request.getRequestURI();
+        if (isChatServicePath(path)) {
+            System.out.println("JWT Filter: Chat service path detected, checking Cookie");
+            if (request.getCookies() != null) {
+                for (Cookie cookie : request.getCookies()) {
+                    if ("refreshToken".equals(cookie.getName())) {
+                        System.out.println("JWT Filter: Token from Cookie");
+                        return cookie.getValue();
+                    }
+                }
+            }
+        }
+
         return null;
     }
+
+    // 채팅 서비스 경로 확인
+    private boolean isChatServicePath(String path) {
+        return pathMatcher.match("/ws/v1/chat/private/**", path) ||
+                pathMatcher.match("/api/v1/chat/private/**", path);
+    }
+
 
     //토큰 검증
     private boolean validateToken(String token) {
