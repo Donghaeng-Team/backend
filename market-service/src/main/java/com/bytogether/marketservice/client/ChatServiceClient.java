@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  */
 
 @FeignClient(name = "chat-service",
-        url = "${openfeign.chat-service.url}"
+        url = "${openfeign.chat-service.url}",
         fallback = ChatServiceClientFallback.class,
         configuration = ServiceFeignConfig.class
 )
