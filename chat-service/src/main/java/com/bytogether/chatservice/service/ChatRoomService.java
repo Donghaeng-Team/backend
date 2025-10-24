@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -234,6 +235,30 @@ public class ChatRoomService {
 
     public ParticipatingStaticsResponse countMyChatrooms(Long userId) {
         return chatRoomRepository.getParticipatingStats(userId);
+    }
+
+    public UserMarketIdsResponse getUserMarketIds(Long userId) {
+        List<Object[]> results = chatRoomRepository.findUserMarketIds(userId);
+
+        List<Long> ongoing = new ArrayList<>();
+        List<Long> completed = new ArrayList<>();
+
+        for (Object[] row : results) {
+            Long marketId = (Long) row[0];
+            ChatRoomStatus status = (ChatRoomStatus) row[1];
+
+            switch (status) {
+                case RECRUITING, RECRUITMENT_CLOSED -> ongoing.add(marketId);
+                case COMPLETED -> completed.add(marketId);
+            }
+        }
+
+        return UserMarketIdsResponse.builder()
+                .ongoing(ongoing)
+                .completed(completed)
+                .ongoingCount(ongoing.size())
+                .completedCount(completed.size())
+                .build();
     }
 
     @Transactional

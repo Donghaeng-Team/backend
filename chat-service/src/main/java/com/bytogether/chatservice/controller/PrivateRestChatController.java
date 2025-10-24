@@ -55,6 +55,7 @@ public class PrivateRestChatController {
         채팅방 기본 CRUD
         ├─ GET    /api/v1/chat/private                             목록 조회
         ├─ GET    /api/v1/chat/private/me                          자신의 참가내역 조회(마이페이지 카운트 표시용)
+        ├─ GET    /api/v1/chat/private/mylist                      자신의 참가내역 조회(마이페이지 카운트 표시용)
         └─ GET    /api/v1/chat/private/{roomId}                    개별 채팅창 페이지 접속
 
         메시지
@@ -99,6 +100,12 @@ public class PrivateRestChatController {
         // TODO: 자신이 개설한 채팅방(활성상태만), 자신이 구매에 참가한 채팅방(활성상태만), 완료된 채팅방(개설/참가 무관) 갯수 정보 제공
 
         return ResponseEntity.ok(ApiResponse.success(chatRoomService.countMyChatrooms(userId)));
+    }
+
+    @GetMapping("/mylist")
+    public ResponseEntity<ApiResponse<UserMarketIdsResponse>> chatRoomListAndStats(@RequestHeader("X-User-Id") Long userId) {
+
+        return ResponseEntity.ok(ApiResponse.success(chatRoomService.getUserMarketIds(userId)));
     }
 
     @GetMapping("/{roomId}")
