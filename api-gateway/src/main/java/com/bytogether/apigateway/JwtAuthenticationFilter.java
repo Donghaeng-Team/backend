@@ -129,7 +129,7 @@ public class JwtAuthenticationFilter implements Filter {
             System.out.println("JWT Filter: Chat service path detected, checking Cookie");
             if (request.getCookies() != null) {
                 for (Cookie cookie : request.getCookies()) {
-                    if ("refreshToken".equals(cookie.getName())) {
+                    if ("refresh_token".equals(cookie.getName())) {
                         System.out.println("JWT Filter: Token from Cookie");
                         return cookie.getValue();
                     }
