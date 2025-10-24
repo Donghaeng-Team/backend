@@ -2,6 +2,7 @@ package com.bytogether.chatservice.service;
 
 import com.bytogether.chatservice.client.MarketServiceClient;
 import com.bytogether.chatservice.client.UserServiceClient;
+import com.bytogether.chatservice.client.dto.UserInfoRequest;
 import com.bytogether.chatservice.client.dto.UserInternalResponse;
 import com.bytogether.chatservice.client.dto.UsersInfoRequest;
 import com.bytogether.chatservice.dto.request.ChatRoomCreateRequest;
@@ -49,6 +50,8 @@ public class ChatRoomService {
     public void joinChatRoom(Long roomId, Long userId) {
         ChatRoom chatRoom = chatRoomRepository.findById(roomId).orElseThrow();
 
+        UserInternalResponse userInfo = userServiceClient.getUserInfo(UserInfoRequest.builder().userId(userId).build());
+
         ChatRoomParticipant newParticipant = ChatRoomParticipant.builder()
                 .chatRoom(chatRoom)
                 .userId(userId)
@@ -56,7 +59,7 @@ public class ChatRoomService {
                 .build();
         participantRepository.save(newParticipant);
 
-        String message = userId.toString() + "님이 참가하셨습니다";
+        String message = userInfo.getNickName() + "님이 참가하셨습니다";
 
         chatMessageService.sendSystemMessage(roomId, message);
     }
