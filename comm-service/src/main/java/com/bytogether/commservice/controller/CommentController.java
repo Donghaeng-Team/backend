@@ -42,7 +42,7 @@ public class CommentController {
         commentService.deleteComment(commentId, authorId);
     }
 
-    @GetMapping("/test")
+    @GetMapping("/public/test")
     public String testCart() {
         return "251021 kis";
     }
