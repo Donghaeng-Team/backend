@@ -43,4 +43,15 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
         WHERE p.status = 'ACTIVE' OR cr.creatorUserId = :userId
         """)
     ParticipatingStaticsResponse getParticipatingStats(@Param("userId") Long userId);
+
+    @Query("""
+    SELECT DISTINCT cr.marketId, cr.status
+    FROM ChatRoom cr
+    JOIN ChatRoomParticipant p ON cr.id = p.chatRoom.id
+    WHERE p.userId = :userId
+    AND cr.creatorUserId != :userId
+    AND p.status = 'ACTIVE'
+    AND p.isBuyer = true
+    """)
+    List<Object[]> findUserMarketIds(@Param("userId") Long userId);
 }
