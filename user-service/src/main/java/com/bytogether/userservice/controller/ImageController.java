@@ -29,6 +29,7 @@ public class ImageController {
     @Value("${spring.cloud.aws.lambda.api-key}")
     private String lambdaApiKey;
 
+    //사용자 프로필 이미지 변경
     @PutMapping("private/me/image")
         public ResponseEntity<ApiResponse<ImageUploadResponse>> uploadImage(
                 @RequestHeader("X-User-Id") Long userId,
@@ -38,30 +39,14 @@ public class ImageController {
        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    //기본 이미지 callback
     @PutMapping("/public/{userId}/avatar/callback")
     public ResponseEntity<Void> avatarCallback(
             @PathVariable Long userId,
             @RequestBody AvatarCallbackRequest request,
             @RequestHeader("X-API-Key") String apiKey
     ){
-        if(!lambdaApiKey.equals(apiKey)){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        //User가 없는 경우에 대한 예외처리 ??
-        User user = userService.getOptionalUserById(userId).orElse(null);
-        if( user == null || !user.getVerify() || !(user.getProvider() == InitialProvider.LOCAL)){
-            log.warn("이메일 가입 사용자가 아니거나 이메일 인증이 완료되지 않았습니다.");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-       if(request.isSuccess ()){
-           log.info("생성성공");
-           user.setAvatar(request.getAvatarUrl());
-           userRepository.save(user);
-       }else {
-           log.error("생성실패");
-           //생성 실패시 대체 이미지
-       }
+        imageService.callback(userId, request, apiKey);
         return ResponseEntity.ok().build();
     }
 }
