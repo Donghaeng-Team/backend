@@ -5,6 +5,7 @@ import com.bytogether.chatservice.client.UserServiceClient;
 import com.bytogether.chatservice.client.dto.UserInfoRequest;
 import com.bytogether.chatservice.client.dto.UserInternalResponse;
 import com.bytogether.chatservice.config.RedisPublish;
+import com.bytogether.chatservice.dto.common.MessagePermission;
 import com.bytogether.chatservice.dto.request.ChatMessageSendRequest;
 import com.bytogether.chatservice.dto.response.ChatMessagePageResponse;
 import com.bytogether.chatservice.dto.response.ChatMessageResponse;
@@ -210,7 +211,7 @@ public class ChatMessageService {
     @RedisPublish  // ← AOP가 반환값을 Redis로 자동 발행
     public ChatMessageResponse sendMessage(Long roomId, Long senderUserId, ChatMessageSendRequest request) {
         // 1. 권한 검증
-        validateActiveParticipant(roomId, senderUserId);
+        validateMessageSendPermission(roomId, senderUserId);
 
         // 2. 엔티티 생성
         ChatRoom chatRoom = em.getReference(ChatRoom.class, roomId);
@@ -319,7 +320,15 @@ public class ChatMessageService {
         participantRepository.updateListOrderTimeForAllActiveParticipants(roomId, messageTime);
     }
 
-    private void validateActiveParticipant(Long roomId, Long userId) {
+    private void validateMessageSendPermission(Long roomId, Long userId) {
+        MessagePermission permission = participantRepository
+                .getMessagePermission(roomId, userId)
+                .orElseThrow(() -> new ForbiddenException("채팅방 참가자가 아닙니다"));
+
+        if (!permission.canSendMessage()) {
+            throw new ForbiddenException(permission.getDenialReason());
+        }
+
         if (!participantRepository.existsByChatRoomIdAndUserIdAndStatus(
                 roomId, userId, ParticipantStatus.ACTIVE)) {
             throw new ForbiddenException("채팅방에 참여 중이지 않습니다");
