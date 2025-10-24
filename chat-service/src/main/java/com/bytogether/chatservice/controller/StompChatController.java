@@ -49,7 +49,7 @@ public class StompChatController {
 
     // 요청 (App)
     // /app/chat.{roomId}.sendMessage       // 메시지 전송
-    // /app/chat.{roomId}.kick.{targetUserId} // 강퇴
+    // /app/chat.{roomId}.leave             // 채팅방 구독해제
 
     @MessageMapping("chat.{roomId}.sendMessage")
     public void sendMessage(@DestinationVariable Long roomId,
