@@ -12,7 +12,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class ImageHandler {
     private final S3Service s3Service;
-    @Value("${cloud.aws.s3.bucket.name:kis-test-dev}")
+    @Value("${spring.cloud.aws.s3.bucket.name:kis-test-dev}")
     private String BUCKET_NAME;
 
     @Async
