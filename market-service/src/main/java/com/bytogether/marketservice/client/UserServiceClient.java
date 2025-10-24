@@ -16,7 +16,9 @@ import java.util.List;
  * @since 2025-09-31
  */
 
-@FeignClient(name = "user-service", url = "${openfeign.user-service.url}")
+@FeignClient(name = "user-service",
+        configuration = ServiceFeignConfig.class,
+        url = "${openfeign.user-service.url}")
 public interface UserServiceClient {
 
     @PostMapping("/internal/v1/user/usersinfo")
