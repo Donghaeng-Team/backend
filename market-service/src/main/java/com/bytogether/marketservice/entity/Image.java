@@ -59,7 +59,7 @@ public class Image {
         image.setSortOrder(sortOrder);
         image.setOriginalName(originalName);
         image.setStoredName(storedName);
-        image.setFilePath("/"+filePath);
+        image.setFilePath("/" + filePath);
         image.setMimeType(mimeType);
         return image;
     }

@@ -28,7 +28,7 @@ public class UserService {
         usersInfoRequest.setUserIds(List.of(userId));
         List<UserInternalResponse> usersByIds = userServiceClient.getUsersByIds(usersInfoRequest);
         if (usersByIds.isEmpty()) {
-            throw new MarketException("User not found for id: "+ userId, HttpStatus.NOT_FOUND);
+            throw new MarketException("User not found for id: " + userId, HttpStatus.NOT_FOUND);
         }
         return usersByIds.stream().findFirst().orElse(null);
     }
@@ -38,7 +38,7 @@ public class UserService {
         usersInfoRequest.setUserIds(authorIds);
         List<UserInternalResponse> usersByIds = userServiceClient.getUsersByIds(usersInfoRequest);
         if (usersByIds.isEmpty()) {
-            throw new MarketException("Users not found for ids: "+ authorIds, HttpStatus.NOT_FOUND);
+            throw new MarketException("Users not found for ids: " + authorIds, HttpStatus.NOT_FOUND);
         }
         return usersByIds;
     }
