@@ -307,17 +307,10 @@ public class ChatRoomService {
         participant.setStatus(ParticipantStatus.LEFT_VOLUNTARY);
         participant.setUpdatedAt(LocalDateTime.now());
 
-        participantRepository.save(participant);
+        ChatRoomParticipant saved = participantRepository.save(participant);
 
         // ChatRoomParticipantHistory 테이블에 기록
-        ChatRoomParticipantHistory history = ChatRoomParticipantHistory.builder()
-                .chatRoom(participant.getChatRoom())
-                .userId(userId)
-                .leftAt(LocalDateTime.now())
-                .exitType(ExitType.VOLUNTARY)
-                .build();
-
-        historyRepository.save(history);
+        historyRepository.updateLeftAtAndExitType(saved.getChatRoom().getId(), userId, saved.getLeftAt(), ExitType.VOLUNTARY);
 
         String system = userId.toString() + "님이 퇴장하셨습니다";
 
