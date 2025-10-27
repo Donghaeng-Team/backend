@@ -421,7 +421,7 @@ public class ChatRoomService {
 
         String system = "공동구매 모집 마감기한이 " + hours + "시간 연장되었습니다";
 
-        chatMessageService.sendSystemMessage(roomId, system);
+        chatMessageService.sendExtendMessage(roomId, system);
 
         return ExtendDeadlineResponse.builder()
                 .roomId(roomId)
