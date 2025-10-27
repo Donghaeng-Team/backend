@@ -49,10 +49,10 @@ public interface ChatRoomParticipantHistoryRepository extends JpaRepository<Chat
     @Query("UPDATE ChatRoomParticipantHistory h " +
             "SET h.leftAt = :leftAt, h.exitType = :exitType " +
             "WHERE h.userId = :userId " +
-            "AND h.chatRoom.id = :roomId " +
+            "AND h.chatRoom.id = :chatRoomId " +
             "AND h.leftAt IS NULL")
     void updateLeftAtAndExitType(
-            @Param("userId") Long userIds,
+            @Param("userId") Long userId,
             @Param("chatRoomId") Long chatRoomId,
             @Param("leftAt") LocalDateTime leftAt,
             @Param("exitType") ExitType exitType);
