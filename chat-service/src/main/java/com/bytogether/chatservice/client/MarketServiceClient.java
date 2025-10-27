@@ -23,8 +23,8 @@ import java.util.List;
 public interface MarketServiceClient {
 
     @GetMapping("/internal/v1/market/status/cancel/{marketId}")
-    void cancelMarketPost(@PathVariable Long marketId, Long requestUserId);
+    void cancelMarketPost(@PathVariable Long marketId, @RequestParam Long requestUserId);
 
     @GetMapping("/internal/v1/market/status/complete/{marketId}")
-    void completeMarketPost(@PathVariable Long marketId, Long requestUserId);
+    void completeMarketPost(@PathVariable Long marketId, @RequestParam Long requestUserId);
 }
