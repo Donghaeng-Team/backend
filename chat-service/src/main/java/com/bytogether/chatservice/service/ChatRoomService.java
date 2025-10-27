@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -57,7 +58,15 @@ public class ChatRoomService {
                 .userId(userId)
                 .listOrderTime(LocalDateTime.now())
                 .build();
-        participantRepository.save(newParticipant);
+        ChatRoomParticipant savedParticipant = participantRepository.save(newParticipant);
+
+        ChatRoomParticipantHistory newHistory = ChatRoomParticipantHistory.builder()
+                .chatRoom(chatRoom)
+                .userId(userId)
+                .joinedAt(savedParticipant.getJoinedAt())
+                .build();
+
+        historyRepository.save(newHistory);
 
         String message = userInfo.getNickName() + "님이 참가하셨습니다";
 
@@ -147,7 +156,7 @@ public class ChatRoomService {
     public boolean isCreator(Long roomId, Long userId) {
         // 방장인지 확인
 
-        return userId == chatRoomRepository.getCreatorUserIdById(roomId);
+        return Objects.equals(userId, chatRoomRepository.getCreatorUserIdById(roomId));
     }
 
     public boolean isPermanentlyBanned(Long roomId, Long userId) {
@@ -163,12 +172,27 @@ public class ChatRoomService {
         return isPermanentlyBanned(chatRoom.getId(), userId);
     }
 
-    public ChatRoomResponse getChatRoomDetails(Long roomId) {
+    public ChatRoomResponse getChatRoomDetails(Long roomId, Long userId) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다. ID: " + roomId));
 
         Integer currentBuyers = participantRepository.countBuyersByRoomId(roomId);
         Integer currentParticipants = participantRepository.countParticipantsByRoomId(roomId);
+
+        ChatRoomResponse chatRoomResponse = chatRoomMapper.convertToResponse(room, currentBuyers, currentParticipants);
+
+        chatRoomResponse.setBuyer(isBuyer(roomId, userId));
+        chatRoomResponse.setCreator(isCreator(roomId, userId));
+
+        return chatRoomResponse;
+    }
+
+    public ChatRoomResponse getChatRoomDetailsByMarketId(Long marketId) {
+        ChatRoom room = chatRoomRepository.findByMarketId(marketId)
+                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다. ID: " + marketId));
+
+        Integer currentBuyers = participantRepository.countBuyersByRoomId(room.getId());
+        Integer currentParticipants = participantRepository.countParticipantsByRoomId(room.getId());
 
         return chatRoomMapper.convertToResponse(room, currentBuyers, currentParticipants);
     }
@@ -204,12 +228,12 @@ public class ChatRoomService {
         List<ParticipantResponse> participantResponses = participants.stream()
                 .map(participant -> {
                     Long userId = participant.getUserId();
-//                    UserInfo userInfo = userInfoMap.get(userId);
+                    UserInternalResponse userInfo = userInfoMap.get(Math.toIntExact(userId));
 
                     return ParticipantResponse.builder()
                             .userId(userId)
-//                            .nickname(userInfo != null ? userInfo.getNickname() : "알 수 없음")
-//                            .profileImage(userInfo != null ? userInfo.getProfileImage() : null)
+                            .nickname(userInfo != null ? userInfo.getNickName() : "알 수 없음")
+                            .profileImage(userInfo != null ? userInfo.getImageUrl() : null)
                             .isBuyer(participant.getIsBuyer())
                             .isCreator(userId.equals(creatorUserId))
                             .joinedAt(participant.getJoinedAt())
@@ -283,7 +307,6 @@ public class ChatRoomService {
         ChatRoomParticipantHistory history = ChatRoomParticipantHistory.builder()
                 .chatRoom(participant.getChatRoom())
                 .userId(userId)
-                .joinedAt(participant.getJoinedAt())
                 .leftAt(LocalDateTime.now())
                 .exitType(ExitType.VOLUNTARY)
                 .build();
@@ -416,14 +439,27 @@ public class ChatRoomService {
         List<ChatRoomParticipant> nonBuyers = participantRepository
                 .findByChatRoomIdAndStatusAndIsBuyerFalse(roomId, ParticipantStatus.ACTIVE);
 
+        LocalDateTime now = LocalDateTime.now();
+
         for(ChatRoomParticipant participant : nonBuyers) {
             participant.setStatus(ParticipantStatus.LEFT_RECRUITMENT_CLOSED);
-            participant.setLeftAt(LocalDateTime.now());
+            participant.setLeftAt(now);
 
             chatMessageService.notifyUser(participant.getUserId(), roomId, "공동구매 모집이 마감되어 자동으로 퇴장되었습니다");
         }
 
         participantRepository.saveAll(nonBuyers);
+
+        List<Long> userIds = nonBuyers.stream()
+                .map(ChatRoomParticipant::getUserId)
+                .toList();
+
+        int updatedCount = historyRepository.batchUpdateLeftAtAndExitType(
+                userIds,
+                roomId,
+                now,
+                ExitType.NOT_BUYER
+        );
 
         int finalBuyers = participantRepository.countBuyersByRoomId(roomId);
 
@@ -456,16 +492,29 @@ public class ChatRoomService {
 
         // 참가자들 강제 퇴장
         List<ChatRoomParticipant> participants = participantRepository
-                .findByChatRoomIdAndStatusAndIsBuyerFalse(roomId, ParticipantStatus.ACTIVE);
+                .findByChatRoomIdAndStatus(roomId, ParticipantStatus.ACTIVE);
+
+        LocalDateTime now = LocalDateTime.now();
 
         for(ChatRoomParticipant participant : participants) {
             participant.setStatus(ParticipantStatus.LEFT_RECRUITMENT_CANCELED);
-            participant.setLeftAt(LocalDateTime.now());
+            participant.setLeftAt(now);
 
             chatMessageService.notifyUser(participant.getUserId(), roomId, "공동구매 모집이 취소되어 자동으로 퇴장되었습니다");
         }
 
         participantRepository.saveAll(participants);
+
+        List<Long> userIds = participants.stream()
+                .map(ChatRoomParticipant::getUserId)
+                .toList();
+
+        int updatedCount = historyRepository.batchUpdateLeftAtAndExitType(
+                userIds,
+                roomId,
+                now,
+                ExitType.NOT_BUYER
+        );
 
         String system = "공동구매 모집이 취소되었습니다";
 
@@ -490,6 +539,33 @@ public class ChatRoomService {
         String system = "공동구매가 완료되었습니다";
 
         chatMessageService.sendSystemMessage(roomId, system);
+
+        List<ChatRoomParticipant> participants = participantRepository
+                .findByChatRoomIdAndStatus(roomId, ParticipantStatus.ACTIVE);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        for(ChatRoomParticipant participant : participants) {
+            participant.setStatus(ParticipantStatus.LEFT_COMPLETED);
+            participant.setLeftAt(now);
+
+            chatMessageService.notifyUser(participant.getUserId(), roomId, "공동구매가 완료되었습니다\n즐거운 공동구매 되셨길 바랍니다");
+        }
+
+        participantRepository.saveAll(participants);
+
+        List<Long> userIds = participants.stream()
+                .map(ChatRoomParticipant::getUserId)
+                .toList();
+
+        int updatedCount = historyRepository.batchUpdateLeftAtAndExitType(
+                userIds,
+                roomId,
+                now,
+                ExitType.COMPLETED
+        );
+
+//        log.info("참가자 이력 업데이트 완료 - roomId: {}, count: {}", roomId, updatedCount);
 
         room.setStatus(ChatRoomStatus.COMPLETED);
         room.setCompletedAt(LocalDateTime.now());
