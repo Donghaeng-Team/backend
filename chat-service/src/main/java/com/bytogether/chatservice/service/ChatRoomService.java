@@ -12,6 +12,7 @@ import com.bytogether.chatservice.mapper.ChatRoomMapper;
 import com.bytogether.chatservice.repository.ChatRoomParticipantHistoryRepository;
 import com.bytogether.chatservice.repository.ChatRoomParticipantRepository;
 import com.bytogether.chatservice.repository.ChatRoomRepository;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -20,10 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -57,17 +55,57 @@ public class ChatRoomService {
 
         UserInternalResponse userInfo = userServiceClient.getUserInfo(UserInfoRequest.builder().userId(userId).build());
 
-        ChatRoomParticipant newParticipant = ChatRoomParticipant.builder()
-                .chatRoom(chatRoom)
-                .userId(userId)
-                .listOrderTime(LocalDateTime.now())
-                .build();
-        ChatRoomParticipant savedParticipant = participantRepository.save(newParticipant);
+        // 1. 기존 참가 기록 확인
+        Optional<ChatRoomParticipant> existingParticipant =
+                participantRepository.findByUserIdAndChatRoomId(userId, chatRoom.getId());
+
+        ChatRoomParticipant participant;
+        boolean isRejoining = false;
+        LocalDateTime now = LocalDateTime.now();
+
+        if (existingParticipant.isPresent()) {
+            // 재입장 처리
+            participant = existingParticipant.get();
+
+            // 강퇴자는 재입장 불가
+            if (participant.getIsPermanentlyBanned()) {
+                throw new ForbiddenException("강퇴된 사용자는 재입장할 수 없습니다");
+            }
+
+            // 이미 활동 중이면 중복 입장 방지
+            if (participant.getStatus() == ParticipantStatus.ACTIVE) {
+                throw new RuntimeException("이미 참가 중인 채팅방입니다");
+            }
+
+            // 현재 세션 리셋
+            participant.setStatus(ParticipantStatus.ACTIVE);
+            participant.setJoinedAt(now);
+            participant.setLeftAt(null);
+            participant.setListOrderTime(now);
+            participant.setIsBuyer(false);
+            participant.setBuyerConfirmedAt(null);
+
+            isRejoining = true;
+
+        } else {
+            // 최초 입장
+            participant = ChatRoomParticipant.builder()
+                    .chatRoom(chatRoom)
+                    .userId(userId)
+                    .status(ParticipantStatus.ACTIVE)
+                    .joinedAt(now)
+                    .listOrderTime(now)
+                    .isBuyer(false)
+                    .isPermanentlyBanned(false)
+                    .build();
+
+            participant = participantRepository.save(participant);
+        }
 
         ChatRoomParticipantHistory newHistory = ChatRoomParticipantHistory.builder()
                 .chatRoom(chatRoom)
                 .userId(userId)
-                .joinedAt(savedParticipant.getJoinedAt())
+                .joinedAt(participant.getJoinedAt())
                 .build();
 
         historyRepository.save(newHistory);

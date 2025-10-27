@@ -164,4 +164,6 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
             @Param("roomId") Long roomId,
             @Param("userId") Long userId
     );
+
+    Optional<ChatRoomParticipant> findByUserIdAndChatRoomId(Long userId, Long chatRoomId);
 }
