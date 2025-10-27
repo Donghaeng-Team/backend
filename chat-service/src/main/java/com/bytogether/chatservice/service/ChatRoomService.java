@@ -112,7 +112,7 @@ public class ChatRoomService {
 
         String message = userInfo.getNickName() + "님이 참가하셨습니다";
 
-        chatMessageService.sendSystemMessage(marketId, message);
+        chatMessageService.sendSystemMessage(chatRoom.getId(), message);
     }
 
     /**
@@ -622,9 +622,9 @@ public class ChatRoomService {
     public ChatRoomResponse createRoom(ChatRoomCreateRequest request) {
         ChatRoom room = request.toChatRoom();
 
-        ChatRoom saved = chatRoomRepository.save(room);
+        ChatRoom saved = chatRoomRepository.saveAndFlush(room);
 
-        joinChatRoom(saved.getId(), request.getCreatorUserId());
+        joinChatRoom(saved.getMarketId(), request.getCreatorUserId());
 
         confirmBuyer(saved.getId(), request.getCreatorUserId());
 
