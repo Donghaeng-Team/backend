@@ -48,8 +48,8 @@ public class ChatRoomService {
 
 
     @Transactional
-    public void joinChatRoom(Long roomId, Long userId) {
-        ChatRoom chatRoom = chatRoomRepository.findById(roomId).orElseThrow();
+    public void joinChatRoom(Long marketId, Long userId) {
+        ChatRoom chatRoom = chatRoomRepository.findByMarketId(marketId).orElseThrow();
 
         UserInternalResponse userInfo = userServiceClient.getUserInfo(UserInfoRequest.builder().userId(userId).build());
 
@@ -70,7 +70,7 @@ public class ChatRoomService {
 
         String message = userInfo.getNickName() + "님이 참가하셨습니다";
 
-        chatMessageService.sendSystemMessage(roomId, message);
+        chatMessageService.sendSystemMessage(marketId, message);
     }
 
     /**
