@@ -333,15 +333,7 @@ public class ChatRoomService {
         participantRepository.save(participant);
 
         // 히스토리 기록
-        ChatRoomParticipantHistory history = ChatRoomParticipantHistory.builder()
-                .chatRoom(participant.getChatRoom())
-                .userId(targetUserId)
-                .joinedAt(participant.getJoinedAt())
-                .leftAt(LocalDateTime.now())
-                .exitType(ExitType.KICKED)
-                .build();
-
-        historyRepository.save(history);
+        historyRepository.updateLeftAtAndExitType(targetUserId, roomId, participant.getLeftAt(), ExitType.KICKED);
 
         String system = targetUserId.toString() + "님이 강퇴되셨습니다";
 
