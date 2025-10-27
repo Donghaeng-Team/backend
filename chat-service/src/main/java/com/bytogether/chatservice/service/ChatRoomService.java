@@ -354,7 +354,9 @@ public class ChatRoomService {
         // ChatRoomParticipantHistory 테이블에 기록
         historyRepository.updateLeftAtAndExitType(saved.getChatRoom().getId(), userId, saved.getLeftAt(), ExitType.VOLUNTARY);
 
-        String system = userId.toString() + "님이 퇴장하셨습니다";
+        UserInternalResponse userInfo = userServiceClient.getUserInfo(UserInfoRequest.builder().userId(userId).build());
+
+        String system = userInfo.getNickName() + "님이 퇴장하셨습니다";
 
         chatMessageService.sendSystemMessage(roomId, system);
 
@@ -377,7 +379,9 @@ public class ChatRoomService {
         // 히스토리 기록
         historyRepository.updateLeftAtAndExitType(targetUserId, roomId, participant.getLeftAt(), ExitType.KICKED);
 
-        String system = targetUserId.toString() + "님이 강퇴되셨습니다";
+        UserInternalResponse targetUserInfo = userServiceClient.getUserInfo(UserInfoRequest.builder().userId(targetUserId).build());
+
+        String system = targetUserInfo.getNickName() + "님이 강퇴되셨습니다";
 
         chatMessageService.sendSystemMessage(roomId, system);
 
@@ -398,7 +402,9 @@ public class ChatRoomService {
 
         int currentBuyers = participantRepository.countBuyersByRoomId(roomId);
 
-        String system = userId.toString() + "님이 공동구매에 참가하셨습니다\n현재 구매자 : " + currentBuyers;
+        UserInternalResponse userInfo = userServiceClient.getUserInfo(UserInfoRequest.builder().userId(userId).build());
+
+        String system = userInfo.getNickName() + "님이 공동구매에 참가하셨습니다\n현재 구매자 : " + currentBuyers;
 
         chatMessageService.sendSystemMessage(roomId, system);
 
@@ -423,7 +429,9 @@ public class ChatRoomService {
 
         int currentBuyers = participantRepository.countBuyersByRoomId(roomId);
 
-        String system = userId.toString() + "님이 공동구매 참가를 취소하셨습니다\n현재 구매자 : " + currentBuyers;
+        UserInternalResponse userInfo = userServiceClient.getUserInfo(UserInfoRequest.builder().userId(userId).build());
+
+        String system = userInfo.getNickName() + "님이 공동구매 참가를 취소하셨습니다\n현재 구매자 : " + currentBuyers;
 
         chatMessageService.sendSystemMessage(roomId, system);
 
