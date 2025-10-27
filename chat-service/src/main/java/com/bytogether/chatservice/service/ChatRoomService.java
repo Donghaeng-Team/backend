@@ -57,7 +57,15 @@ public class ChatRoomService {
                 .userId(userId)
                 .listOrderTime(LocalDateTime.now())
                 .build();
-        participantRepository.save(newParticipant);
+        ChatRoomParticipant savedParticipant = participantRepository.save(newParticipant);
+
+        ChatRoomParticipantHistory newHistory = ChatRoomParticipantHistory.builder()
+                .chatRoom(chatRoom)
+                .userId(userId)
+                .joinedAt(savedParticipant.getJoinedAt())
+                .build();
+
+        historyRepository.save(newHistory);
 
         String message = userInfo.getNickName() + "님이 참가하셨습니다";
 
@@ -283,7 +291,6 @@ public class ChatRoomService {
         ChatRoomParticipantHistory history = ChatRoomParticipantHistory.builder()
                 .chatRoom(participant.getChatRoom())
                 .userId(userId)
-                .joinedAt(participant.getJoinedAt())
                 .leftAt(LocalDateTime.now())
                 .exitType(ExitType.VOLUNTARY)
                 .build();
@@ -416,14 +423,27 @@ public class ChatRoomService {
         List<ChatRoomParticipant> nonBuyers = participantRepository
                 .findByChatRoomIdAndStatusAndIsBuyerFalse(roomId, ParticipantStatus.ACTIVE);
 
+        LocalDateTime now = LocalDateTime.now();
+
         for(ChatRoomParticipant participant : nonBuyers) {
             participant.setStatus(ParticipantStatus.LEFT_RECRUITMENT_CLOSED);
-            participant.setLeftAt(LocalDateTime.now());
+            participant.setLeftAt(now);
 
             chatMessageService.notifyUser(participant.getUserId(), roomId, "공동구매 모집이 마감되어 자동으로 퇴장되었습니다");
         }
 
         participantRepository.saveAll(nonBuyers);
+
+        List<Long> userIds = nonBuyers.stream()
+                .map(ChatRoomParticipant::getUserId)
+                .toList();
+
+        int updatedCount = historyRepository.batchUpdateLeftAtAndExitType(
+                userIds,
+                roomId,
+                now,
+                ExitType.NOT_BUYER
+        );
 
         int finalBuyers = participantRepository.countBuyersByRoomId(roomId);
 
@@ -456,16 +476,29 @@ public class ChatRoomService {
 
         // 참가자들 강제 퇴장
         List<ChatRoomParticipant> participants = participantRepository
-                .findByChatRoomIdAndStatusAndIsBuyerFalse(roomId, ParticipantStatus.ACTIVE);
+                .findByChatRoomIdAndStatus(roomId, ParticipantStatus.ACTIVE);
+
+        LocalDateTime now = LocalDateTime.now();
 
         for(ChatRoomParticipant participant : participants) {
             participant.setStatus(ParticipantStatus.LEFT_RECRUITMENT_CANCELED);
-            participant.setLeftAt(LocalDateTime.now());
+            participant.setLeftAt(now);
 
             chatMessageService.notifyUser(participant.getUserId(), roomId, "공동구매 모집이 취소되어 자동으로 퇴장되었습니다");
         }
 
         participantRepository.saveAll(participants);
+
+        List<Long> userIds = participants.stream()
+                .map(ChatRoomParticipant::getUserId)
+                .toList();
+
+        int updatedCount = historyRepository.batchUpdateLeftAtAndExitType(
+                userIds,
+                roomId,
+                now,
+                ExitType.NOT_BUYER
+        );
 
         String system = "공동구매 모집이 취소되었습니다";
 
@@ -490,6 +523,33 @@ public class ChatRoomService {
         String system = "공동구매가 완료되었습니다";
 
         chatMessageService.sendSystemMessage(roomId, system);
+
+        List<ChatRoomParticipant> participants = participantRepository
+                .findByChatRoomIdAndStatus(roomId, ParticipantStatus.ACTIVE);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        for(ChatRoomParticipant participant : participants) {
+            participant.setStatus(ParticipantStatus.LEFT_COMPLETED);
+            participant.setLeftAt(now);
+
+            chatMessageService.notifyUser(participant.getUserId(), roomId, "공동구매가 완료되었습니다\n즐거운 공동구매 되셨길 바랍니다");
+        }
+
+        participantRepository.saveAll(participants);
+
+        List<Long> userIds = participants.stream()
+                .map(ChatRoomParticipant::getUserId)
+                .toList();
+
+        int updatedCount = historyRepository.batchUpdateLeftAtAndExitType(
+                userIds,
+                roomId,
+                now,
+                ExitType.COMPLETED
+        );
+
+//        log.info("참가자 이력 업데이트 완료 - roomId: {}, count: {}", roomId, updatedCount);
 
         room.setStatus(ChatRoomStatus.COMPLETED);
         room.setCompletedAt(LocalDateTime.now());
