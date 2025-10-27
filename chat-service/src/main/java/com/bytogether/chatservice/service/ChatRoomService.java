@@ -57,7 +57,15 @@ public class ChatRoomService {
                 .userId(userId)
                 .listOrderTime(LocalDateTime.now())
                 .build();
-        participantRepository.save(newParticipant);
+        ChatRoomParticipant savedParticipant = participantRepository.save(newParticipant);
+
+        ChatRoomParticipantHistory newHistory = ChatRoomParticipantHistory.builder()
+                .chatRoom(chatRoom)
+                .userId(userId)
+                .joinedAt(savedParticipant.getJoinedAt())
+                .build();
+
+        historyRepository.save(newHistory);
 
         String message = userInfo.getNickName() + "님이 참가하셨습니다";
 
