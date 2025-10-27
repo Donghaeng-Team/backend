@@ -222,13 +222,19 @@ public class ChatRoomService {
         UsersInfoRequest usersInfoRequest = UsersInfoRequest.buildRequest(userIds);
 
         // 5. User 서비스에서 사용자 정보 조회 (MSA)
-        List<UserInternalResponse> userInfoMap = userServiceClient.getUsersInfo(usersInfoRequest);
+        List<UserInternalResponse> userInfoList = userServiceClient.getUsersInfo(usersInfoRequest);
+
+        Map<Long, UserInternalResponse> userInfoMap = userInfoList.stream()
+                .collect(Collectors.toMap(
+                        UserInternalResponse::getUserId,  // 키: userId
+                        userInfo -> userInfo              // 값: UserInternalResponse 객체
+                ));
 
         // 6. ParticipantResponse 리스트 생성
         List<ParticipantResponse> participantResponses = participants.stream()
                 .map(participant -> {
                     Long userId = participant.getUserId();
-                    UserInternalResponse userInfo = userInfoMap.get(Math.toIntExact(userId));
+                    UserInternalResponse userInfo = userInfoMap.get(userId);
 
                     return ParticipantResponse.builder()
                             .userId(userId)
