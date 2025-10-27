@@ -29,11 +29,11 @@ ext {
 }
 dependencies {
 	// config client
-	implementation 'org.springframework.cloud:spring-cloud-starter-config'
+	//implementation 'org.springframework.cloud:spring-cloud-starter-config'
 
 
     // eureka client -> k8s service로 대체
-//	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+	//	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
     // DB
 	runtimeOnly 'org.postgresql:postgresql'
