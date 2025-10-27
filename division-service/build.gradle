@@ -49,8 +49,9 @@ dependencies {
     // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
 
-    // config client, eureka client -> k8s config map, k8s service로 대체
-//    implementation 'org.springframework.cloud:spring-cloud-starter-config'
+
+    // config client, eureka client
+    //implementation 'org.springframework.cloud:spring-cloud-starter-config'
 
     // k8s service로 대체
 //    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'

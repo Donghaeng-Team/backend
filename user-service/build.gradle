@@ -28,12 +28,13 @@ ext {
 	set('springCloudVersion', "2025.0.0")
 }
 dependencies {
-	// config client -> k8s config map로 대체
-//	implementation 'org.springframework.cloud:spring-cloud-starter-config'
+
+	// config client
+	//implementation 'org.springframework.cloud:spring-cloud-starter-config'
 
 
     // eureka client -> k8s service로 대체
-//	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+	//	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
     // DB
 	runtimeOnly 'org.postgresql:postgresql'
