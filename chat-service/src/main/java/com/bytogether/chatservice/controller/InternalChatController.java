@@ -4,6 +4,7 @@ import com.bytogether.chatservice.dto.common.ApiResponse;
 import com.bytogether.chatservice.dto.request.ChatRoomCreateRequest;
 import com.bytogether.chatservice.dto.response.ChatRoomResponse;
 import com.bytogether.chatservice.dto.response.ParticipantListResponse;
+import com.bytogether.chatservice.dto.response.UserMarketIdsResponse;
 import com.bytogether.chatservice.entity.ChatRoom;
 import com.bytogether.chatservice.service.ChatRoomService;
 import lombok.RequiredArgsConstructor;
@@ -41,5 +42,11 @@ public class InternalChatController {
         log.info("internal 채팅방 참가자 목록 요청 - marketId: {}", marketId);
 
         return chatRoomService.getParticipants(marketId);
+    }
+
+    @GetMapping("/mylist")
+    public UserMarketIdsResponse chatRoomListAndStats(@RequestHeader("X-User-Id") Long userId) {
+
+        return chatRoomService.getUserMarketIds(userId);
     }
 }

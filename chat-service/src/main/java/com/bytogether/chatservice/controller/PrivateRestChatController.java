@@ -102,12 +102,6 @@ public class PrivateRestChatController {
         return ResponseEntity.ok(ApiResponse.success(chatRoomService.countMyChatrooms(userId)));
     }
 
-    @GetMapping("/mylist")
-    public ResponseEntity<ApiResponse<UserMarketIdsResponse>> chatRoomListAndStats(@RequestHeader("X-User-Id") Long userId) {
-
-        return ResponseEntity.ok(ApiResponse.success(chatRoomService.getUserMarketIds(userId)));
-    }
-
     @GetMapping("/{roomId}")
     public ResponseEntity<ApiResponse<ChatRoomResponse>> enterChatRoom(@PathVariable("roomId") Long chatRoomId, @RequestHeader("X-User-Id") Long userId) {
         // 채팅방 id를 사용하여 참가중인 특정 채팅방 페이지를 오픈
