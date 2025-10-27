@@ -1,10 +1,10 @@
 spring:
   application:
     name: user-service
-  profiles:
-    active: prod
-  config:
-    import: "configserver:http://config-service"
+#  profiles:
+#    active: prod
+#  config:
+#    import: "configserver:http://config-service"
   data:
     redis:
       host: localhost
