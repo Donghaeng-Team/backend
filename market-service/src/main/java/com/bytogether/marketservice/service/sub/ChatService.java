@@ -5,6 +5,7 @@ import com.bytogether.marketservice.client.dto.request.ChatRoomCreateRequest;
 import com.bytogether.marketservice.client.dto.response.ChatRoomResponse;
 import com.bytogether.marketservice.client.dto.response.ParticipantListResponse;
 import com.bytogether.marketservice.client.dto.response.ParticipantListResponseWrap;
+import com.bytogether.marketservice.client.dto.response.UserMarketIdsResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -42,5 +43,10 @@ public class ChatService {
             participantListResponseWraps.add(participantListResponseWrap);
         });
         return participantListResponseWraps;
+    }
+
+
+    public UserMarketIdsResponse getUserChatRooms(Long userId) {
+        return chatServiceClient.getUserChatRooms(userId);
     }
 }

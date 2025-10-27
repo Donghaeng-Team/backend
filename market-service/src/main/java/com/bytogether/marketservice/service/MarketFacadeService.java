@@ -1,10 +1,7 @@
 package com.bytogether.marketservice.service;
 
 import com.bytogether.marketservice.client.dto.request.ChatRoomCreateRequest;
-import com.bytogether.marketservice.client.dto.response.DivisionResponseDto;
-import com.bytogether.marketservice.client.dto.response.ParticipantListResponse;
-import com.bytogether.marketservice.client.dto.response.ParticipantListResponseWrap;
-import com.bytogether.marketservice.client.dto.response.UserInternalResponse;
+import com.bytogether.marketservice.client.dto.response.*;
 import com.bytogether.marketservice.constant.MarketStatus;
 import com.bytogether.marketservice.dto.request.*;
 import com.bytogether.marketservice.dto.response.*;
@@ -322,5 +319,53 @@ public class MarketFacadeService {
         }
         // 마켓글 상태 변경 (완료)
         marketService.changeStatus(market, MarketStatus.ENDED);
+    }
+
+    public MarketListResponse getMyParticipatingMarketPosts(Long requestUserID, DefaultPageRequest defaultPageRequest) {
+        // 1. requestUserID가 참여중인 마켓글 ID 목록 조회 (chat Service API 호출)
+        // 2. 마켓글 목록 조회 (페이징)
+
+//        1. requestUserID가 참여중인 마켓글 ID 목록 조회 (chat Service API 호출)
+        UserMarketIdsResponse userChatRooms = chatService.getUserChatRooms(requestUserID);
+        List<Long> ongoing = userChatRooms.getOngoing();
+
+        // 2. 마켓글 목록 조회 (마켓글 상태: 모집중, 페이징)
+        PageRequest pageRequest = PageRequest.of(defaultPageRequest.getPageNum(), defaultPageRequest.getPageSize());
+
+
+        Page<Market> marketsByIds = marketService.getMarketsByIds(ongoing, pageRequest);
+
+        // 작성자 정보 조회 (User Service API 호출)
+        List<Long> authorIds = marketsByIds.getContent().stream().map(Market::getAuthorId).distinct().toList();
+
+        List<UserInternalResponse> authors = userService.getUsersByIds(authorIds);
+
+        // 현재 모집 참여 인원 수 조회 (chat Service API 호출)
+        List<ParticipantListResponseWrap> participantsWrap = chatService.getParticipantsWrap(marketsByIds.getContent().stream().map(Market::getId).toList());
+        MarketListResponse marketListResponse = MarketListResponse.fromEntities(marketsByIds, authors, participantsWrap);
+        return marketListResponse;
+    }
+
+    public MarketListResponse getMyEndMarketPosts(Long requestUserID, DefaultPageRequest defaultPageRequest) {
+        // 1. requestUserID가 완료한 마켓글 ID 목록 조회 (chat Service API 호출)
+        // 2. 마켓글 목록 조회 (마켓글 상태: 완료, 페이징)
+
+        //        1. requestUserID가 참여중인 마켓글 ID 목록 조회 (chat Service API 호출)
+        UserMarketIdsResponse userChatRooms = chatService.getUserChatRooms(requestUserID);
+        List<Long> ended = userChatRooms.getCompleted();
+
+        // 2. 마켓글 목록 조회 (페이징)
+        PageRequest pageRequest = PageRequest.of(defaultPageRequest.getPageNum(), defaultPageRequest.getPageSize());
+        Page<Market> marketsByIds = marketService.getMarketsByIds(ended, pageRequest);
+
+        // 작성자 정보 조회 (User Service API 호출)
+        List<Long> authorIds = marketsByIds.getContent().stream().map(Market::getAuthorId).distinct().toList();
+        List<UserInternalResponse> authors = userService.getUsersByIds(authorIds);
+
+
+        // 현재 모집 참여 인원 수 조회 (chat Service API 호출)
+        List<ParticipantListResponseWrap> participantsWrap = chatService.getParticipantsWrap(marketsByIds.getContent().stream().map(Market::getId).toList());
+        MarketListResponse marketListResponse = MarketListResponse.fromEntities(marketsByIds, authors, participantsWrap);
+        return marketListResponse;
     }
 }
