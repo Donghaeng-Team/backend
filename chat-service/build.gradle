@@ -41,8 +41,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
 
-	// config client
-	implementation 'org.springframework.cloud:spring-cloud-starter-config'
+	// config client -> k8s config map로 대체
+//	implementation 'org.springframework.cloud:spring-cloud-starter-config'
 
 //  eureka client -> k8s service로 대체
 //	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'

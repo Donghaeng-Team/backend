@@ -1,10 +1,10 @@
 spring:
-  config:
-    import: "configserver:http://config-service"
   application:
     name: comm-service
-  profiles:
-    active: ${profile:prod}
+#  config:
+#    import: "configserver:http://config-service"
+#  profiles:
+#    active: ${profile:prod}
 
 
 s3:
