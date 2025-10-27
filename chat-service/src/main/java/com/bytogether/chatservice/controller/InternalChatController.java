@@ -44,8 +44,8 @@ public class InternalChatController {
         return chatRoomService.getParticipants(marketId);
     }
 
-    @GetMapping("/mylist")
-    public UserMarketIdsResponse chatRoomListAndStats(@RequestHeader("X-User-Id") Long userId) {
+    @GetMapping("/mylist/{userId}")
+    public UserMarketIdsResponse chatRoomListAndStats(@PathVariable("userId") Long userId) {
 
         return chatRoomService.getUserMarketIds(userId);
     }
