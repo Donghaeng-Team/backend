@@ -25,9 +25,8 @@ import java.util.Optional;
 @Repository
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
+    @Query("SELECT c.creatorUserId FROM ChatRoom c WHERE c.id = :id")
     Long getCreatorUserIdById(Long id);
-
-    String findTitleById(Long roomId);
 
     Optional<ChatRoom> findByMarketId(Long marketId);
 

@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -155,7 +156,7 @@ public class ChatRoomService {
     public boolean isCreator(Long roomId, Long userId) {
         // 방장인지 확인
 
-        return userId == chatRoomRepository.getCreatorUserIdById(roomId);
+        return Objects.equals(userId, chatRoomRepository.getCreatorUserIdById(roomId));
     }
 
     public boolean isPermanentlyBanned(Long roomId, Long userId) {
@@ -227,12 +228,12 @@ public class ChatRoomService {
         List<ParticipantResponse> participantResponses = participants.stream()
                 .map(participant -> {
                     Long userId = participant.getUserId();
-//                    UserInfo userInfo = userInfoMap.get(userId);
+                    UserInternalResponse userInfo = userInfoMap.get(Math.toIntExact(userId));
 
                     return ParticipantResponse.builder()
                             .userId(userId)
-//                            .nickname(userInfo != null ? userInfo.getNickname() : "알 수 없음")
-//                            .profileImage(userInfo != null ? userInfo.getProfileImage() : null)
+                            .nickname(userInfo != null ? userInfo.getNickName() : "알 수 없음")
+                            .profileImage(userInfo != null ? userInfo.getImageUrl() : null)
                             .isBuyer(participant.getIsBuyer())
                             .isCreator(userId.equals(creatorUserId))
                             .joinedAt(participant.getJoinedAt())
