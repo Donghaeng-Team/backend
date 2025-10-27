@@ -3,6 +3,7 @@ package com.bytogether.marketservice.client;
 import com.bytogether.marketservice.client.dto.request.ChatRoomCreateRequest;
 import com.bytogether.marketservice.client.dto.response.ChatRoomResponse;
 import com.bytogether.marketservice.client.dto.response.ParticipantListResponse;
+import com.bytogether.marketservice.client.dto.response.UserMarketIdsResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,5 +31,7 @@ public interface ChatServiceClient {
     @GetMapping("/internal/v1/chat/{marketId}/participants")
     ParticipantListResponse getParticipants(@PathVariable("marketId") Long marketId);
 
+    @GetMapping("/internal/v1/chat/mylist/{userId}")
+    UserMarketIdsResponse getUserChatRooms(@PathVariable("userId") Long userId);
 
 }
