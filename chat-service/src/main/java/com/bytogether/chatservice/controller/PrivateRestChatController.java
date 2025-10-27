@@ -55,7 +55,6 @@ public class PrivateRestChatController {
         채팅방 기본 CRUD
         ├─ GET    /api/v1/chat/private                             목록 조회
         ├─ GET    /api/v1/chat/private/me                          자신의 참가내역 조회(마이페이지 카운트 표시용)
-        ├─ GET    /api/v1/chat/private/mylist                      자신의 참가내역 조회(마이페이지 카운트 표시용)
         └─ GET    /api/v1/chat/private/{roomId}                    개별 채팅창 페이지 접속
 
         메시지
