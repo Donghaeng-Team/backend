@@ -51,6 +51,10 @@ public class ChatRoomService {
     public void joinChatRoom(Long marketId, Long userId) {
         ChatRoom chatRoom = chatRoomRepository.findByMarketId(marketId).orElseThrow();
 
+        if (chatRoom.getStatus() != ChatRoomStatus.RECRUITING) {
+            throw new RuntimeException("모집이 마감된 채팅방입니다");
+        }
+
         UserInternalResponse userInfo = userServiceClient.getUserInfo(UserInfoRequest.builder().userId(userId).build());
 
         ChatRoomParticipant newParticipant = ChatRoomParticipant.builder()
@@ -333,15 +337,7 @@ public class ChatRoomService {
         participantRepository.save(participant);
 
         // 히스토리 기록
-        ChatRoomParticipantHistory history = ChatRoomParticipantHistory.builder()
-                .chatRoom(participant.getChatRoom())
-                .userId(targetUserId)
-                .joinedAt(participant.getJoinedAt())
-                .leftAt(LocalDateTime.now())
-                .exitType(ExitType.KICKED)
-                .build();
-
-        historyRepository.save(history);
+        historyRepository.updateLeftAtAndExitType(targetUserId, roomId, participant.getLeftAt(), ExitType.KICKED);
 
         String system = targetUserId.toString() + "님이 강퇴되셨습니다";
 

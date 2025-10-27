@@ -37,10 +37,10 @@ public class ChatMessage {
     @Column(name = "sender_user_id", nullable = true)
     private Long senderUserId;
 
-    @Column(name = "sender_nickname", nullable = true)
+    @Column(name = "sender_nickname", nullable = false)
     private String senderNickname;
 
-    @Column(name = "sender_profile_url", nullable = false)
+    @Column(name = "sender_profile_url", nullable = true)
     private String senderProfileUrl;
 
     @Column(name = "message_content", nullable = false, columnDefinition = "TEXT")
