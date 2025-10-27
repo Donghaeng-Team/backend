@@ -3,6 +3,7 @@ package com.bytogether.marketservice.client;
 import com.bytogether.marketservice.client.dto.request.ChatRoomCreateRequest;
 import com.bytogether.marketservice.client.dto.response.ChatRoomResponse;
 import com.bytogether.marketservice.client.dto.response.ParticipantListResponse;
+import com.bytogether.marketservice.client.dto.response.UserMarketIdsResponse;
 import com.bytogether.marketservice.exception.MarketException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,17 @@ public class ChatServiceClientFallback implements ChatServiceClient {
         response.setCurrentParticipants(null);
         response.setCurrentBuyers(null);
         response.setParticipants(Collections.emptyList());
+        return response;
+    }
+
+    @Override
+    public UserMarketIdsResponse getUserChatRooms(Long userId) {
+        // fallback 로직
+        UserMarketIdsResponse response = new UserMarketIdsResponse();
+        response.setOngoing(Collections.emptyList());
+        response.setCompleted(Collections.emptyList());
+        response.setOngoingCount(0);
+        response.setCompletedCount(0);
         return response;
     }
 }

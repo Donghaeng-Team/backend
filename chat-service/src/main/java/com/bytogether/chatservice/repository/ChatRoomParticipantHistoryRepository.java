@@ -2,6 +2,7 @@ package com.bytogether.chatservice.repository;
 
 import com.bytogether.chatservice.entity.*;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -30,4 +31,17 @@ public interface ChatRoomParticipantHistoryRepository extends JpaRepository<Chat
             Long userId, Long chatRoomId);
 
     List<ChatRoomParticipantHistory> findAllByUserIdAndChatRoomIdOrderByJoinedAtDesc(Long userId, Long chatRoomId);
+
+    @Modifying
+    @Query("UPDATE ChatRoomParticipantHistory h " +
+            "SET h.leftAt = :leftAt, h.exitType = :exitType " +
+            "WHERE h.userId IN :userIds " +
+            "AND h.chatRoom.id = :chatRoomId " +
+            "AND h.leftAt IS NULL")
+    int batchUpdateLeftAtAndExitType(
+            @Param("userIds") List<Long> userIds,
+            @Param("chatRoomId") Long chatRoomId,
+            @Param("leftAt") LocalDateTime leftAt,
+            @Param("exitType") ExitType exitType
+    );
 }

@@ -9,6 +9,7 @@ import com.bytogether.marketservice.repository.MarketRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -60,4 +61,8 @@ public class MarketService {
         return marketRepository.searchMarkets(requestDivisions, marketListRequest);
     }
 
+    public Page<Market> getMarketsByIds(List<Long> ongoing, PageRequest pageRequest) {
+        Page<Market> allByIdIn = marketRepository.findAllByIdIn(ongoing, pageRequest);
+        return allByIdIn;
+    }
 }

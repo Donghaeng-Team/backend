@@ -2,10 +2,7 @@ package com.bytogether.marketservice.controller;
 
 
 import com.bytogether.marketservice.dto.ApiResponse;
-import com.bytogether.marketservice.dto.request.CreateMarketRequest;
-import com.bytogether.marketservice.dto.request.ExtendMarketRequest;
-import com.bytogether.marketservice.dto.request.MarketListRequest;
-import com.bytogether.marketservice.dto.request.PutMarketRequest;
+import com.bytogether.marketservice.dto.request.*;
 import com.bytogether.marketservice.dto.response.*;
 import com.bytogether.marketservice.service.MarketFacadeService;
 import jakarta.validation.Valid;
@@ -32,10 +29,12 @@ public class MarketController {
 //    1.마켓글 작성 createMarketPost - private (완료)
 //    2.마켓글 수정 updateMarketPost - private (완료) - 프론트에서 이미지 관리 필요(기존 이미지 유지, 삭제, 추가, 변경 등) // 모든 이미지 교체로 구현
 //    3.마켓글 삭제 (취소) deleteMarketPost - private (완료)
-//    4.마켓글 연장 extendMarketPost - private (완료)
+//    4.마켓글 연장 extendMarketPost - private (완료) -> TODO: 채팅을 통해서 해야할듯? 1027
 //    5.마켓글 목록 조회 (필터링, 페이징) (로그인) - getMarketPostsWithLogin - private (완료)
 //    6.마켓글 상세 조회 (로그인) - getMarketPostDetailWithLogin - private (완료)
 //    7.마켓글 상태 변경 (모집중, 거래완료, 취소 등) changeMarketPostStatus - private // 채팅 기능 구현 후 완료
+//    8.내가 참여중인 마켓글 조회 getMyParticipatingMarketPosts - private
+//    9.내가 완료한 마켓글 조회 getMyMarketPosts - private
 
     // 1. 마켓글 작성 createMarketPost - private (완료)
     @PostMapping(consumes = "multipart/form-data")
@@ -93,5 +92,18 @@ public class MarketController {
 //        return "Market post " + marketId + " status changed to " + status;
 //    }
 
+    // 8. 내가 참여중인 마켓글 조회 getMyParticipatingMarketPosts - private
+    @GetMapping("/participating")
+    public ResponseEntity<ApiResponse<MarketListResponse>> getMyParticipatingMarketPosts(@RequestHeader(value = "X-User-Id", required = true) Long requestUserID, DefaultPageRequest defaultPageRequest) {
+        MarketListResponse response = marketFacadeService.getMyParticipatingMarketPosts(requestUserID, defaultPageRequest);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
+    }
+
+    // 9. 내가 완료한 마켓글 조회 getMyMarketPosts - private
+    @GetMapping("/completed")
+    public ResponseEntity<ApiResponse<MarketListResponse>> getMyMarketPosts(@RequestHeader(value = "X-User-Id", required = true) Long requestUserID, DefaultPageRequest defaultPageRequest) {
+        MarketListResponse response = marketFacadeService.getMyEndMarketPosts(requestUserID, defaultPageRequest);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
+    }
 
 }
