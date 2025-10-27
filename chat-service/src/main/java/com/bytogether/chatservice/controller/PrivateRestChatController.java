@@ -109,7 +109,7 @@ public class PrivateRestChatController {
         log.info("채팅방 페이지 오픈 요청 - roomId: {}, userId: {}", chatRoomId, userId);
 
         if(chatRoomService.isParticipating(chatRoomId, userId)){
-            return ResponseEntity.ok(ApiResponse.success(chatRoomService.getChatRoomDetails(chatRoomId)));
+            return ResponseEntity.ok(ApiResponse.success(chatRoomService.getChatRoomDetails(chatRoomId, userId)));
         }
 
         return ResponseEntity.badRequest().body(ApiResponse.fail("잘못된 요청입니다"));
@@ -148,7 +148,7 @@ public class PrivateRestChatController {
 
         chatRoomService.joinChatRoom(marketId, userId);
 
-        return ResponseEntity.ok(ApiResponse.success(chatRoomService.getChatRoomDetails(marketId)));
+        return ResponseEntity.ok(ApiResponse.success(chatRoomService.getChatRoomDetailsByMarketId(marketId)));
     }
 
 

@@ -171,12 +171,27 @@ public class ChatRoomService {
         return isPermanentlyBanned(chatRoom.getId(), userId);
     }
 
-    public ChatRoomResponse getChatRoomDetails(Long roomId) {
+    public ChatRoomResponse getChatRoomDetails(Long roomId, Long userId) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다. ID: " + roomId));
 
         Integer currentBuyers = participantRepository.countBuyersByRoomId(roomId);
         Integer currentParticipants = participantRepository.countParticipantsByRoomId(roomId);
+
+        ChatRoomResponse chatRoomResponse = chatRoomMapper.convertToResponse(room, currentBuyers, currentParticipants);
+
+        chatRoomResponse.setBuyer(isBuyer(roomId, userId));
+        chatRoomResponse.setCreator(isCreator(roomId, userId));
+
+        return chatRoomResponse;
+    }
+
+    public ChatRoomResponse getChatRoomDetailsByMarketId(Long marketId) {
+        ChatRoom room = chatRoomRepository.findByMarketId(marketId)
+                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다. ID: " + marketId));
+
+        Integer currentBuyers = participantRepository.countBuyersByRoomId(room.getId());
+        Integer currentParticipants = participantRepository.countParticipantsByRoomId(room.getId());
 
         return chatRoomMapper.convertToResponse(room, currentBuyers, currentParticipants);
     }
