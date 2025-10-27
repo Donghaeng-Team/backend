@@ -14,7 +14,7 @@ env:
   AWS_ACCOUNT_ID: 857360183365
   TAG: ${{ github.sha }}   # 커밋 해시 기반 버전
   SHORT_SHA: ${{ github.sha }}
-  EXCLUDE_DIRS: "common .github"
+  EXCLUDE_DIRS: "common .github config-server eureka-server"
   ARGOCD_REPO: "https://github.com/Donghaeng-Team/argoCD-manifest.git"
   ARGOCD_BRANCH: "main"
 
