@@ -272,6 +272,23 @@ public class ChatMessageService {
         return response;  // AOP가 Redis로 자동 발행
     }
 
+    // 기한연장 알림
+    @Transactional
+    @RedisPublish
+    public ChatMessageResponse sendExtendMessage(Long roomId, String message) {
+        ChatRoom chatRoom = em.getReference(ChatRoom.class, roomId);
+
+        ChatMessage extendMessage = ChatMessage.extendMessage(chatRoom, message);
+
+        ChatMessage saved = messageRepository.save(extendMessage);
+        ChatMessageResponse response = chatMessageMapper.toResponse(saved);
+
+        broadcastToCurrentPod(roomId, response);
+        updateListOrderTime(roomId, saved.getSentAt());
+
+        return response;  // AOP가 Redis로 자동 발행
+    }
+
     /**
      * 강퇴당한 사용자에게 개인 알림
      */
