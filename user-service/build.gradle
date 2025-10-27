@@ -28,6 +28,7 @@ ext {
 	set('springCloudVersion', "2025.0.0")
 }
 dependencies {
+
 	// config client
 	//implementation 'org.springframework.cloud:spring-cloud-starter-config'
 
