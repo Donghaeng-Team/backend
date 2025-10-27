@@ -272,13 +272,30 @@ public class ChatMessageService {
         return response;  // AOP가 Redis로 자동 발행
     }
 
+    // 기한연장 알림
+    @Transactional
+    @RedisPublish
+    public ChatMessageResponse sendExtendMessage(Long roomId, String message) {
+        ChatRoom chatRoom = em.getReference(ChatRoom.class, roomId);
+
+        ChatMessage extendMessage = ChatMessage.extendMessage(chatRoom, message);
+
+        ChatMessage saved = messageRepository.save(extendMessage);
+        ChatMessageResponse response = chatMessageMapper.toResponse(saved);
+
+        broadcastToCurrentPod(roomId, response);
+        updateListOrderTime(roomId, saved.getSentAt());
+
+        return response;  // AOP가 Redis로 자동 발행
+    }
+
     /**
      * 강퇴당한 사용자에게 개인 알림
      */
     public void notifyKickedUser(Long userId, Long roomId, String reason) {
-        String message = chatRoomRepository.findTitleById(roomId) + " 채팅방에서 강퇴되었습니다.";
+        String message = chatRoomRepository.findById(roomId).orElseThrow().getTitle() + " 채팅방에서 강퇴되었습니다.";
         if (reason != null && !reason.isBlank()) {
-            message += " 사유: " + reason;
+            message += "\n사유: " + reason;
         }
 
         // 현재 Pod
@@ -293,7 +310,7 @@ public class ChatMessageService {
     }
 
     public void notifyUser(Long userId, Long roomId, String reason) {
-        String message = chatRoomRepository.findTitleById(roomId) + " 채팅방에서 알림 : \n" + reason;
+        String message = chatRoomRepository.findById(roomId).orElseThrow().getTitle() + " 채팅방에서 알림 : \n" + reason;
 
         // 현재 Pod
         messagingTemplate.convertAndSendToUser(

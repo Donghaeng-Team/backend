@@ -55,7 +55,6 @@ public class PrivateRestChatController {
         채팅방 기본 CRUD
         ├─ GET    /api/v1/chat/private                             목록 조회
         ├─ GET    /api/v1/chat/private/me                          자신의 참가내역 조회(마이페이지 카운트 표시용)
-        ├─ GET    /api/v1/chat/private/mylist                      자신의 참가내역 조회(마이페이지 카운트 표시용)
         └─ GET    /api/v1/chat/private/{roomId}                    개별 채팅창 페이지 접속
 
         메시지
@@ -109,7 +108,7 @@ public class PrivateRestChatController {
         log.info("채팅방 페이지 오픈 요청 - roomId: {}, userId: {}", chatRoomId, userId);
 
         if(chatRoomService.isParticipating(chatRoomId, userId)){
-            return ResponseEntity.ok(ApiResponse.success(chatRoomService.getChatRoomDetails(chatRoomId)));
+            return ResponseEntity.ok(ApiResponse.success(chatRoomService.getChatRoomDetails(chatRoomId, userId)));
         }
 
         return ResponseEntity.badRequest().body(ApiResponse.fail("잘못된 요청입니다"));
@@ -148,7 +147,7 @@ public class PrivateRestChatController {
 
         chatRoomService.joinChatRoom(marketId, userId);
 
-        return ResponseEntity.ok(ApiResponse.success(chatRoomService.getChatRoomDetails(marketId)));
+        return ResponseEntity.ok(ApiResponse.success(chatRoomService.getChatRoomDetailsByMarketId(marketId)));
     }
 
 

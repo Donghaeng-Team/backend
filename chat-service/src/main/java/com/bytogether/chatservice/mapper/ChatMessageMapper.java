@@ -24,6 +24,7 @@ public class ChatMessageMapper {
                 .id(message.getId())
                 .senderId(message.getSenderUserId())
                 .senderNickname(message.getSenderNickname())
+                .senderProfileUrl(message.getSenderProfileUrl())
                 .messageContent(message.getMessageContent())
                 .messageType(message.getMessageType())
                 .sentAt(message.getSentAt())

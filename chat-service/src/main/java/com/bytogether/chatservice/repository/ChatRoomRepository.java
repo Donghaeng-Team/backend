@@ -25,17 +25,16 @@ import java.util.Optional;
 @Repository
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
+    @Query("SELECT c.creatorUserId FROM ChatRoom c WHERE c.id = :id")
     Long getCreatorUserIdById(Long id);
-
-    String findTitleById(Long roomId);
 
     Optional<ChatRoom> findByMarketId(Long marketId);
 
     // DTO로 직접 매핑하는 깔끔한 방법
     @Query("""
         SELECT new com.bytogether.chatservice.dto.response.ParticipatingStaticsResponse(
-            COUNT(CASE WHEN cr.status = 'RECRUITING' AND cr.creatorUserId = :userId THEN 1 END),
-            COUNT(DISTINCT CASE WHEN cr.status = 'RECRUITING' AND p.isBuyer = true THEN cr.id END),
+            COUNT(CASE WHEN cr.status IN ('RECRUITING', 'RECRUITMENT_CLOSED', 'COMPLETED') AND cr.creatorUserId = :userId THEN 1 END),
+            COUNT(DISTINCT CASE WHEN cr.status IN ('RECRUITING', 'RECRUITMENT_CLOSED', 'COMPLETED') AND p.isBuyer = true THEN cr.id END),
             COUNT(CASE WHEN cr.status = 'COMPLETED' THEN 1 END)
         )
         FROM ChatRoom cr

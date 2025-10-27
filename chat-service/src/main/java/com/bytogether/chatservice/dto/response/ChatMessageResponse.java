@@ -26,6 +26,7 @@ public class ChatMessageResponse {
     private Long id;
     private Long senderId;
     private String senderNickname;  // User 서비스에서 조회 필요
+    private String senderProfileUrl;  // User 서비스에서 조회 필요
     private String messageContent;
     private MessageType messageType;
 
