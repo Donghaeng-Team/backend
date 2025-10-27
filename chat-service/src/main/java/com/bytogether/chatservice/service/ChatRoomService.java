@@ -51,6 +51,10 @@ public class ChatRoomService {
     public void joinChatRoom(Long marketId, Long userId) {
         ChatRoom chatRoom = chatRoomRepository.findByMarketId(marketId).orElseThrow();
 
+        if (chatRoom.getStatus() != ChatRoomStatus.RECRUITING) {
+            throw new RuntimeException("모집이 마감된 채팅방입니다");
+        }
+
         UserInternalResponse userInfo = userServiceClient.getUserInfo(UserInfoRequest.builder().userId(userId).build());
 
         ChatRoomParticipant newParticipant = ChatRoomParticipant.builder()
