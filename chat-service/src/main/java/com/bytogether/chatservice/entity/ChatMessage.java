@@ -80,4 +80,15 @@ public class ChatMessage {
                 .messageContent(content)
                 .build();
     }
+
+    public static ChatMessage extendMessage(ChatRoom room, String content) {
+        return ChatMessage.builder()
+                .chatRoom(room)
+                .senderUserId(null)  // NULL로 설정
+                .senderNickname("system")
+                .senderProfileUrl(null)
+                .messageType(MessageType.DEADLINE_EXTEND)
+                .messageContent(content)
+                .build();
+    }
 }
