@@ -1,0 +1,88 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.6'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.bytogether'
+version = '0.0.1-SNAPSHOT'
+description = 'user-service'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	set('springCloudVersion', "2025.0.0")
+}
+dependencies {
+	// config client
+	implementation 'org.springframework.cloud:spring-cloud-starter-config'
+
+
+    // eureka client -> k8s service로 대체
+//	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+    // DB
+	runtimeOnly 'org.postgresql:postgresql'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // Prometheus & Micrometer
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    // Loki (로그)
+    implementation 'com.github.loki4j:loki-logback-appender:1.5.2'
+
+    // Tempo (분산 추적)
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
+	implementation 'org.apache.commons:commons-lang3:3.18.0'
+
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3:3.0.3'
+	implementation 'software.amazon.awssdk:s3:2.20.0'
+	implementation 'software.amazon.awssdk:lambda:2.20.0'
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+	}
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+//kis- 251021 1219 argoTest

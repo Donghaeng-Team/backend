@@ -1,0 +1,12 @@
+spring:
+  config:
+    import: "configserver:http://config-service"
+  application:
+    name: comm-service
+  profiles:
+    active: ${profile:prod}
+
+
+s3:
+  bucket:
+    commImg: "sesac-bytogether-bucket"

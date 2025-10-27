@@ -1,0 +1,13 @@
+package com.bytogether.marketservice.client.dto.response;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+public class ParticipantListResponseWrap {
+    private Long requestMarketId;
+    private ParticipantListResponse participantListResponse;
+}
