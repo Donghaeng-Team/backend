@@ -379,7 +379,9 @@ public class ChatRoomService {
         // 히스토리 기록
         historyRepository.updateLeftAtAndExitType(targetUserId, roomId, participant.getLeftAt(), ExitType.KICKED);
 
-        String system = targetUserId.toString() + "님이 강퇴되셨습니다";
+        UserInternalResponse targetUserInfo = userServiceClient.getUserInfo(UserInfoRequest.builder().userId(targetUserId).build());
+
+        String system = targetUserInfo.getNickName() + "님이 강퇴되셨습니다";
 
         chatMessageService.sendSystemMessage(roomId, system);
 
