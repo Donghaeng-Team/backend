@@ -85,8 +85,6 @@ dependencies {
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 
 //    추적 임시
-    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
-    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
     implementation 'io.github.openfeign:feign-micrometer'
 
     annotationProcessor 'org.projectlombok:lombok'
