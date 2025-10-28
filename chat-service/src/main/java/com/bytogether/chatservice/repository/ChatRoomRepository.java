@@ -53,4 +53,6 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     AND p.isBuyer = true
     """)
     List<Object[]> findUserMarketIds(@Param("userId") Long userId);
+
+    List<ChatRoom> findByMarketIdIn(List<Long> marketIds);
 }
