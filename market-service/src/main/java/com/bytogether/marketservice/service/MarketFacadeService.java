@@ -8,6 +8,8 @@ import com.bytogether.marketservice.dto.response.*;
 import com.bytogether.marketservice.entity.Market;
 import com.bytogether.marketservice.exception.MarketException;
 import com.bytogether.marketservice.service.sub.*;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +43,8 @@ public class MarketFacadeService {
     private final DivisionService divisionService;
     private final UserService userService;
     private final ChatService chatService;
+
+    private final Tracer tracer;
 
     private static ChatRoomCreateRequest getChatRoomCreateRequest(Market newMarket, String thumbnailUrl) {
         ChatRoomCreateRequest chatRoomCreateRequest = new ChatRoomCreateRequest();
@@ -249,30 +253,54 @@ public class MarketFacadeService {
         // 7. 응답 생성하기
 
         // 1. 카테고리 ID 유효성 검사
-        if (marketListRequest.getCategoryId() != null) {
-            categoryService.validateCategoryId(marketListRequest.getCategoryId());
+        Span validateCategorySpan = tracer.spanBuilder("getMarketPosts.validateCategory").startSpan();
+        try {
+            if (marketListRequest.getCategoryId() != null) {
+                categoryService.validateCategoryId(marketListRequest.getCategoryId());
+            }
+        } finally {
+            validateCategorySpan.end();
         }
 
         // 2. 행정구역 ID 유효성 검사 + 인접동 목록 조회
-        List<DivisionResponseDto> requestDivisions = null;
-        if (marketListRequest.getDepth() == 0) {
-            DivisionResponseDto divisionByCode = divisionService.getDivisionByCode(marketListRequest.getDivisionId());
-            requestDivisions = List.of(divisionByCode);
-        } else {
-            requestDivisions = divisionService.getNearDivisionsByCode(marketListRequest.getDepth(), marketListRequest.getDivisionId());
+        Span getDivisionsSpan = tracer.spanBuilder("getMarketPosts.getDivisions").startSpan();
+        List<DivisionResponseDto> requestDivisions;
+        try {
+            if (marketListRequest.getDepth() == 0) {
+                DivisionResponseDto divisionByCode = divisionService.getDivisionByCode(marketListRequest.getDivisionId());
+                requestDivisions = List.of(divisionByCode);
+            } else {
+                requestDivisions = divisionService.getNearDivisionsByCode(marketListRequest.getDepth(), marketListRequest.getDivisionId());
+            }
+            getDivisionsSpan.setAttribute("divisions.count", requestDivisions.size());
+        } finally {
+            getDivisionsSpan.end();
         }
 
         // 3. 검색 기록 추가 ( USER_ID, DIVISION_ID, DEPTH, CATEGORY_ID, KEYWORD)
         // 카테고리나 키워드 둘 중 하나라도 있으면 검색 기록 저장
-        if (requestUserID != null) {
-            if (marketListRequest.getCategoryId() != null || (marketListRequest.getKeyword() != null && !marketListRequest.getKeyword().isBlank())) {
-                searchService.saveSearchFromRequest(marketListRequest, requestUserID);
+        Span saveSearchHistorySpan = tracer.spanBuilder("getMarketPosts.saveSearchHistory").startSpan();
+        try {
+            if (requestUserID != null) {
+                if (marketListRequest.getCategoryId() != null || (marketListRequest.getKeyword() != null && !marketListRequest.getKeyword().isBlank())) {
+                    searchService.saveSearchFromRequest(marketListRequest, requestUserID);
+                }
             }
+        } finally {
+            saveSearchHistorySpan.end();
         }
 
 
         // 4. 검색 (행정구역, 카테고리, 상태, 키워드, 페이징, 정렬)
-        Page<Market> markets = marketService.searchMarkets(requestDivisions, marketListRequest);
+        Span searchMarketsSpan = tracer.spanBuilder("getMarketPosts.searchMarkets").startSpan();
+        Page<Market> markets;
+        try {
+            markets = marketService.searchMarkets(requestDivisions, marketListRequest);
+            searchMarketsSpan.setAttribute("markets.count", markets.getContent().size());
+            searchMarketsSpan.setAttribute("markets.totalElements", markets.getTotalElements());
+        } finally {
+            searchMarketsSpan.end();
+        }
 
         if(markets.isEmpty()){
             return MarketListResponse.fromEntities(markets, new ArrayList<>(), new ArrayList<>());
@@ -280,17 +308,38 @@ public class MarketFacadeService {
 
 
         // 5. 작성자 닉네임, 프로필 이미지 URL 조회 (User Service API 호출)
-        List<Long> authorIds = markets.getContent().stream()
-                .map(Market::getAuthorId)
-                .toList();
-        List<UserInternalResponse> users = userService.getUsersByIds(authorIds);
+        Span getUsersByIdsSpan = tracer.spanBuilder("getMarketPosts.getUsersByIds").startSpan();
+        List<UserInternalResponse> users;
+        try {
+            List<Long> authorIds = markets.getContent().stream()
+                    .map(Market::getAuthorId)
+                    .toList();
+            getUsersByIdsSpan.setAttribute("authorIds.count", authorIds.size());
+            users = userService.getUsersByIds(authorIds);
+        } finally {
+            getUsersByIdsSpan.end();
+        }
 
         // 6. 현재 모집 참여 인원 수 조회 (chat Service API 호출) - TODO: 251023 14:00 임시 작성
-        List<ParticipantListResponseWrap> participantsWrap = chatService.getParticipantsWrap(markets.getContent().stream().map(Market::getId).toList());
+        Span getParticipantsWrapSpan = tracer.spanBuilder("getMarketPosts.getParticipantsWrap").startSpan();
+        List<ParticipantListResponseWrap> participantsWrap;
+        try {
+            List<Long> marketIds = markets.getContent().stream().map(Market::getId).toList();
+            getParticipantsWrapSpan.setAttribute("marketIds.count", marketIds.size());
+            participantsWrap = chatService.getParticipantsWrap(marketIds);
+        } finally {
+            getParticipantsWrapSpan.end();
+        }
 
 
         // 7. 응답 생성하기
-        MarketListResponse marketListResponse = MarketListResponse.fromEntities(markets, users, participantsWrap);
+        Span buildResponseSpan = tracer.spanBuilder("getMarketPosts.buildResponse").startSpan();
+        MarketListResponse marketListResponse;
+        try {
+            marketListResponse = MarketListResponse.fromEntities(markets, users, participantsWrap);
+        } finally {
+            buildResponseSpan.end();
+        }
 
 
         return marketListResponse;

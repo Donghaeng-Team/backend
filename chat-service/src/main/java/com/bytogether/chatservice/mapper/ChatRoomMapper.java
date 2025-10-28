@@ -70,23 +70,25 @@ public class ChatRoomMapper {
      * Participant -> DTO 변환
      */
     public ChatRoomResponse convertToResponse(ChatRoomParticipant participant, Map<Long, Integer> buyerCounts) {
-        ChatRoom chatRoom = participant.getChatRoom();
-        Long roomId = chatRoom.getId();
+        ChatRoom room = participant.getChatRoom();
+        Long roomId = room.getId();
         Integer currentBuyers = buyerCounts.get(roomId);
 
         return ChatRoomResponse.builder()
-                .id(chatRoom.getId())
-                .title(chatRoom.getTitle())
-                .thumbnailUrl(chatRoom.getThumbnailUrl())
-                .minBuyers(chatRoom.getMinBuyers())
-                .maxBuyers(chatRoom.getMaxBuyers())
+                .id(room.getId())
+                .marketId(room.getMarketId())
+                .creatorUserId(room.getCreatorUserId())
+                .title(room.getTitle())
+                .thumbnailUrl(room.getThumbnailUrl())
+                .minBuyers(room.getMinBuyers())
+                .maxBuyers(room.getMaxBuyers())
                 .currentBuyers(currentBuyers)
-                .status(chatRoom.getStatus())
-                .endTime(chatRoom.getEndTime())
+                .status(room.getStatus())
+                .endTime(room.getEndTime())
                 .listOrderTime(participant.getListOrderTime())
                 .isBuyer(participant.getIsBuyer())                    // ← 구매 의사 확정 여부
                 .participantStatus(participant.getStatus())           // ← 내 참가 상태
-                .isCreator(chatRoom.getCreatorUserId()                // ← 방장 여부
+                .isCreator(room.getCreatorUserId()                // ← 방장 여부
                         .equals(participant.getUserId()))
                 .build();
     }
@@ -95,6 +97,8 @@ public class ChatRoomMapper {
 
         return ChatRoomResponse.builder()
                 .id(room.getId())
+                .marketId(room.getMarketId())
+                .creatorUserId(room.getCreatorUserId())
                 .title(room.getTitle())
                 .thumbnailUrl(room.getThumbnailUrl())
                 .minBuyers(room.getMinBuyers())
@@ -113,6 +117,8 @@ public class ChatRoomMapper {
 
         return ChatRoomResponse.builder()
                 .id(room.getId())
+                .marketId(room.getMarketId())
+                .creatorUserId(room.getCreatorUserId())
                 .title(room.getTitle())
                 .thumbnailUrl(room.getThumbnailUrl())
                 .minBuyers(room.getMinBuyers())
