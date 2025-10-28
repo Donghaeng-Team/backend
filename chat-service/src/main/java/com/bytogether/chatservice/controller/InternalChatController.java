@@ -47,7 +47,7 @@ public class InternalChatController {
         return chatRoomService.getParticipants(marketId);
     }
 
-    @GetMapping("/participantList")
+    @PostMapping("/participantList")
     public List<ParticipantListResponseWrap> getParticipantList(@RequestBody List<Long> marketIds) {
         // 참가자 목록 정보 쿼리
         log.info("internal 채팅방 참가자 목록 요청 - marketIds: {}", marketIds);

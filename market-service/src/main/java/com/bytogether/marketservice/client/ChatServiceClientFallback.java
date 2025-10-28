@@ -3,12 +3,14 @@ package com.bytogether.marketservice.client;
 import com.bytogether.marketservice.client.dto.request.ChatRoomCreateRequest;
 import com.bytogether.marketservice.client.dto.response.ChatRoomResponse;
 import com.bytogether.marketservice.client.dto.response.ParticipantListResponse;
+import com.bytogether.marketservice.client.dto.response.ParticipantListResponseWrap;
 import com.bytogether.marketservice.client.dto.response.UserMarketIdsResponse;
 import com.bytogether.marketservice.exception.MarketException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 
 import java.util.Collections;
+import java.util.List;
 
 @Slf4j
 public class ChatServiceClientFallback implements ChatServiceClient {
@@ -39,5 +41,12 @@ public class ChatServiceClientFallback implements ChatServiceClient {
         response.setOngoingCount(0);
         response.setCompletedCount(0);
         return response;
+    }
+
+    @Override
+    public List<ParticipantListResponseWrap> getParticipantList(List<Long> marketIds) {
+        // fallback 로직
+
+        return Collections.emptyList();
     }
 }
