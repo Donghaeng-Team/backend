@@ -308,6 +308,149 @@ public class ChatRoomService {
                 .build();
     }
 
+    public List<ParticipantListResponseWrap> getParticipantList(List<Long> marketIds) {
+        // 빈 리스트 처리
+        if (marketIds == null || marketIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 1. marketIds로 ChatRoom들을 한 번에 조회 (1 쿼리)
+        List<ChatRoom> chatRooms = chatRoomRepository.findByMarketIdIn(marketIds);
+
+        if (chatRooms.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // marketId -> ChatRoom 매핑
+        Map<Long, ChatRoom> marketIdToChatRoomMap = chatRooms.stream()
+                .collect(Collectors.toMap(ChatRoom::getMarketId, room -> room));
+
+        // roomId 추출
+        List<Long> roomIds = chatRooms.stream()
+                .map(ChatRoom::getId)
+                .collect(Collectors.toList());
+
+        // creatorUserId 매핑 (방장 판단용)
+        Map<Long, Long> roomIdToCreatorMap = chatRooms.stream()
+                .collect(Collectors.toMap(ChatRoom::getId, ChatRoom::getCreatorUserId));
+
+        // 2. 모든 채팅방의 활성 참가자들을 한 번에 조회 (1 쿼리)
+        List<ChatRoomParticipant> allParticipants = participantRepository
+                .findByChatRoomIdInAndStatus(roomIds, ParticipantStatus.ACTIVE);
+
+        // 3. 구매자 수 및 참가자 수 조회 (각 1 쿼리)
+        Map<Long, Integer> buyerCountMap = getBuyerCountMap(roomIds);
+        Map<Long, Integer> participantCountMap = getParticipantCountMap(roomIds);
+
+        // 4. 모든 참가자의 userId를 모아서 User 서비스에 배치 요청 (1 HTTP 호출)
+        List<Long> allUserIds = allParticipants.stream()
+                .map(ChatRoomParticipant::getUserId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, UserInternalResponse> userInfoMap = Collections.emptyMap();
+        if (!allUserIds.isEmpty()) {
+            UsersInfoRequest usersInfoRequest = UsersInfoRequest.buildRequest(allUserIds);
+            List<UserInternalResponse> userInfoList = userServiceClient.getUsersInfo(usersInfoRequest);
+
+            userInfoMap = userInfoList.stream()
+                    .collect(Collectors.toMap(
+                            UserInternalResponse::getUserId,
+                            userInfo -> userInfo
+                    ));
+        }
+
+        // 5. roomId별로 참가자 그룹핑
+        Map<Long, List<ChatRoomParticipant>> participantsByRoom = allParticipants.stream()
+                .collect(Collectors.groupingBy(p -> p.getChatRoom().getId()));
+
+        // 6. 각 marketId에 대해 ParticipantListResponseWrap 생성
+        final Map<Long, UserInternalResponse> finalUserInfoMap = userInfoMap;
+
+        return marketIds.stream()
+                .map(marketId -> {
+                    ChatRoom chatRoom = marketIdToChatRoomMap.get(marketId);
+
+                    Long roomId = chatRoom.getId();
+                    Long creatorUserId = roomIdToCreatorMap.get(roomId);
+                    List<ChatRoomParticipant> participants = participantsByRoom.getOrDefault(roomId,
+                            Collections.emptyList());
+
+                    // ParticipantResponse 리스트 생성 및 정렬
+                    List<ParticipantResponse> participantResponses = participants.stream()
+                            .map(participant -> {
+                                Long userId = participant.getUserId();
+                                UserInternalResponse userInfo = finalUserInfoMap.get(userId);
+
+                                return ParticipantResponse.builder()
+                                        .userId(userId)
+                                        .nickname(userInfo != null ? userInfo.getNickName() : "알 수 없음")
+                                        .profileImage(userInfo != null ? userInfo.getImageUrl() : null)
+                                        .isBuyer(participant.getIsBuyer())
+                                        .isCreator(userId.equals(creatorUserId))
+                                        .joinedAt(participant.getJoinedAt())
+                                        .build();
+                            })
+                            .sorted((a, b) -> {
+                                // 방장 > 구매자 > 일반 참가자 > 가입 시간 순
+                                if (a.getIsCreator() && !b.getIsCreator()) return -1;
+                                if (!a.getIsCreator() && b.getIsCreator()) return 1;
+
+                                if (a.getIsBuyer() && !b.getIsBuyer()) return -1;
+                                if (!a.getIsBuyer() && b.getIsBuyer()) return 1;
+
+                                return a.getJoinedAt().compareTo(b.getJoinedAt());
+                            })
+                            .collect(Collectors.toList());
+
+                    // ParticipantListResponse 생성
+                    ParticipantListResponse participantListResponse = ParticipantListResponse.builder()
+                            .roomId(roomId)
+                            .currentParticipants(participantCountMap.getOrDefault(roomId, 1))
+                            .currentBuyers(buyerCountMap.getOrDefault(roomId, 1))
+                            .participants(participantResponses)
+                            .build();
+
+                    // ParticipantListResponseWrap 생성
+                    ParticipantListResponseWrap wrap = new ParticipantListResponseWrap();
+                    wrap.setRequestMarketId(marketId);
+                    wrap.setParticipantListResponse(participantListResponse);
+
+                    return wrap;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 여러 채팅방의 구매자 수를 Map으로 반환
+     */
+    private Map<Long, Integer> getBuyerCountMap(List<Long> roomIds) {
+        if (roomIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return participantRepository.countBuyersByRoomIdsForBatch(roomIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Long) row[1]).intValue()
+                ));
+    }
+
+    /**
+     * 여러 채팅방의 참가자 수를 Map으로 반환
+     */
+    private Map<Long, Integer> getParticipantCountMap(List<Long> roomIds) {
+        if (roomIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return participantRepository.countParticipantsByRoomIdsForBatch(roomIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Long) row[1]).intValue()
+                ));
+    }
+
     public ParticipatingStaticsResponse countMyChatrooms(Long userId) {
         return chatRoomRepository.getParticipatingStats(userId);
     }
