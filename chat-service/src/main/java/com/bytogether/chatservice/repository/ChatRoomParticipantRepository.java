@@ -166,4 +166,44 @@ public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomPar
     );
 
     Optional<ChatRoomParticipant> findByUserIdAndChatRoomId(Long userId, Long chatRoomId);
+
+
+    /**
+     * 여러 채팅방의 활성 참가자들을 한 번에 조회
+     */
+    @Query("""
+      SELECT p FROM ChatRoomParticipant p
+      WHERE p.chatRoom.id IN :roomIds
+      AND p.status = :status
+      ORDER BY p.chatRoom.id, p.joinedAt ASC
+      """)
+    List<ChatRoomParticipant> findByChatRoomIdInAndStatus(
+            @Param("roomIds") List<Long> roomIds,
+            @Param("status") ParticipantStatus status
+    );
+
+    /**
+     * 여러 채팅방의 구매자 수를 한 번에 조회
+     */
+    @Query("""
+      SELECT p.chatRoom.id, COUNT(p)
+      FROM ChatRoomParticipant p
+      WHERE p.chatRoom.id IN :roomIds
+      AND p.status = 'ACTIVE'
+      AND p.isBuyer = true
+      GROUP BY p.chatRoom.id
+      """)
+    List<Object[]> countBuyersByRoomIdsForBatch(@Param("roomIds") List<Long> roomIds);
+
+    /**
+     * 여러 채팅방의 참가자 수를 한 번에 조회
+     */
+    @Query("""
+      SELECT p.chatRoom.id, COUNT(p)
+      FROM ChatRoomParticipant p
+      WHERE p.chatRoom.id IN :roomIds
+      AND p.status = 'ACTIVE'
+      GROUP BY p.chatRoom.id
+      """)
+    List<Object[]> countParticipantsByRoomIdsForBatch(@Param("roomIds") List<Long> roomIds);
 }
