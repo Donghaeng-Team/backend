@@ -10,6 +10,7 @@ import com.bytogether.chatservice.dto.request.ChatMessageSendRequest;
 import com.bytogether.chatservice.dto.response.ChatMessagePageResponse;
 import com.bytogether.chatservice.dto.response.ChatMessageResponse;
 import com.bytogether.chatservice.entity.*;
+import com.bytogether.chatservice.exception.ChatForbiddenException;
 import com.bytogether.chatservice.mapper.ChatMessageMapper;
 import com.bytogether.chatservice.repository.ChatMessageRepository;
 import com.bytogether.chatservice.repository.ChatRoomParticipantHistoryRepository;
@@ -22,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -340,22 +342,17 @@ public class ChatMessageService {
     private void validateMessageSendPermission(Long roomId, Long userId) {
         MessagePermission permission = participantRepository
                 .getMessagePermission(roomId, userId)
-                .orElseThrow(() -> new ForbiddenException("채팅방 참가자가 아닙니다"));
+                .orElseThrow(() -> new ChatForbiddenException("채팅방 참가자가 아닙니다", HttpStatus.FORBIDDEN));
 
         if (!permission.canSendMessage()) {
-            throw new ForbiddenException(permission.getDenialReason());
+            throw new ChatForbiddenException(permission.getDenialReason(), HttpStatus.FORBIDDEN);
         }
 
         if (!participantRepository.existsByChatRoomIdAndUserIdAndStatus(
                 roomId, userId, ParticipantStatus.ACTIVE)) {
-            throw new ForbiddenException("채팅방에 참여 중이지 않습니다");
+            throw new ChatForbiddenException("채팅방에 참여 중이지 않습니다", HttpStatus.FORBIDDEN);
         }
     }
-
-    private String getUserNickname(Long userId) {
-        return "User#" + userId;
-    }
-
 
     /**
      * ChatMessagePageResponse 생성

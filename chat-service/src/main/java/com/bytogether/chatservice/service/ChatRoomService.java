@@ -8,6 +8,7 @@ import com.bytogether.chatservice.client.dto.UsersInfoRequest;
 import com.bytogether.chatservice.dto.request.ChatRoomCreateRequest;
 import com.bytogether.chatservice.dto.response.*;
 import com.bytogether.chatservice.entity.*;
+import com.bytogether.chatservice.exception.ChatForbiddenException;
 import com.bytogether.chatservice.mapper.ChatRoomMapper;
 import com.bytogether.chatservice.repository.ChatRoomParticipantHistoryRepository;
 import com.bytogether.chatservice.repository.ChatRoomParticipantRepository;
@@ -17,6 +18,7 @@ import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,7 +52,7 @@ public class ChatRoomService {
         ChatRoom chatRoom = chatRoomRepository.findByMarketId(marketId).orElseThrow();
 
         if (chatRoom.getStatus() != ChatRoomStatus.RECRUITING) {
-            throw new RuntimeException("모집이 마감된 채팅방입니다");
+            throw new ChatForbiddenException("모집이 마감된 채팅방입니다", HttpStatus.FORBIDDEN);
         }
 
         UserInternalResponse userInfo = userServiceClient.getUserInfo(UserInfoRequest.builder().userId(userId).build());
@@ -69,12 +71,12 @@ public class ChatRoomService {
 
             // 강퇴자는 재입장 불가
             if (participant.getIsPermanentlyBanned()) {
-                throw new ForbiddenException("강퇴된 사용자는 재입장할 수 없습니다");
+                throw new ChatForbiddenException("강퇴된 사용자는 재입장할 수 없습니다", HttpStatus.FORBIDDEN);
             }
 
             // 이미 활동 중이면 중복 입장 방지
             if (participant.getStatus() == ParticipantStatus.ACTIVE) {
-                throw new RuntimeException("이미 참가 중인 채팅방입니다");
+                throw new ChatForbiddenException("이미 참가 중인 채팅방입니다", HttpStatus.BAD_REQUEST);
             }
 
             // 현재 세션 리셋
@@ -242,7 +244,7 @@ public class ChatRoomService {
     public ParticipantListResponse getParticipants(Long marketId) {
         // 1. 채팅방 정보 조회 (방장 ID 확인용)
         ChatRoom chatRoom = chatRoomRepository.findByMarketId(marketId)
-                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다. ID: " + marketId));
+                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다. marketId: " + marketId));
 
         Long creatorUserId = chatRoom.getCreatorUserId();
         Long roomId = chatRoom.getId();
@@ -483,7 +485,7 @@ public class ChatRoomService {
     public String leaveChatRoom(Long roomId, Long userId) {
         ChatRoomParticipant participant = participantRepository
                 .findByChatRoomIdAndUserId(roomId, userId)
-                .orElseThrow(() -> new NotFoundException("참가 정보를 찾을 수 없습니다"));
+                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다. roomId: " + roomId));
 
         // ChatRoomParticipant 테이블 업데이트
         participant.setIsBuyer(false);
@@ -510,7 +512,7 @@ public class ChatRoomService {
     public String kickParticipant(Long roomId, Long targetUserId) {
         ChatRoomParticipant participant = participantRepository
                 .findByChatRoomIdAndUserId(roomId, targetUserId)
-                .orElseThrow(() -> new NotFoundException("참가자를 찾을 수 없습니다"));
+                .orElseThrow(() -> new NotFoundException("참가자를 찾을 수 없습니다. roomId: " + roomId + ", targetUserId: " + targetUserId));
 
         participant.setStatus(ParticipantStatus.BANNED);
         participant.setLeftAt(LocalDateTime.now());
@@ -537,7 +539,7 @@ public class ChatRoomService {
     public BuyerConfirmResponse confirmBuyer(Long roomId, Long userId) {
         ChatRoomParticipant participant = participantRepository
                 .findByChatRoomIdAndUserId(roomId, userId)
-                .orElseThrow(() -> new NotFoundException("참가 정보를 찾을 수 없습니다"));
+                .orElseThrow(() -> new NotFoundException("참가 정보를 찾을 수 없습니다. roomId: " + roomId + ", userId: " + userId));
 
         participant.confirmBuyer();
 
@@ -563,7 +565,7 @@ public class ChatRoomService {
     public BuyerConfirmResponse cancelBuyer(Long roomId, Long userId) {
         ChatRoomParticipant participant = participantRepository
                 .findByChatRoomIdAndUserId(roomId, userId)
-                .orElseThrow(() -> new NotFoundException("참가 정보를 찾을 수 없습니다"));
+                .orElseThrow(() -> new NotFoundException("참가 정보를 찾을 수 없습니다. roomId: " + roomId + ", userId: " + userId));
 
         participant.setIsBuyer(false);
         participant.setBuyerConfirmedAt(null);
@@ -589,7 +591,7 @@ public class ChatRoomService {
     @Transactional
     public ExtendDeadlineResponse extendDeadline(Long roomId, Integer hours) {
         ChatRoom room = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다"));
+                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다. roomId: " + roomId));
 
         LocalDateTime newDeadline = room.getEndTime().plusHours(hours);
         room.setEndTime(newDeadline);
@@ -611,7 +613,7 @@ public class ChatRoomService {
     @Transactional
     public RecruitmentCloseResponse closeRecruitment(Long roomId, Long userId) {
         ChatRoom room = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다"));
+                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다. roomId: " + roomId));
 
         // 채팅방 상태 변경
         room.setStatus(ChatRoomStatus.RECRUITMENT_CLOSED);
@@ -667,7 +669,7 @@ public class ChatRoomService {
     @Transactional
     public RecruitmentCancelResponse cancelRecruitment(Long roomId, Long userId) {
         ChatRoom room = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다"));
+                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다. roomId: " + roomId));
 
         // 채팅방 상태 변경
         room.setStatus(ChatRoomStatus.CANCELLED);
@@ -718,7 +720,7 @@ public class ChatRoomService {
     @Transactional
     public String completePurchase(Long roomId) {
         ChatRoom room = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다"));
+                .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다. roomId: " + roomId));
 
         String system = "공동구매가 완료되었습니다";
 
