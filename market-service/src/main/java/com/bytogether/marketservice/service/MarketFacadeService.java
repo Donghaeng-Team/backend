@@ -271,7 +271,7 @@ public class MarketFacadeService {
         Page<Market> markets = marketService.searchMarkets(requestDivisions, marketListRequest);
 
         // 5. 작성자 닉네임, 프로필 이미지 URL 조회 (User Service API 호출)
-        List<Long> authorIds = markets.stream()
+        List<Long> authorIds = markets.getContent().stream()
                 .map(Market::getAuthorId)
                 .toList();
         List<UserInternalResponse> users = userService.getUsersByIds(authorIds);
