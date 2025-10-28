@@ -114,6 +114,10 @@ public class MarketFacadeService {
         // 특정 사용자가 작성한 마켓글 조회
         Page<Market> myMarkets = marketService.getMarketsByAuthorId(targetUserId, PageRequest.of(defaultPageRequest.getPageNum(), defaultPageRequest.getPageSize()));
 
+        if(myMarkets.isEmpty()){
+            return MarketListResponse.fromEntities(myMarkets, new ArrayList<>(), new ArrayList<>());
+        }
+
         // 작성자 정보 조회 (User Service API 호출)
         UserInternalResponse userById = userService.getUserById(targetUserId);
 
@@ -270,6 +274,11 @@ public class MarketFacadeService {
         // 4. 검색 (행정구역, 카테고리, 상태, 키워드, 페이징, 정렬)
         Page<Market> markets = marketService.searchMarkets(requestDivisions, marketListRequest);
 
+        if(markets.isEmpty()){
+            return MarketListResponse.fromEntities(markets, new ArrayList<>(), new ArrayList<>());
+        }
+
+
         // 5. 작성자 닉네임, 프로필 이미지 URL 조회 (User Service API 호출)
         List<Long> authorIds = markets.getContent().stream()
                 .map(Market::getAuthorId)
@@ -335,6 +344,10 @@ public class MarketFacadeService {
 
         Page<Market> marketsByIds = marketService.getMarketsByIds(ongoing, pageRequest);
 
+        if(marketsByIds.isEmpty()){
+            return MarketListResponse.fromEntities(marketsByIds, new ArrayList<>(), new ArrayList<>());
+        }
+
         // 작성자 정보 조회 (User Service API 호출)
         List<Long> authorIds = marketsByIds.getContent().stream().map(Market::getAuthorId).distinct().toList();
 
@@ -357,6 +370,10 @@ public class MarketFacadeService {
         // 2. 마켓글 목록 조회 (페이징)
         PageRequest pageRequest = PageRequest.of(defaultPageRequest.getPageNum(), defaultPageRequest.getPageSize());
         Page<Market> marketsByIds = marketService.getMarketsByIds(ended, pageRequest);
+
+        if(marketsByIds.isEmpty()){
+            return MarketListResponse.fromEntities(marketsByIds, new ArrayList<>(), new ArrayList<>());
+        }
 
         // 작성자 정보 조회 (User Service API 호출)
         List<Long> authorIds = marketsByIds.getContent().stream().map(Market::getAuthorId).distinct().toList();
