@@ -33,16 +33,9 @@ public class ChatService {
 
     public List<ParticipantListResponseWrap> getParticipantsWrap(List<Long> marketId) {
 
-        List<ParticipantListResponseWrap> participantListResponseWraps = new ArrayList<>();
+        List<ParticipantListResponseWrap> participantList = chatServiceClient.getParticipantList(marketId);
 
-        marketId.forEach(id -> {
-            ParticipantListResponseWrap participantListResponseWrap = new ParticipantListResponseWrap();
-            ParticipantListResponse participants = chatServiceClient.getParticipants(id);
-            participantListResponseWrap.setRequestMarketId(id);
-            participantListResponseWrap.setParticipantListResponse(participants);
-            participantListResponseWraps.add(participantListResponseWrap);
-        });
-        return participantListResponseWraps;
+        return participantList;
     }
 
 
