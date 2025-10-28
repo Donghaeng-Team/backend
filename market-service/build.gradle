@@ -73,11 +73,9 @@ dependencies {
 
     //local - dev
     implementation 'io.opentelemetry:opentelemetry-exporter-zipkin'
-
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+
     // for k8s
-//    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
-    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
     implementation 'io.micrometer:micrometer-registry-prometheus'
     implementation 'io.github.openfeign:feign-micrometer'
 
