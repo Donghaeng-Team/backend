@@ -54,8 +54,6 @@ dependencies {
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"
     annotationProcessor "jakarta.persistence:jakarta.persistence-api"
 
-    // actuator
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     // swagger
     // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
@@ -87,11 +85,6 @@ dependencies {
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 
 //    추적 임시
-    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
-    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
-    // for k8s
-//    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
-    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
     implementation 'io.github.openfeign:feign-micrometer'
 
     annotationProcessor 'org.projectlombok:lombok'
