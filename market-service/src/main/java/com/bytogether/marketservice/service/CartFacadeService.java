@@ -62,6 +62,10 @@ public class CartFacadeService {
                 PageRequest.of(cartListRequest.getPageNum(), cartListRequest.getPageSize())
         );
 
+        if (myCarts.isEmpty()) {
+            return MarketListResponse.fromEntities(new PageImpl<>(List.of()), List.of(), List.of());
+        }
+
         // 마켓 정보 조회
         List<Market> markets = marketService.getMarketsByIds(myCarts.getContent().stream().map(Cart::getMarketId).toList());
 
