@@ -64,31 +64,59 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       #변경 사항 감지
+      # - name: Detect changed services
+      #   id: detect
+      #   run: |
+      #     echo "🔍 Detecting changed services in merge commit..."
+      #     git fetch --all
+
+      #     # 머지 커밋의 두 번째 부모(머지된 브랜치)와 비교
+      #     BASE=$(git rev-parse HEAD^1)
+      #     MERGED=$(git rev-parse HEAD^2)
+
+      #     git diff --name-only $BASE $MERGED > changed_files.txt
+
+      #     echo "변경된 파일 목록:"
+      #     cat changed_files.txt || true
+
+      #     CHANGED_DIRS=$(grep '/' changed_files.txt | cut -d'/' -f1 | sort -u | uniq)
+      #     TARGETS=""
+      #     for DIR in $CHANGED_DIRS; do
+      #       if [[ -d $DIR && ! " $EXCLUDE_DIRS " =~ " $DIR " ]]; then
+      #         TARGETS="$TARGETS $DIR"
+      #       fi
+      #     done
+      #     echo "targets=$(echo $TARGETS | xargs)" >> $GITHUB_OUTPUT
+      #     echo "머지로 변경된 서비스: $TARGETS"
+      - name: Detect changed files
+        id: changes
+        uses: tj-actions/changed-files@v44
+        with:
+          separator: " "
+          files_ignore: |
+            common/**
+            .github/**
+            config-server/**
+            eureka-server/**
+      
       - name: Detect changed services
         id: detect
         run: |
-          echo "🔍 Detecting changed services in merge commit..."
-          git fetch --all
-
-          # 머지 커밋의 두 번째 부모(머지된 브랜치)와 비교
-          BASE=$(git rev-parse HEAD^1)
-          MERGED=$(git rev-parse HEAD^2)
-
-          git diff --name-only $BASE $MERGED > changed_files.txt
-
-          echo "변경된 파일 목록:"
-          cat changed_files.txt || true
-
-          CHANGED_DIRS=$(grep '/' changed_files.txt | cut -d'/' -f1 | sort -u | uniq)
+          CHANGED_DIRS=$(for FILE in ${{ steps.changes.outputs.all_changed_files }}; do
+            echo $FILE | cut -d'/' -f1
+          done | sort -u)
+      
           TARGETS=""
           for DIR in $CHANGED_DIRS; do
-            if [[ -d $DIR && ! " $EXCLUDE_DIRS " =~ " $DIR " ]]; then
+            if [ -d "$DIR" ] && [[ ! " $EXCLUDE_DIRS " =~ " $DIR " ]]; then
               TARGETS="$TARGETS $DIR"
             fi
           done
+      
           echo "targets=$(echo $TARGETS | xargs)" >> $GITHUB_OUTPUT
           echo "머지로 변경된 서비스: $TARGETS"
 
+    
       # 빌드 & 푸쉬
       - name: Build and Push changed services
         if: steps.detect.outputs.targets != ''
