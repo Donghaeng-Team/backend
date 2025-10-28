@@ -71,4 +71,4 @@ dependencyManagement {
 tasks.named('test') {
     useJUnitPlatform()
 }
-//kis- 251021 1219 argoTest
+//kis- 251028
