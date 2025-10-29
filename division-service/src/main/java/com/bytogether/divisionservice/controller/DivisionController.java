@@ -32,6 +32,6 @@ public class DivisionController {
 
     @GetMapping("/public/test")
     public String testCart() {
-        return "251029 - 좋은 아침입니다!";
+        return "251029 - 좋은 점심입니다!";
     }
 }
