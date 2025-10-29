@@ -4,6 +4,7 @@ import com.bytogether.chatservice.dto.common.ApiResponse;
 import com.bytogether.chatservice.dto.request.ChatMessagePageRequest;
 import com.bytogether.chatservice.dto.request.ChatRoomPageRequest;
 import com.bytogether.chatservice.dto.response.*;
+import com.bytogether.chatservice.entity.ChatRoomStatus;
 import com.bytogether.chatservice.repository.ChatRoomParticipantRepository;
 import com.bytogether.chatservice.service.ChatMessageService;
 import com.bytogether.chatservice.service.ChatRoomService;
@@ -164,6 +165,8 @@ public class PrivateRestChatController {
 
         // 2. 방장은 퇴장 불가
         if(chatRoomService.isCreator(roomId, userId)) {
+            if(!chatRoomService.getChatRoomDetails(roomId, userId).getStatus().equals(ChatRoomStatus.COMPLETED)
+                    && !chatRoomService.getChatRoomDetails(roomId, userId).getStatus().equals(ChatRoomStatus.CANCELLED)){}
             return ResponseEntity.badRequest().body(ApiResponse.fail("방장은 채팅방을 닫기 전에 퇴장할 수 없습니다"));
         }
 
