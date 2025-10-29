@@ -34,9 +34,11 @@ public class MessagePermission {
 
         return switch (roomStatus) {
             case RECRUITING -> null;
-            case RECRUITMENT_CLOSED -> !isBuyer ?
+//            case RECRUITMENT_CLOSED -> !isBuyer ?
+//                    "모집이 마감되어 구매자만 메시지를 보낼 수 있습니다" : null;
+//            case COMPLETED -> "완료된 채팅방입니다";
+            case COMPLETED -> !isBuyer ?
                     "모집이 마감되어 구매자만 메시지를 보낼 수 있습니다" : null;
-            case COMPLETED -> "완료된 채팅방입니다";
             case CANCELLED -> "취소된 채팅방입니다";
             default -> "채팅을 보낼 수 없는 상태입니다";
         };
