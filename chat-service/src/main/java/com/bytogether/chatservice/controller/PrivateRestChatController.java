@@ -273,7 +273,7 @@ public class PrivateRestChatController {
         }
 
         // 3. 기한 연장 처리
-        ExtendDeadlineResponse response = chatRoomService.extendDeadline(roomId, hours);
+        ExtendDeadlineResponse response = chatRoomService.extendDeadline(roomId, userId, hours);
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
