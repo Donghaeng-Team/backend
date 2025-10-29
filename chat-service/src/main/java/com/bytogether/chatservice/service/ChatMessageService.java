@@ -67,8 +67,8 @@ public class ChatMessageService {
                 .findByChatRoomIdAndUserId(chatRoomId, userId)
                 .orElse(null);
 
-        if (participant == null || participant.getStatus() != ParticipantStatus.ACTIVE) {
-            // 참가자가 아니거나 비활성 상태
+        if (participant == null || !participant.getStatus().isViewable()) {
+            // 참가자가 아니거나 채팅을 볼 수 없는 상태
             return null;
         }
 
