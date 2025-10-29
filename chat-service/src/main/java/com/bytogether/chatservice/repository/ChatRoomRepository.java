@@ -48,10 +48,11 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     FROM ChatRoom cr
     JOIN ChatRoomParticipant p ON cr.id = p.chatRoom.id
     WHERE p.userId = :userId
-    AND cr.creatorUserId != :userId
+    
     AND p.status = 'ACTIVE'
     AND p.isBuyer = true
     """)
+//    AND cr.creatorUserId != :userId
     List<Object[]> findUserMarketIds(@Param("userId") Long userId);
 
     List<ChatRoom> findByMarketIdIn(List<Long> marketIds);
