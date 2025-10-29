@@ -8,6 +8,7 @@ import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.lambda.LambdaClient;
 import software.amazon.awssdk.services.lambda.model.InvocationType;
 import software.amazon.awssdk.services.lambda.model.InvokeRequest;
+import software.amazon.awssdk.services.lambda.model.InvokeResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -33,8 +34,9 @@ public class LambdaService {
                   .payload(SdkBytes.fromUtf8String(payload))
                   .build();
 
-          avatarLambdaClient.invoke(invokeRequest);
-          log.info("Lambda 실행성공 - userId : {} ", userId);
+            InvokeResponse invoke = avatarLambdaClient.invoke(invokeRequest);
+            log.info("Lambda 호출 응답 - StatusCode : {} , FunctionError : {} ", invoke.statusCode(), invoke.functionError());
+            log.info("Lambda 실행성공 - userId : {} ", userId);
 
         }catch (Exception e){
             log.error("Lamba 실행성공 - userId : {} ", userId);
