@@ -125,8 +125,8 @@ public class ChatRoomService {
         // 활성 + 퇴장한 채팅방 모두 조회
         List<ParticipantStatus> statuses = List.of(
                 ParticipantStatus.ACTIVE,
-                ParticipantStatus.LEFT_RECRUITMENT_CLOSED,
-                ParticipantStatus.LEFT_RECRUITMENT_CANCELED,
+//                ParticipantStatus.LEFT_RECRUITMENT_CLOSED,
+//                ParticipantStatus.LEFT_RECRUITMENT_CANCELED,
                 ParticipantStatus.LEFT_COMPLETED
         );
 
