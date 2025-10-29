@@ -21,8 +21,10 @@ public class MessagePermission {
         // 채팅방 상태별 권한 체크
         return switch (roomStatus) {
             case RECRUITING -> true;
-            case RECRUITMENT_CLOSED -> isBuyer;  // 구매자만 가능
-            case COMPLETED, CANCELLED -> false;   // 모두 불가
+//            case RECRUITMENT_CLOSED -> isBuyer;  // 구매자만 가능
+//            case COMPLETED, CANCELLED -> false;   // 모두 불가
+            case COMPLETED -> true;
+            case CANCELLED -> false;
             default -> false;
         };
     }
