@@ -25,9 +25,9 @@ public class MarketInternalController {
     }
 
     // 4. 마켓글 연장 extendMarketPost - private (완료)
-    @PatchMapping("/extend/{marketId}")
-    public void extendMarketPost(@RequestParam Long requestUserID, @PathVariable Long marketId, @RequestBody ExtendMarketRequest extendMarketRequest) {
-        ExtendMarketResponse extendMarketResponse = marketFacadeService.extendMarketPost(requestUserID, marketId, extendMarketRequest);
+    @PostMapping("/extend/{marketId}")
+    public void extendMarketPost(@RequestParam Long requestUserId, @PathVariable Long marketId, @RequestBody ExtendMarketRequest extendMarketRequest) {
+        ExtendMarketResponse extendMarketResponse = marketFacadeService.extendMarketPost(requestUserId, marketId, extendMarketRequest);
     }
 
 }
