@@ -616,7 +616,8 @@ public class ChatRoomService {
                 .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다. roomId: " + roomId));
 
         // 채팅방 상태 변경
-        room.setStatus(ChatRoomStatus.RECRUITMENT_CLOSED);
+//        room.setStatus(ChatRoomStatus.RECRUITMENT_CLOSED);
+        room.setStatus(ChatRoomStatus.COMPLETED);
         room.setRecruitmentClosedAt(LocalDateTime.now());
 
         ChatRoom saved = chatRoomRepository.save(room);
