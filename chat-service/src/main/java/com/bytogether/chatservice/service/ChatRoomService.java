@@ -2,6 +2,7 @@ package com.bytogether.chatservice.service;
 
 import com.bytogether.chatservice.client.MarketServiceClient;
 import com.bytogether.chatservice.client.UserServiceClient;
+import com.bytogether.chatservice.client.dto.ExtendMarketRequest;
 import com.bytogether.chatservice.client.dto.UserInfoRequest;
 import com.bytogether.chatservice.client.dto.UserInternalResponse;
 import com.bytogether.chatservice.client.dto.UsersInfoRequest;
@@ -589,7 +590,7 @@ public class ChatRoomService {
     }
 
     @Transactional
-    public ExtendDeadlineResponse extendDeadline(Long roomId, Integer hours) {
+    public ExtendDeadlineResponse extendDeadline(Long roomId, Long requesterUserId, Integer hours) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new NotFoundException("채팅방을 찾을 수 없습니다. roomId: " + roomId));
 
@@ -597,7 +598,13 @@ public class ChatRoomService {
         room.setEndTime(newDeadline);
         room.setUpdatedAt(LocalDateTime.now());
 
-        chatRoomRepository.save(room);
+        ChatRoom saved = chatRoomRepository.save(room);
+
+        ExtendMarketRequest extendMarketRequest = new ExtendMarketRequest();
+
+        extendMarketRequest.setEndTime(saved.getEndTime());
+
+        marketServiceClient.extendMarketPost(requesterUserId, saved.getMarketId(), extendMarketRequest);
 
         String system = "공동구매 모집 마감기한이 " + hours + "시간 연장되었습니다";
 
