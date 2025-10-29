@@ -30,8 +30,8 @@ public class DivisionController {
     }
 
 
-    @GetMapping("/test")
+    @GetMapping("/public/test")
     public String testCart() {
-        return "251021 kis";
+        return "251029 - 좋은 아침입니다!";
     }
 }
