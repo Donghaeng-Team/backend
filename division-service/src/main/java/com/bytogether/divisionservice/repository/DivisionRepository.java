@@ -15,12 +15,31 @@ public interface DivisionRepository extends JpaRepository<Division, String> {
     // 읍면동 검색 (좌표로) - 완성
     @Query(nativeQuery = true, value = """
             SELECT * FROM divisions d
-            WHERE d.id = (
-                SELECT division_id
-                FROM division_geoms dg
-                WHERE ST_Contains(
-                    dg.geom,
-                    ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)
+            WHERE d.id = COALESCE(
+                -- 1. 먼저 포함되는 것 찾기
+                (
+                    SELECT division_id
+                    FROM division_geoms dg
+                    WHERE ST_Contains(
+                        dg.geom,
+                        ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)
+                    )
+                    LIMIT 1
+                ),
+                -- 2. 없으면 가장 가까운 것 찾기 (거리 제한 추가)
+                (
+                    SELECT division_id
+                    FROM division_geoms dg
+                    WHERE ST_DWithin(
+                        dg.geom::geography,
+                        ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography,
+                        1000  -- 1km 반경 내에서만 검색
+                    )
+                    ORDER BY ST_Distance(
+                        dg.geom::geography,
+                        ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography
+                    )
+                    LIMIT 1
                 )
             )
             """)
